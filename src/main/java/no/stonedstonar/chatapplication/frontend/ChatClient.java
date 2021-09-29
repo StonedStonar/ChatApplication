@@ -1,15 +1,15 @@
-package no.stonedstonar.chatapplication.backend;
+package no.stonedstonar.chatapplication.frontend;
 /**
- * A class that represents the logic that the server class should hold.
+ * A class that represents the logic that the chat client should hold.
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
-public class Server {
+public class ChatClient {
 
     /**
-      * Makes an instance of the Server class.
+      * Makes an instance of the ChatClient class.
       */
-    public Server(){
+    public ChatClient(){
     
     }
 
