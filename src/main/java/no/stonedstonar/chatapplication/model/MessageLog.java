@@ -1,24 +1,47 @@
 package no.stonedstonar.chatapplication.model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 /**
- *
+ * Represents a class that holds messages.
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
-public class MessageLog {
+public class MessageLog implements Serializable {
 
     private ArrayList<Message> messageList;
+
+    private MembersOfConversation membersOfConversation;
+
+    private long messageLogNumber;
 
     //Todo: Vurder en liste som holder alle tingene som vil abonere på dette objektet. Dermed når en ny melding kommer oppdaterer den GUIen eller lignende med en gang.
     /**
       * Makes an instance of the MessageLog class.
       */
-    public MessageLog(){
+    public MessageLog(long messageLogNumber){
         messageList = new ArrayList<>();
+        membersOfConversation = new MembersOfConversation();
+        this.messageLogNumber = messageLogNumber;
+    }
+
+    /**
+     * Gets the message log number.
+     * @return the number that this message log is assigned.
+     */
+    public long getMessageLogNumber() {
+        return messageLogNumber;
+    }
+
+    /**
+     * Gets the members object.
+     * @return the object that holds all the members of this conversation.
+     */
+    public MembersOfConversation getMembersOfConversation(){
+        return membersOfConversation;
     }
 
     /**

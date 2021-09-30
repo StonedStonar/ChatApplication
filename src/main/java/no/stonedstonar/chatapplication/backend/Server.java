@@ -1,4 +1,13 @@
 package no.stonedstonar.chatapplication.backend;
+
+import no.stonedstonar.chatapplication.model.*;
+
+import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * A class that represents the logic that the server class should hold.
  * @version 0.1
@@ -6,11 +15,159 @@ package no.stonedstonar.chatapplication.backend;
  */
 public class Server {
 
+    private ServerSocket welcomeSocket;
+
+    private volatile UserRegister userRegister;
+
+    private volatile ConversationRegister conversationRegister;
+
+    public static void main(String[] args) {
+        Server server = new Server();
+        try {
+            server.run();
+        }catch (IllegalArgumentException exception){
+            System.out.println(exception.getMessage());
+        }
+    }
+
     /**
       * Makes an instance of the Server class.
       */
     public Server(){
-    
+        userRegister = new UserRegister();
+        conversationRegister = new ConversationRegister();
+
+        User user = new User("bjarne22", "passr");
+        User user1 = new User("fjell", "passord");
+        User user3 = new User("bass", "thepass");
+        userRegister.addUser(user);
+        userRegister.addUser(user1);
+        userRegister.addUser(user3);
+        List<String> twoMembers = new ArrayList<>();
+        twoMembers.add(user.getUsername());
+        twoMembers.add(user1.getUsername());
+        List<String> users = new ArrayList<>();
+        users.add(user.getUsername());
+        users.add(user1.getUsername());
+        users.add(user3.getUsername());
+        conversationRegister.addNewMessageLogWithUsernames(users);
+        conversationRegister.addNewMessageLogWithUsernames(twoMembers);
+
+        try {
+            welcomeSocket = new ServerSocket(1380);
+        }catch (IOException exception){
+            System.out.println("Could not open a socket. Please try again.");
+        }
+    }
+
+    /**
+     * Makes the server run and accept incoming communication.
+     */
+    public void run(){
+        boolean run = true;
+        try {
+            while (run){
+                Socket client = welcomeSocket.accept();
+                System.out.println("Message recived from a new client.");
+                Thread clientThread = new Thread(() -> {
+                    handleConnection(client);
+                });
+                clientThread.start();
+            }
+            System.out.println("Server shutting down");
+        }catch (IOException exception){
+            System.out.println("FUCK");
+        }
+    }
+
+    /**
+     * Handles the connection of a client.
+     * @param socket the socket that this connection is about.
+     */
+    private void handleConnection(Socket socket){
+        try {
+            Object object = getObject(socket);
+            if(object instanceof MessageTransport){
+                MessageTransport messageTransport = (MessageTransport) object;
+                handleMessage(messageTransport);
+            }else if (object instanceof UserRequest userRequest){
+                handleUserInteraction(userRequest, socket);
+            }else {
+                throw new IllegalArgumentException("NONE IS A VALID OBJECT");
+            }
+            try {
+                socket.close();
+            }catch (IOException exception) {
+                exception.printStackTrace();
+            }
+        }catch (IllegalArgumentException exception){
+            System.out.print(exception.getMessage());
+        }
+
+    }
+
+    /**
+     * Handles a message when it comes in.
+     * @param messageTransport the message transport the message comes in.
+     */
+    private void handleMessage(MessageTransport messageTransport){
+        System.out.print("New message");
+        MessageLog messageLog = conversationRegister.getMessageLogByLogNumber(messageTransport.getMessageLogNumber());
+        messageLog.addMessage(messageTransport.getMessage());
+        System.out.print("The message log is now " + messageLog.getMessageList().size() + " messages long.");
+    }
+
+
+
+    /**
+     *
+     * @param userRequest
+     */
+    private void handleUserInteraction(UserRequest userRequest, Socket socket){
+        //Todo: Skal gjøre det mulig å logge inn med brukeren.
+        if (userRequest.isLogin()){
+            User user = userRegister.login(userRequest.getUsername(), userRequest.getPassword());
+            List<MessageLog> messageLogs = conversationRegister.getAllMessageLogsOfUsername(user.getUsername());
+            LoginTransport loginTransport = new LoginTransport(user, messageLogs);
+            sendObject(loginTransport, socket);
+        }else if (userRequest.isNewUser()){
+            User user = new User(userRequest.getUsername(), userRequest.getPassword());
+            userRegister.addUser(user);
+            sendObject(user, socket);
+        } else if (userRequest.isCheckUsername()){
+            sendObject(userRegister.checkIfUsernameIsTaken(userRequest.getUsername()), socket);
+        }
+    }
+
+    /**
+     * Sends an object through the socket.
+     * @param object the object you want to send.
+     * @param socket the socket the object should go through.
+     */
+    private void sendObject(Object object, Socket socket){
+        try {
+            OutputStream outputStream = socket.getOutputStream();
+            ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+            objectOutputStream.writeObject(object);
+        }catch (IOException exception){
+            System.out.println("Kunne ikke sende objektet.");
+        }
+    }
+
+    /**
+     * Gets the message that is sent through the socket.
+     * @param socket the socket that this message is coming through.
+     * @return the message this socket contians.
+     */
+    private Object getObject(Socket socket){
+        try {
+            ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
+            Object object = objectInputStream.readObject();
+            checkIfObjectIsNull(object, "object");
+            return object;
+        }catch (IOException | ClassNotFoundException exception){
+            throw new IllegalArgumentException(exception.getMessage());
+        }
     }
 
     /**

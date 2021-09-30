@@ -1,31 +1,29 @@
 package no.stonedstonar.chatapplication.model;
+
+import java.io.Serializable;
+
 /**
  *
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
-public class Message {
+public class Message implements Serializable {
 
     private String message;
 
     private String fromUsername;
-
-    private String toUsername;
 
 
     /**
       * Makes an instance of the Message class.
      * @param message the message this object should contain.
      * @param fromUsername the username this message was sent form.
-     * @param toUsername the username this message was meant for.
       */
-    public Message(String message, String fromUsername, String toUsername){
+    public Message(String message, String fromUsername){
         checkString(message, "Message");
         checkString(fromUsername, "From username");
-        checkString(toUsername, "To username");
         this.message = message;
         this.fromUsername = fromUsername;
-        this.toUsername = toUsername;
     }
 
     /**
@@ -42,14 +40,6 @@ public class Message {
      */
     public String getFromUsername() {
         return fromUsername;
-    }
-
-    /**
-     * Gets the username the message was meant for.
-     * @return gets the username of the person who this message was meant for.
-     */
-    public String getToUsername() {
-        return toUsername;
     }
 
     /**

@@ -79,7 +79,7 @@ public class UserRegister {
      * @return the user that matches this username.
      */
     private User getUserByUsername(String username) {
-        Optional<User> opUser = userList.stream().filter(name -> name.equals(username)).findFirst();
+        Optional<User> opUser = userList.stream().filter(name -> name.getUsername().equals(username)).findFirst();
         if (opUser.isPresent()) {
             return opUser.get();
         } else{

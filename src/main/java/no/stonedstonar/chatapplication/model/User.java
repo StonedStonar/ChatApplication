@@ -1,10 +1,13 @@
 package no.stonedstonar.chatapplication.model;
+
+import java.io.Serializable;
+
 /**
  *
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
-public class User {
+public class User implements Serializable{
 
     private String username;
 
