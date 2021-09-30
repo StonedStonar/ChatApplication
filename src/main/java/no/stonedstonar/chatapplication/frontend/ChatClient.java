@@ -3,7 +3,6 @@ package no.stonedstonar.chatapplication.frontend;
 import no.stonedstonar.chatapplication.backend.LoginTransport;
 import no.stonedstonar.chatapplication.backend.MessageTransport;
 import no.stonedstonar.chatapplication.backend.UserRequest;
-import no.stonedstonar.chatapplication.model.ConversationRegister;
 import no.stonedstonar.chatapplication.model.Message;
 import no.stonedstonar.chatapplication.model.MessageLog;
 import no.stonedstonar.chatapplication.model.User;

@@ -1,0 +1,26 @@
+
+r
+java:S3077"WUse a thread-safe type; adding "volatile" is not enough to make this field thread-safe.(ğÿÙùÿÿÿÿ
+m
+java:S3077"WUse a thread-safe type; adding "volatile" is not enough to make this field thread-safe.(ğÏÔç
+N	java:S106"9Replace this use of System.out or System.err by a logger.(ñ·¤¬
+N	java:S106;"9Replace this use of System.out or System.err by a logger.(Â¨˜
+N	java:S106G"9Replace this use of System.out or System.err by a logger.(Í–¼Ô
+B
+java:S1602H",Remove useless curly braces around statement(âÌ­ù
+S	java:S106M"9Replace this use of System.out or System.err by a logger.(ŞÂÇ¯ıÿÿÿÿ
+N	java:S106O"9Replace this use of System.out or System.err by a logger.(Åİ“€
+w
+java:S6201Z"ZReplace this instanceof check and cast with 'instanceof MessageTransport messageTransport'(…©‘™8óÛ½½Ã/
+N	java:S106h"9Replace this use of System.out or System.err by a logger.(šÒ»½
+S	java:S106r"9Replace this use of System.out or System.err by a logger.(ã†Äóûÿÿÿÿ
+U	java:S106u"9Replace this use of System.out or System.err by a logger.(š–í”8÷Û½½Ã/
+H
+java:S1135"2Complete the task associated to this TODO comment.(¾ºè»
+U	java:S106™"9Replace this use of System.out or System.err by a logger.(·ïx8ä¯Æ½Ã/
+P
+java:S1141b"5Extract this nested try block into a separate method.(¡»¢üùÿÿÿÿ
+=
+java:S2189E""Add an end condition to this loop.(ÑÒŸ¹øÿÿÿÿ
+R
+java:S2589E"7Remove this expression which always evaluates to "true"(ÑÒŸ¹øÿÿÿÿ
