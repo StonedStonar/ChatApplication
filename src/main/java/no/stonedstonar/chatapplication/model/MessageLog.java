@@ -12,7 +12,7 @@ import java.util.Optional;
  */
 public class MessageLog implements Serializable {
 
-    private ArrayList<Message> messageList;
+    private ArrayList<TextMessage> textMessageList;
 
     private MembersOfConversation membersOfConversation;
 
@@ -23,10 +23,12 @@ public class MessageLog implements Serializable {
       * Makes an instance of the MessageLog class.
       */
     public MessageLog(long messageLogNumber){
-        messageList = new ArrayList<>();
+        checkIfLongIsNegative(messageLogNumber, "messagelog number");
+        textMessageList = new ArrayList<>();
         membersOfConversation = new MembersOfConversation();
         this.messageLogNumber = messageLogNumber;
     }
+
 
     /**
      * Gets the message log number.
@@ -46,12 +48,12 @@ public class MessageLog implements Serializable {
 
     /**
      * Adds a message to the list.
-     * @param message the message you want to add.
+     * @param textMessage the message you want to add.
      */
-    public void addMessage(Message message){
-        checkIfObjectIsNull(message, "message");
-        if (!messageList.contains(message)){
-            messageList.add(message);
+    public void addMessage(TextMessage textMessage){
+        checkIfObjectIsNull(textMessage, "message");
+        if (!textMessageList.contains(textMessage)){
+            textMessageList.add(textMessage);
         }else {
             throw new IllegalArgumentException("The message is already in the register.");
         }
@@ -59,12 +61,12 @@ public class MessageLog implements Serializable {
 
     /**
      * Removes the wanted message form the list.
-     * @param message the message you want to remove.
+     * @param textMessage the message you want to remove.
      */
-    public void removeMessage(Message message){
-        checkIfObjectIsNull(message, "message");
-        if (messageList.contains(message)){
-            messageList.remove(message);
+    public void removeMessage(TextMessage textMessage){
+        checkIfObjectIsNull(textMessage, "message");
+        if (textMessageList.contains(textMessage)){
+            textMessageList.remove(textMessage);
         }else {
             throw new IllegalArgumentException("Could not remove the message since its not in the register.");
         }
@@ -74,8 +76,8 @@ public class MessageLog implements Serializable {
      * Gets the list that has all the messages.
      * @return the list with all the messages.
      */
-    public List<Message> getMessageList(){
-        return messageList;
+    public List<TextMessage> getMessageList(){
+        return textMessageList;
     }
 
     //Todo: Lag en metode som heller ser på dato og tidspunkt siden samme meldingen kan bli sendt flere ganger.
@@ -84,9 +86,9 @@ public class MessageLog implements Serializable {
      * @param messageContents the message you want to check for.
      * @return the message that matches the input message.
      */
-    public Message getMessage(String messageContents){
+    public TextMessage getMessage(String messageContents){
         checkString(messageContents, "message");
-        Optional<Message> optionalMessage = messageList.stream().filter(mess -> mess.getMessage().equals(messageContents)).findFirst();
+        Optional<TextMessage> optionalMessage = textMessageList.stream().filter(mess -> mess.getMessage().equals(messageContents)).findFirst();
         if (optionalMessage.isPresent()){
             return optionalMessage.get();
         }else {
@@ -99,7 +101,7 @@ public class MessageLog implements Serializable {
      * @param stringToCheck the string you want to check.
      * @param errorPrefix the error the exception should have if the string is invalid.
      */
-    public void checkString(String stringToCheck, String errorPrefix){
+    private void checkString(String stringToCheck, String errorPrefix){
         checkIfObjectIsNull(stringToCheck, errorPrefix);
         if (stringToCheck.isEmpty()){
             throw new IllegalArgumentException("The " + errorPrefix + " cannot be empty.");
@@ -111,9 +113,20 @@ public class MessageLog implements Serializable {
      * @param object the object you want to check.
      * @param error the error message the exception should have.
      */
-    public void checkIfObjectIsNull(Object object, String error){
+    private void checkIfObjectIsNull(Object object, String error){
        if (object == null){
            throw new IllegalArgumentException("The " + error + " cannot be null.");
        }
+    }
+
+    /**
+     * Checks if a long is negative or equal to zero.
+     * @param number the number to check.
+     * @param prefix the prefix the error should have.
+     */
+    private void checkIfLongIsNegative(long number, String prefix){
+        if (number <= 0){
+            throw new IllegalArgumentException("Expected the " + prefix + " to be larger than zero.");
+        }
     }
 }

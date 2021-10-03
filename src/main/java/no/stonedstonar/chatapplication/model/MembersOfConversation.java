@@ -38,10 +38,13 @@ public class MembersOfConversation implements Serializable {
      */
     public void addAllMembers(List<String> usernames){
         checkIfObjectIsNull(usernames, "usernames");
-        if (usernames.size() > 0){
+        if (!usernames.isEmpty()){
             usernames.forEach((String username) -> {
-                addMember(username);
+                if (checkIfUsernameIsMember(username)){
+                    throw new IllegalArgumentException("The user by the username " + username + " is already in the conversation.");
+                }
             });
+            usernames.forEach(this::addMember);
         }else {
             throw new IllegalArgumentException("All the usernames could not be added since the list is zero in size.");
         }
@@ -72,19 +75,34 @@ public class MembersOfConversation implements Serializable {
 
     /**
      * Checks if all the usernames in the list is a part of the conversation.
+     * 9/10 names can be correct but the 1/10 will result in a false return value.
+     * So this method requires all the names to match one person in the conversation.
      * @param usernames the usernames of the users.
      * @return <code>true</code> if all the names matches everyone in the group.
+     *         <code>false</code> if one name or all of the names does not match any in the conversation.
      */
     public boolean checkIfUsernamesAreInConversation(List<String> usernames){
         boolean valid = false;
         checkIfObjectIsNull(usernames, "usernames");
-        long amount = memberList.stream().filter(name -> {
-            return usernames.stream().anyMatch(username -> username.equals(name));
-        }).count();
-        if ((amount == usernames.size()) && (memberList.size() == amount)){
-            valid = true;
+        if (!usernames.isEmpty()){
+            long amount = memberList.stream().filter(name -> {
+                return usernames.stream().anyMatch(username -> username.equals(name));
+            }).count();
+            if ((amount == usernames.size()) && (memberList.size() == amount)){
+                valid = true;
+            }
+        }else {
+            throw new IllegalArgumentException("The list must have some usernames in it.");
         }
         return valid;
+    }
+
+    /**
+     * Gets the size of the conversation.
+     * @return the amount of users in the conversation.
+     */
+    public int getAmountOfMembers(){
+        return memberList.size();
     }
     
     /**

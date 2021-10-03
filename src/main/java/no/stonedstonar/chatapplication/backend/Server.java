@@ -1,6 +1,9 @@
 package no.stonedstonar.chatapplication.backend;
 
 import no.stonedstonar.chatapplication.model.*;
+import no.stonedstonar.chatapplication.model.networktransport.LoginTransport;
+import no.stonedstonar.chatapplication.model.networktransport.MessageTransport;
+import no.stonedstonar.chatapplication.model.networktransport.UserRequest;
 
 import java.io.*;
 import java.net.ServerSocket;

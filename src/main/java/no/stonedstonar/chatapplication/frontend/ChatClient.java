@@ -1,9 +1,9 @@
 package no.stonedstonar.chatapplication.frontend;
 
-import no.stonedstonar.chatapplication.backend.LoginTransport;
-import no.stonedstonar.chatapplication.backend.MessageTransport;
-import no.stonedstonar.chatapplication.backend.UserRequest;
-import no.stonedstonar.chatapplication.model.Message;
+import no.stonedstonar.chatapplication.model.networktransport.LoginTransport;
+import no.stonedstonar.chatapplication.model.networktransport.MessageTransport;
+import no.stonedstonar.chatapplication.model.networktransport.UserRequest;
+import no.stonedstonar.chatapplication.model.TextMessage;
 import no.stonedstonar.chatapplication.model.MessageLog;
 import no.stonedstonar.chatapplication.model.User;
 
@@ -57,9 +57,9 @@ public class ChatClient {
         try {
             socket = new Socket("localhost", 1380);
             checkString(messageContents, "message");
-            Message message = new Message(messageContents, user.getUsername());
-            messageLog.addMessage(message);
-            MessageTransport messageTransport = new MessageTransport(message, messageLog);
+            TextMessage textMessage = new TextMessage(messageContents, user.getUsername());
+            messageLog.addMessage(textMessage);
+            MessageTransport messageTransport = new MessageTransport(textMessage, messageLog);
             sendObject(messageTransport, socket);
         } catch (IOException e) {
             System.out.println("The socket failed to be made.");

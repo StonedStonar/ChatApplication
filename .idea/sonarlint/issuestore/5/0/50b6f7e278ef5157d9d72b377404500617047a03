@@ -1,9 +1,0 @@
-
-G
-java:S1602*",Remove useless curly braces around statement(φ¥§ήϋÿÿÿÿ
-W
-java:S1612*"<Replace this lambda with method reference 'this::addMember'.(φ¥§ήϋÿÿÿÿ
-i
-java:S1602Q"SRemove useless curly braces around statement and then remove useless return keyword(°¬Ε
-Y
-java:S1155)">Use isEmpty() to check whether the collection is empty or not.(Ϋ¤νόÿÿÿÿ

@@ -1,6 +1,6 @@
-package no.stonedstonar.chatapplication.backend;
+package no.stonedstonar.chatapplication.model.networktransport;
 
-import no.stonedstonar.chatapplication.model.Message;
+import no.stonedstonar.chatapplication.model.TextMessage;
 import no.stonedstonar.chatapplication.model.MessageLog;
 
 import java.io.Serializable;
@@ -12,27 +12,27 @@ import java.io.Serializable;
  */
 public class MessageTransport implements Serializable {
 
-    private Message message;
+    private TextMessage textMessage;
 
     private long messageLogNumber;
 
     /**
       * Makes an instance of the MessageTransport class
-      * @param message the message you want to transport.
+      * @param textMessage the message you want to transport.
       * @param messageLog the message log that this message is a part of.
       */
-    public MessageTransport(Message message, MessageLog messageLog){
-        checkIfObjectIsNull(message, "message");
+    public MessageTransport(TextMessage textMessage, MessageLog messageLog){
+        checkIfObjectIsNull(textMessage, "message");
         this.messageLogNumber = messageLog.getMessageLogNumber();
-        this.message = message;
+        this.textMessage = textMessage;
     }
 
     /**
      * Gets the message.
      * @return the message the user wanted to send.
      */
-    public Message getMessage(){
-        return message;
+    public TextMessage getMessage(){
+        return textMessage;
     }
 
     /**

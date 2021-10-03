@@ -25,6 +25,7 @@ public class UserRegister {
      * @param user the user you want to add.
      */
     public void addUser(User user){
+        checkIfObjectIsNull(user, "user");
         if (!checkIfUsernameIsTaken(user.getUsername())){
             userList.add(user);
         }else {
@@ -37,6 +38,7 @@ public class UserRegister {
      * @param user the user you want to remove.
      */
     public void removeUser(User user){
+        checkIfObjectIsNull(user, "user");
         if (checkIfUsernameIsTaken(user.getUsername())){
             userList.remove(user);
         }else {
@@ -70,7 +72,7 @@ public class UserRegister {
      */
     public boolean checkIfUsernameIsTaken(String username){
         checkString(username, "username");
-        return userList.stream().anyMatch(name -> name.equals(username));
+        return userList.stream().anyMatch(name -> name.getUsername().equals(username));
     }
 
     /**
@@ -92,7 +94,7 @@ public class UserRegister {
      * @param stringToCheck the string you want to check.
      * @param errorPrefix the error the exception should have if the string is invalid.
      */
-    public void checkString(String stringToCheck, String errorPrefix){
+    private void checkString(String stringToCheck, String errorPrefix){
         checkIfObjectIsNull(stringToCheck, errorPrefix);
         if (stringToCheck.isEmpty()){
             throw new IllegalArgumentException("The " + errorPrefix + " cannot be empty.");
@@ -104,7 +106,7 @@ public class UserRegister {
      * @param object the object you want to check.
      * @param error the error message the exception should have.
      */
-    public void checkIfObjectIsNull(Object object, String error){
+    private void checkIfObjectIsNull(Object object, String error){
         if (object == null){
             throw new IllegalArgumentException("The " + error + " cannot be null.");
         }
