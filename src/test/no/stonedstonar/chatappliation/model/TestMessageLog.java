@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
- *
+ * Represents a testing class for MessageLog.
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */

@@ -12,7 +12,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- *
+ * Represents a testing class for the Members of a conversation.
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
