@@ -1,8 +1,11 @@
 package no.stonedstonar.chatapplication.ui;
 
+import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.stage.Stage;
 import no.stonedstonar.chatapplication.ui.controllers.Controller;
+import no.stonedstonar.chatapplication.ui.windows.LoginWindow;
 import no.stonedstonar.chatapplication.ui.windows.Window;
 
 import java.io.IOException;
@@ -12,15 +15,28 @@ import java.io.IOException;
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
-public class ChatApplicationClient {
+public class ChatApplicationClient extends Application {
 
     private static volatile ChatApplicationClient chatApplicationClient;
+
+    private Stage stage;
 
     /**
      * Makes an instance of the ChatApplicationGUI app.
      */
     private ChatApplicationClient(){
 
+    }
+
+    @Override
+    public void start(Stage primaryStage) throws Exception {
+        stage = primaryStage;
+        try {
+            setNewScene(LoginWindow.getLoginWindow());
+            primaryStage.show();
+        }catch (IOException exception){
+            //Todo: Something
+        }
     }
 
     /**
@@ -39,9 +55,25 @@ public class ChatApplicationClient {
     /**
      * Changes the scene to a new scene.
      * @param window the window you want to change the scene to.
+     * @throws IOException gets thrown if the scene could not be loaded.
      */
-    public void setNewScene(Window window){
+    public void setNewScene(Window window) throws IOException {
         checkIfObjectIsNull(window, "window");
+        Controller controller = window.getController();
+        checkIfObjectIsNull(controller, "controller");
+        Scene scene = window.getScene();
+        if (scene == null){
+            String fileName = window.getFXMLName();
+            checkString(fileName, "file name");
+            scene = loadScene(fileName, controller);
+            window.setScene(scene);
+        }
+        String title = window.getTitleName();
+        checkString(title, "title");
+        String windowTitle = "Chat application 0.1v - " + title;
+        controller.updateContent();
+        stage.setTitle(windowTitle);
+        stage.setScene(scene);
         
     }
 
