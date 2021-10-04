@@ -4,7 +4,9 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import no.stonedstonar.chatapplication.frontend.ChatClient;
 import no.stonedstonar.chatapplication.ui.controllers.Controller;
+import no.stonedstonar.chatapplication.ui.windows.ChatWindow;
 import no.stonedstonar.chatapplication.ui.windows.LoginWindow;
 import no.stonedstonar.chatapplication.ui.windows.Window;
 
@@ -19,13 +21,16 @@ public class ChatApplicationClient extends Application {
 
     private static volatile ChatApplicationClient chatApplicationClient;
 
+    private ChatClient chatClient;
+
     private Stage stage;
 
     /**
      * Makes an instance of the ChatApplicationGUI app.
      */
     private ChatApplicationClient(){
-
+        chatClient = new ChatClient();
+        //Todo: Make chat client
     }
 
     @Override
