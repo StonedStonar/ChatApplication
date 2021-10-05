@@ -1,4 +1,10 @@
 package no.stonedstonar.chatapplication.ui.controllers;
+
+import javafx.fxml.FXML;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+
 /**
  *
  * @version 0.1
@@ -6,6 +12,26 @@ package no.stonedstonar.chatapplication.ui.controllers;
  */
 public class LoginController implements Controller{
 
+    @FXML
+    private Label loginLabel;
+
+    @FXML
+    private Label usernameText;
+
+    @FXML
+    private PasswordField passwordField;
+
+    @FXML
+    private Label versionLabel;
+
+    @FXML
+    private Button loginButton;
+
+    @FXML
+    private Button cancelButton;
+
+    @FXML
+    private Button newUserButton;
     /**
       * Makes an instance of the LoginController class.
       */

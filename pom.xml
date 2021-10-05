@@ -35,7 +35,7 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.5</version>
                 <configuration>
-                    <mainClass>no.stonedstonar</mainClass>
+                    <mainClass>no.stonedstonar.chatapplication.ui.ChatApplicationClient</mainClass>
                 </configuration>
             </plugin>
         </plugins>

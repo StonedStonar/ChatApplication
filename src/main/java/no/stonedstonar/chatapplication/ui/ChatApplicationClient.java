@@ -21,15 +21,15 @@ public class ChatApplicationClient extends Application {
 
     private static volatile ChatApplicationClient chatApplicationClient;
 
-    private ChatClient chatClient;
+    //private ChatClient chatClient;
 
     private Stage stage;
 
     /**
      * Makes an instance of the ChatApplicationGUI app.
      */
-    private ChatApplicationClient(){
-        chatClient = new ChatClient();
+    public ChatApplicationClient(){
+        //chatClient = new ChatClient();
         //Todo: Make chat client
     }
 
@@ -39,8 +39,9 @@ public class ChatApplicationClient extends Application {
         try {
             setNewScene(LoginWindow.getLoginWindow());
             primaryStage.show();
-        }catch (IOException exception){
+        }catch (Exception exception){
             //Todo: Something
+            System.out.print("Exception hell. " +  exception.getClass() + " " + exception.getMessage());
         }
     }
 
@@ -70,7 +71,8 @@ public class ChatApplicationClient extends Application {
         if (scene == null){
             String fileName = window.getFXMLName();
             checkString(fileName, "file name");
-            scene = loadScene(fileName, controller);
+            String fullFilename = fileName + ".fxml";
+            scene = loadScene(fullFilename , controller);
             window.setScene(scene);
         }
         String title = window.getTitleName();
@@ -79,7 +81,6 @@ public class ChatApplicationClient extends Application {
         controller.updateContent();
         stage.setTitle(windowTitle);
         stage.setScene(scene);
-        
     }
 
     /**
@@ -90,7 +91,7 @@ public class ChatApplicationClient extends Application {
      * @throws IOException gets thrown if the scene is not loaded correctly or is missing.
      */
     private Scene loadScene(String fullNameOfFile, Controller controller) throws IOException {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource( fullNameOfFile));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource(fullNameOfFile));
         loader.setController(controller);
         Scene newScene = new Scene(loader.load());
         return newScene;
