@@ -29,7 +29,7 @@ public class Server {
         try {
             server.run();
         }catch (IllegalArgumentException exception){
-            System.out.println(exception.getMessage());
+            System.out.println("Exception in main run method: " + exception.getMessage());
         }
     }
 
@@ -104,7 +104,7 @@ public class Server {
                 exception.printStackTrace();
             }
         }catch (IllegalArgumentException exception){
-            System.out.print(exception.getMessage());
+            sendObject(exception, socket);
         }
 
     }
@@ -128,17 +128,23 @@ public class Server {
      */
     private void handleUserInteraction(UserRequest userRequest, Socket socket){
         //Todo: Skal gjøre det mulig å logge inn med brukeren.
-        if (userRequest.isLogin()){
-            User user = userRegister.login(userRequest.getUsername(), userRequest.getPassword());
-            List<MessageLog> messageLogs = conversationRegister.getAllMessageLogsOfUsername(user.getUsername());
-            LoginTransport loginTransport = new LoginTransport(user, messageLogs);
-            sendObject(loginTransport, socket);
-        }else if (userRequest.isNewUser()){
-            User user = new User(userRequest.getUsername(), userRequest.getPassword());
-            userRegister.addUser(user);
-            sendObject(user, socket);
-        } else if (userRequest.isCheckUsername()){
-            sendObject(userRegister.checkIfUsernameIsTaken(userRequest.getUsername()), socket);
+        try {
+            if (userRequest.isLogin()){
+                User user = userRegister.login(userRequest.getUsername(), userRequest.getPassword());
+                List<MessageLog> messageLogs = conversationRegister.getAllMessageLogsOfUsername(user.getUsername());
+                LoginTransport loginTransport = new LoginTransport(user, messageLogs);
+                sendObject(loginTransport, socket);
+            }else if (userRequest.isNewUser()){
+                User user = new User(userRequest.getUsername(), userRequest.getPassword());
+                userRegister.addUser(user);
+                List<MessageLog> messageLogs = conversationRegister.getAllMessageLogsOfUsername(user.getUsername());
+                LoginTransport loginTransport = new LoginTransport(user, messageLogs);
+                sendObject(loginTransport, socket);
+            } else if (userRequest.isCheckUsername()){
+                sendObject(userRegister.checkIfUsernameIsTaken(userRequest.getUsername()), socket);
+            }
+        }catch (IllegalArgumentException exception){
+            sendObject(exception, socket);
         }
     }
 

@@ -12,7 +12,6 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-
 <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="720.0" prefWidth="1240.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
    <center>
       <VBox prefHeight="200.0" prefWidth="100.0" style="-fx-alignment: Center;" BorderPane.alignment="CENTER">
@@ -60,7 +59,7 @@
                               <Font size="14.0" />
                            </font>
                         </Label>
-                        <TextField promptText="Enter username" GridPane.rowIndex="1">
+                        <TextField fx:id="usernameField" promptText="Enter username" GridPane.rowIndex="1">
                            <GridPane.margin>
                               <Insets />
                            </GridPane.margin>
@@ -129,7 +128,7 @@
                               <Font size="14.0" />
                            </font>
                         </Label>
-                        <PasswordField fx:id="passwordFieldCheck" promptText="Enter password" GridPane.rowIndex="1" />
+                        <PasswordField fx:id="passwordFieldCheck" promptText="Enter password again" GridPane.rowIndex="1" />
                         <Label fx:id="passwordText" text="Label" GridPane.rowIndex="2">
                            <GridPane.margin>
                               <Insets top="-10.0" />

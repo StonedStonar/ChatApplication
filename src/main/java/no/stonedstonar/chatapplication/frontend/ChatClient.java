@@ -34,6 +34,18 @@ public class ChatClient {
 
     }
 
+    /**
+     * Gets the username of the user.
+     * @return the username of the logged in user.
+     */
+    public String getUsername(){
+        if (user != null){
+            return user.getUsername();
+        }else {
+            throw new IllegalArgumentException("The user cannot be null.");
+        }
+    }
+
     public void run(){
         String username = "fjell";
         String password =  "passord";
@@ -75,7 +87,6 @@ public class ChatClient {
         Socket socket;
         try {
             socket = new Socket("localhost", 1380);
-
             checkString(username, "username");
             checkString(password, "password");
             UserRequest userRequest = new UserRequest.UserRequestBuilder().setLogin(true).setUsername(username).setPassword(password).build();
@@ -84,11 +95,14 @@ public class ChatClient {
             if (object instanceof LoginTransport loginTransport){
                 user = loginTransport.getUser();
                 messageLogs = loginTransport.getMessageLogList();
+            }else if (object instanceof IllegalArgumentException){
+                socket.close();
+                throw (IllegalArgumentException) object;
             }else {
                 throw new IllegalArgumentException("The returned input is not a user.");
             }
         } catch (IOException e) {
-            System.out.println("The socket failed to be made.");
+
         }
 
     }
@@ -97,14 +111,47 @@ public class ChatClient {
 
     }
 
-    public void checkUsername(String username){
-        checkString(username, "username");
-
+    public boolean checkUsername(String username){
+        try {
+            Socket socket = new Socket("localhost", 1380);
+            checkString(username, "username");
+            sendObject(username, socket);
+            Object object = getObject(socket);
+            if (object instanceof Boolean b){
+                return b;
+            }else {
+                //Todo: Fiks this.
+                throw new IllegalArgumentException("Could not check username.");
+            }
+        }catch (IOException exception){
+            //Todo: Also fiks this
+            throw new IllegalArgumentException("Facka you");
+        }
     }
 
+    /**
+     * Contacts the server and makes a new user if the username is not taken.
+     * @param username the username the user wants.
+     * @param password the password of the user.
+     */
     public void makeNewUser(String username, String password){
-        checkString(username, "username");
-        checkString(password, "password");
+        try {
+            Socket socket = new Socket("localhost", 1380);
+            checkString(username, "username");
+            checkString(password, "password");
+            UserRequest userRequest = new UserRequest.UserRequestBuilder().setNewUser(true).setUsername(username).setPassword(password).build();
+            sendObject(userRequest, socket);
+            Object object = getObject(socket);
+            if (object instanceof LoginTransport loginTransport){
+                user = loginTransport.getUser();
+                messageLogs = loginTransport.getMessageLogList();
+            }else if (object instanceof IllegalArgumentException exception){
+                System.out.println("Execption from server");
+                throw exception;
+            }
+        }catch (IOException exception){
+            //Todo: lag en handler
+        }
     }
 
 

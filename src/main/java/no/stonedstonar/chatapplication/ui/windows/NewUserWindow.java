@@ -37,7 +37,7 @@ public class NewUserWindow implements Window{
      */
     public static NewUserWindow getNewUserWindow(){
         if (newUserWindow == null){
-            synchronized (LoginWindow.class){
+            synchronized (NewUserWindow.class){
                 newUserWindow = new NewUserWindow();
             }
         }

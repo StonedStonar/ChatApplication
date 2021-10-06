@@ -57,7 +57,7 @@
                               <Font size="14.0" />
                            </font>
                         </Label>
-                        <TextField promptText="Enter username" GridPane.rowIndex="1">
+                        <TextField fx:id="usernameField" promptText="Enter username" GridPane.rowIndex="1">
                            <GridPane.margin>
                               <Insets />
                            </GridPane.margin>
@@ -88,7 +88,7 @@
                            </font>
                         </Label>
                         <PasswordField fx:id="passwordField" promptText="Enter password" GridPane.rowIndex="1" />
-                        <Label text="Password text" GridPane.rowIndex="2">
+                        <Label fx:id="passwordText" text="Password text" GridPane.rowIndex="2">
                            <GridPane.margin>
                               <Insets top="-10.0" />
                            </GridPane.margin>
@@ -144,7 +144,7 @@
                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                      </rowConstraints>
                      <children>
-                        <Button fx:id="newUser" mnemonicParsing="false" text="New user" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.valignment="CENTER">
+                        <Button fx:id="newUserButton" mnemonicParsing="false" text="New user" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.valignment="CENTER">
                            <padding>
                               <Insets bottom="5.0" left="15.0" right="15.0" top="5.0" />
                            </padding>

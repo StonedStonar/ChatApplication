@@ -21,7 +21,7 @@ public class ChatApplicationClient extends Application {
 
     private static volatile ChatApplicationClient chatApplicationClient;
 
-    //private ChatClient chatClient;
+    private ChatClient chatClient;
 
     private Stage stage;
 
@@ -29,8 +29,9 @@ public class ChatApplicationClient extends Application {
      * Makes an instance of the ChatApplicationGUI app.
      */
     public ChatApplicationClient(){
-        //chatClient = new ChatClient();
+        chatClient = new ChatClient();
         //Todo: Make chat client
+        chatApplicationClient = this;
     }
 
     @Override
@@ -56,6 +57,14 @@ public class ChatApplicationClient extends Application {
             }
         }
         return chatApplicationClient;
+    }
+
+    /**
+     * Gets the chat client and can call methods from it.
+     * @return the chat client of this application.
+     */
+    public ChatClient getChatClient(){
+        return chatClient;
     }
 
     /**
