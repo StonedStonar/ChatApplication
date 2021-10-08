@@ -49,12 +49,16 @@ public class Server {
         List<String> twoMembers = new ArrayList<>();
         twoMembers.add(user.getUsername());
         twoMembers.add(user1.getUsername());
-        List<String> users = new ArrayList<>();
-        users.add(user.getUsername());
-        users.add(user1.getUsername());
-        users.add(user3.getUsername());
-        conversationRegister.addNewMessageLogWithUsernames(users);
+        List<String> threeMembers = new ArrayList<>();
+        threeMembers.add(user.getUsername());
+        threeMembers.add(user1.getUsername());
+        threeMembers.add(user3.getUsername());
+        conversationRegister.addNewMessageLogWithUsernames(threeMembers);
         conversationRegister.addNewMessageLogWithUsernames(twoMembers);
+        List<MessageLog> messageLogs = conversationRegister.getAllMessageLogsOfUsername("bjarne22");
+        messageLogs.get(0).addMessage(new TextMessage("Haha", "bjarne22"));
+        messageLogs.get(0).addMessage(new TextMessage("Nope", "fjell"));
+        messageLogs.get(0).addMessage(new TextMessage("So funny bjarne", "bass"));
 
         try {
             welcomeSocket = new ServerSocket(1380);

@@ -98,6 +98,20 @@ public class MembersOfConversation implements Serializable {
     }
 
     /**
+     * Makes a string that contains all the members.
+     * @return a string that contains all the members of this conversation.
+     */
+    public String getAllMembersInAString(){
+        StringBuilder stringBuilder = new StringBuilder();
+
+        for (String member : memberList) {
+            stringBuilder.append(" ");
+            stringBuilder.append(member);
+        }
+        return stringBuilder.toString();
+    }
+
+    /**
      * Gets the size of the conversation.
      * @return the amount of users in the conversation.
      */

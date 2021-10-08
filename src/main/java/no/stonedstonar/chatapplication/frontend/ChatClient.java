@@ -35,6 +35,14 @@ public class ChatClient {
     }
 
     /**
+     * Returns the message log of the user.
+     * @return the message log of the user.
+     */
+    public List<MessageLog> getMessageLogs(){
+        return messageLogs;
+    }
+
+    /**
      * Gets the username of the user.
      * @return the username of the logged in user.
      */
