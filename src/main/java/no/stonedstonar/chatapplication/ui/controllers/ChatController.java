@@ -12,6 +12,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import no.stonedstonar.chatapplication.frontend.ChatClient;
 import no.stonedstonar.chatapplication.model.MessageLog;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
@@ -144,23 +145,14 @@ public class ChatController implements Controller{
         String username = chatClient.getUsername();
 
         messageLog.getMessageList().forEach(message -> {
-            try {
-                Pane pane = getPaneFromFXMLFile("messageBox");
-                Text text = (Text) pane.getChildren().get(0);
-                text.setText(message.getMessage());
-                String side = "left";
-                if(message.getFromUsername().equals(username)){
-                    side = "right";
-                }
-                pane.setStyle("-fx-alignment: " + side + ";");
-                pane.setBorder(new Border(new BorderStroke(Color.BLACK,
-                        BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
-                messageBox.getChildren().add(pane);
-            }catch (IOException exception){
-                //Todo: Fix this
-                System.out.println("Cannot setup messages.");
+            Text text = new Text();
+            text.setText(message.getMessage());
+            String side = "left";
+            if(message.getFromUsername().equals(username)){
+                side = "right";
             }
-
+            text.setStyle("-fx-halignment: right;");
+            messageBox.getChildren().add(text);
         });
     }
 
