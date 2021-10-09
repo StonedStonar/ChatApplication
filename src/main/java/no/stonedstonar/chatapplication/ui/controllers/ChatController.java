@@ -3,10 +3,8 @@ package no.stonedstonar.chatapplication.ui.controllers;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -22,6 +20,7 @@ import no.stonedstonar.chatapplication.model.TextMessage;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotAddTextMessageException;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
+import no.stonedstonar.chatapplication.ui.windows.NewConversationWindow;
 
 import java.io.IOException;
 import java.net.SocketException;
@@ -29,8 +28,6 @@ import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
 
 /**
  *
@@ -93,7 +90,13 @@ public class ChatController implements Controller{
                 exception.printStackTrace();
             }
         });
-        newContactButton.setDisable(true);
+        newContactButton.setOnAction(event -> {
+            try {
+                ChatApplicationClient.getChatApplication().setNewScene(NewConversationWindow.getNewUserWindow());
+            }catch (IOException exception){
+
+            }
+        });
     }
 
     /**
@@ -118,6 +121,7 @@ public class ChatController implements Controller{
      * Adds all the conversations to the conversation panel.
      */
     private void addAllConversations(){
+        contactsBox.getChildren().clear();
         ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
         List<MessageLog> messageLogList = chatClient.getMessageLogs();
         if (!messageLogList.isEmpty()){
@@ -127,7 +131,7 @@ public class ChatController implements Controller{
     }
 
     /**
-     * Makes a new conversation to select on the right side.
+     * Makes a new conversation to select on the left side.
      * @param messageLog the message log this conversation is about.
      */
     private void addNewConversation(MessageLog messageLog){
@@ -178,11 +182,9 @@ public class ChatController implements Controller{
      */
     public void showMessagesFromMessageLog(MessageLog messageLog){
         messageBox.getChildren().clear();
-        ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
-        String username = chatClient.getUsername();
         List<TextMessage> messages = messageLog.getMessageList();
         activeMessageLog = messageLog.getMessageLogNumber();
-        if (messages.size() > 0){
+        if (!messages.isEmpty()){
             messageLog.getMessageList().forEach(message -> {
                 addMessage(message);
             });
@@ -268,18 +270,6 @@ public class ChatController implements Controller{
             sendButton.setDisable(false);
         }else {
             sendButton.setDisable(true);
-        }
-    }
-
-    /**
-     * Checks if a string is of a valid format or not.
-     * @param stringToCheck the string you want to check.
-     * @param errorPrefix the error the exception should have if the string is invalid.
-     */
-    private void checkString(String stringToCheck, String errorPrefix){
-        checkIfObjectIsNull(stringToCheck, errorPrefix);
-        if (stringToCheck.isEmpty()){
-            throw new IllegalArgumentException("The " + errorPrefix + " cannot be empty.");
         }
     }
 
