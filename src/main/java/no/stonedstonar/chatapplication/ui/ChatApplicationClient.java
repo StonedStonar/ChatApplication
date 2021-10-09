@@ -50,7 +50,7 @@ public class ChatApplicationClient extends Application {
      * Gets the sorting app object.
      * @return the sorting app.
      */
-    public static ChatApplicationClient getSortingApp(){
+    public static ChatApplicationClient getChatApplication(){
         if (chatApplicationClient == null){
             synchronized (ChatApplicationClient.class){
                 chatApplicationClient = new ChatApplicationClient();

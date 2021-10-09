@@ -10,6 +10,7 @@ import no.stonedstonar.chatapplication.model.User;
 import java.io.*;
 import java.net.Socket;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * A class that represents the logic that the chat client should hold.
@@ -71,9 +72,11 @@ public class ChatClient {
      * Sends a message to a person if this client is logged in.
      * @param messageContents the contents of the message.
      * @param messageLog the message log that holds the message log number.
+     * @return the message that was just sent.
      */
-    public void sendMessage(String messageContents, MessageLog messageLog){
+    public TextMessage sendMessage(String messageContents, MessageLog messageLog){
         Socket socket;
+        //Todo: Add a function to check if the message was added successfully.And alter the documentation.
         try {
             socket = new Socket("localhost", 1380);
             checkString(messageContents, "message");
@@ -81,8 +84,24 @@ public class ChatClient {
             messageLog.addMessage(textMessage);
             MessageTransport messageTransport = new MessageTransport(textMessage, messageLog);
             sendObject(messageTransport, socket);
+            return textMessage;
         } catch (IOException e) {
             System.out.println("The socket failed to be made.");
+            throw new IllegalArgumentException("The socket failed to be made.");
+        }
+    }
+
+    /**
+     * Gets the message log that matches that long number.
+     * @param messageLogNumber the number that message log has.
+     * @return the message log that matches that number.
+     */
+    public MessageLog getMessageLogByLongNumber(long messageLogNumber){
+        try {
+            MessageLog messageLog = messageLogs.stream().filter(log -> log.getMessageLogNumber() == messageLogNumber).findFirst().get();
+            return messageLog;
+        }catch (NoSuchElementException exception){
+            throw new IllegalArgumentException("The messagelog with the log number " + messageLogNumber + " is not in the list.");
         }
     }
 
@@ -123,10 +142,11 @@ public class ChatClient {
         try {
             Socket socket = new Socket("localhost", 1380);
             checkString(username, "username");
-            sendObject(username, socket);
+            UserRequest userRequest = new UserRequest.UserRequestBuilder().setUsername(username).setCheckUsername(true).build();
+            sendObject(userRequest, socket);
             Object object = getObject(socket);
-            if (object instanceof Boolean b){
-                return b;
+            if (object instanceof Boolean valid){
+                return valid;
             }else {
                 //Todo: Fiks this.
                 throw new IllegalArgumentException("Could not check username.");

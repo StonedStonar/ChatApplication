@@ -94,8 +94,7 @@ public class Server {
     private void handleConnection(Socket socket){
         try {
             Object object = getObject(socket);
-            if(object instanceof MessageTransport){
-                MessageTransport messageTransport = (MessageTransport) object;
+            if(object instanceof MessageTransport messageTransport){
                 handleMessage(messageTransport);
             }else if (object instanceof UserRequest userRequest){
                 handleUserInteraction(userRequest, socket);

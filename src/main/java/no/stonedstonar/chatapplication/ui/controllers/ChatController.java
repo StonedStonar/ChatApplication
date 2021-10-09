@@ -3,6 +3,7 @@ package no.stonedstonar.chatapplication.ui.controllers;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -10,11 +11,13 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontPosture;
+import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
-import javafx.scene.text.TextAlignment;
 import no.stonedstonar.chatapplication.frontend.ChatClient;
 import no.stonedstonar.chatapplication.model.MessageLog;
+import no.stonedstonar.chatapplication.model.TextMessage;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
 
 import java.io.IOException;
@@ -32,9 +35,6 @@ public class ChatController implements Controller{
     private Label loggedInLabel;
 
     @FXML
-    private VBox vBox;
-
-    @FXML
     private VBox contactsBox;
 
     @FXML
@@ -46,6 +46,8 @@ public class ChatController implements Controller{
     @FXML
     private TextField textMessageField;
 
+    private long activeMessageLog;
+
 
     /**
       * Makes an instance of the ChatController class.
@@ -53,75 +55,68 @@ public class ChatController implements Controller{
     public ChatController(){
     
     }
-    
-    /**
-     * Checks if a string is of a valid format or not.
-     * @param stringToCheck the string you want to check.
-     * @param errorPrefix the error the exception should have if the string is invalid.
-     */
-    private void checkString(String stringToCheck, String errorPrefix){
-        checkIfObjectIsNull(stringToCheck, errorPrefix);
-        if (stringToCheck.isEmpty()){
-            throw new IllegalArgumentException("The " + errorPrefix + " cannot be empty.");
-        }
-    }
-    
-    /**
-     * Checks if an object is null.
-     * @param object the object you want to check.
-     * @param error the error message the exception should have.
-     */
-    private void checkIfObjectIsNull(Object object, String error){
-       if (object == null){
-           throw new IllegalArgumentException("The " + error + " cannot be null.");
-       }
-    }
 
-    public void test(){
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("contactBox.fxml"));
-        try {
-            //Todo: Use what you found out here to take stuff out of a fxml file. Let the games begin
-            // ( ͡• ͜ʖ ͡•)
-            Scene scene = new Scene(loader.load());
-            if (scene.getRoot() instanceof Pane pane){
-                Label label = (Label) pane.getChildren().stream().filter(thing -> {
-                    return thing instanceof Label;
-                }).findFirst().get();
-                System.out.println(label.textProperty().get());
+    /**
+     * Sets the functions of all the buttons in the window.
+     */
+    private void setButtonFunctions(){
+        sendButton.setOnAction(event -> {
+            try {
+                String contents = textMessageField.textProperty().get();
+                ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
+                MessageLog messageLog = chatClient.getMessageLogByLongNumber(activeMessageLog);
+                TextMessage textMessage = chatClient.sendMessage(contents, messageLog);
+                addMessage(textMessage);
+                textMessageField.textProperty().set("");
+            }catch (IllegalArgumentException exception){
+                //Todo: Gjør noe annet her.
+                System.out.println("Could not send the message.");
             }
-        }catch (IOException exception){
 
-        }
+        });
     }
 
-    public void addAllMessageLogs(){
-        ChatClient chatClient = ChatApplicationClient.getSortingApp().getChatClient();
+    private void addListeners(){
+
+    }
+
+
+
+    /**
+     * Adds all the conversations to the conversation panel.
+     */
+    private void addAllConversations(){
+        ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
         List<MessageLog> messageLogList = chatClient.getMessageLogs();
-        AtomicInteger errors = new AtomicInteger();
         if (!messageLogList.isEmpty()){
-            messageLogList.forEach(messageLog -> {
-                try {
-                    Pane conversationPane = getPaneFromFXMLFile("contactBox");
-                    Text contactLabel = (Text) conversationPane.getChildren().stream().filter(thing -> thing instanceof Text).findFirst().get();
-                    contactLabel.textProperty().set(messageLog.getMembersOfConversation().getAllMembersInAString());
-                    addInteractionToPane(conversationPane);
-                    contactsBox.getChildren().add(conversationPane);
-                }catch (IOException exception){
-                    errors.addAndGet(1);
-                }
-            });
-        }
-        if (errors.get() > 0){
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Could not load messagebox");
-            alert.setHeaderText("Could not load messagebox.");
-            alert.setContentText("Something went wrong in the loading of your contacts. Please try again.");
-            alert.show();
+            messageLogList.forEach(this::addNewConversation);
         }
         showMessagesFromMessageLog(messageLogList.get(0));
     }
 
-    private void addInteractionToPane(Pane pane){
+    /**
+     * Makes a new conversation to select on the right side.
+     * @param messageLog the message log this conversation is about.
+     */
+    private void addNewConversation(MessageLog messageLog){
+        VBox vBox = new VBox();
+        vBox.setMinWidth(Long.MAX_VALUE);
+        String nameOfConversation = messageLog.getMembersOfConversation().getAllMembersExceptUsernameAsString(ChatApplicationClient.getChatApplication().getChatClient().getUsername());
+        Text text = new Text(nameOfConversation);
+        long messageLogNumber = messageLog.getMessageLogNumber();
+        vBox.getChildren().add(text);
+        vBox.setPadding(new Insets(3,3,3,3));
+        VBox.setMargin(vBox, new Insets(5,5,5,5));
+        addInteractionToPane(vBox, messageLogNumber);
+        contactsBox.getChildren().add(vBox);
+    }
+
+    /**
+     * Adds it so that the pane is interactive and can be used as a button.
+     * @param pane the pane you want to make interactive.
+     * @param messageLogNumber the message log number this pane is holding.
+     */
+    private void addInteractionToPane(Pane pane, long messageLogNumber){
         pane.setOnMouseEntered(mouseEvent -> {
             pane.setBackground(new Background(new BackgroundFill(Color.valueOf("#8B7E7E"), CornerRadii.EMPTY, Insets.EMPTY)));
         });
@@ -131,29 +126,62 @@ public class ChatController implements Controller{
         });
 
         pane.setOnMouseClicked(mouseEvent -> {
-
+            handleConversationSwitch(messageLogNumber);
         });
+    }
+
+    /**
+     * Handles the switch from one conversation to another.
+     * @param messageLogNumber the message log number this conversation has.
+     */
+    private void handleConversationSwitch(long messageLogNumber){
+        ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
+        MessageLog messageLog = chatClient.getMessageLogByLongNumber(messageLogNumber);
+        showMessagesFromMessageLog(messageLog);
+    }
+
+    /**
+     * Loads the messages of this conversation.
+     * @param messageLog the messagelog you want to load.
+     */
+    public void showMessagesFromMessageLog(MessageLog messageLog){
+        messageBox.getChildren().clear();
+        ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
+        String username = chatClient.getUsername();
+        List<TextMessage> messages = messageLog.getMessageList();
+        activeMessageLog = messageLog.getMessageLogNumber();
+        if (messages.size() > 0){
+            messageLog.getMessageList().forEach(message -> {
+                addMessage(message);
+            });
+        }else {
+            Label label = new Label("There is no messages in this conversation yet.");
+            VBox vBox = new VBox();
+            vBox.setMinWidth(Long.MAX_VALUE);
+            vBox.getChildren().add(label);
+            messageBox.getChildren().add(vBox);
+        }
 
     }
 
     /**
-     *
-     * @param messageLog
+     * Adds a message to the conversation.
+     * @param message the message you want to add to the gui.
      */
-    public void showMessagesFromMessageLog(MessageLog messageLog){
-        ChatClient chatClient = ChatApplicationClient.getSortingApp().getChatClient();
-        String username = chatClient.getUsername();
-
-        messageLog.getMessageList().forEach(message -> {
-            Text text = new Text();
-            text.setText(message.getMessage());
-            String side = "left";
-            if(message.getFromUsername().equals(username)){
-                side = "right";
-            }
-            text.setStyle("-fx-halignment: right;");
-            messageBox.getChildren().add(text);
-        });
+    private void addMessage(TextMessage message){
+        Text text = new Text();
+        Label label = new Label(message.getFromUsername());
+        label.setTextFill(Color.valueOf("#666666"));
+        label.setFont(Font.font(label.getFont().getName(), FontWeight.NORMAL, FontPosture.REGULAR, 12));
+        text.setFont(Font.font(label.getFont().getName(), FontWeight.NORMAL, FontPosture.REGULAR, 12));
+        text.setText(message.getMessage());
+        VBox vBox = new VBox();
+        vBox.setPadding(new Insets(0,5,10,5));
+        vBox.setMinWidth(Long.MAX_VALUE);
+        vBox.getChildren().add(label);
+        vBox.getChildren().add(text);
+        //vBox.setBackground(new Background(new BackgroundFill(Color.valueOf("#dbdbdb"), CornerRadii.EMPTY, Insets.EMPTY)));
+        messageBox.getChildren().add(vBox);
     }
 
     /**
@@ -176,8 +204,32 @@ public class ChatController implements Controller{
     @Override
     public void updateContent() {
         String string = loggedInLabel.textProperty().get();
-        string += " " + ChatApplicationClient.getSortingApp().getChatClient().getUsername();
+        string += " " + ChatApplicationClient.getChatApplication().getChatClient().getUsername();
         loggedInLabel.textProperty().set(string);
-        addAllMessageLogs();
+        addAllConversations();
+        setButtonFunctions();
+    }
+
+    /**
+     * Checks if a string is of a valid format or not.
+     * @param stringToCheck the string you want to check.
+     * @param errorPrefix the error the exception should have if the string is invalid.
+     */
+    private void checkString(String stringToCheck, String errorPrefix){
+        checkIfObjectIsNull(stringToCheck, errorPrefix);
+        if (stringToCheck.isEmpty()){
+            throw new IllegalArgumentException("The " + errorPrefix + " cannot be empty.");
+        }
+    }
+
+    /**
+     * Checks if an object is null.
+     * @param object the object you want to check.
+     * @param error the error message the exception should have.
+     */
+    private void checkIfObjectIsNull(Object object, String error){
+        if (object == null){
+            throw new IllegalArgumentException("The " + error + " cannot be null.");
+        }
     }
 }

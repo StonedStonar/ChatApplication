@@ -55,14 +55,17 @@ public class NewUserController implements Controller{
     
     }
 
+    /**
+     * Sets the functions of all the buttons in this window.
+     */
     private void setButtonFunctions(){
         makeUserButton.setOnAction(actionEvent -> {
             try {
                 String username = usernameField.textProperty().get();
                 String password = passwordField.textProperty().get();
-                ChatClient chatClient = ChatApplicationClient.getSortingApp().getChatClient();
+                ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
                 chatClient.makeNewUser(username, password);
-                ChatApplicationClient.getSortingApp().setNewScene(ChatWindow.getChatWindow());
+                ChatApplicationClient.getChatApplication().setNewScene(ChatWindow.getChatWindow());
             }catch (IllegalArgumentException exception){
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setContentText("The user with the name " + usernameField.textProperty().get() + " is already in the register.");
@@ -75,13 +78,16 @@ public class NewUserController implements Controller{
         });
         cancelButton.setOnAction(actionEvent -> {
             try {
-                ChatApplicationClient.getSortingApp().setNewScene(LoginWindow.getLoginWindow());
+                ChatApplicationClient.getChatApplication().setNewScene(LoginWindow.getLoginWindow());
             }catch (IOException exception){
                 //Todo: Insert error handeling.
             }
         });
     }
 
+    /**
+     * Sets the listeners of all the controls that needs them.
+     */
     private void makeListeners(){
         String username3Letters = "The username must be more than 3 letters long.";
         String password3Letters = "The password must be more than 3 letters long.";
@@ -104,12 +110,43 @@ public class NewUserController implements Controller{
 
         passwordFieldCheck.textProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal.length() >= 3){
-                validFields.put(passwordField, true);
+                validFields.put(passwordFieldCheck, true);
             }else {
                 passwordText.textProperty().set(password3Letters);
-                validFields.put(passwordField, false);
+                validFields.put(passwordFieldCheck, false);
             }
             checkIfPasswordsMatch(password3Letters);
+        });
+
+        ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
+
+        usernameField.textProperty().addListener((obs, oldVal, newVal) -> {
+            try {
+                Long.parseLong(newVal);
+                usernameText.textProperty().set("Username cannot start with a number or only be numbers.");
+            }catch (NumberFormatException exception){
+                if (newVal.length() >= 3){
+                    usernameText.setText("The username is of a valid format.");
+                }else {
+                    usernameText.textProperty().set(username3Letters);
+                }
+            }
+            checkIfAllFieldsAreValid();
+        });
+
+        usernameField.focusedProperty().addListener((valid) -> {
+            String username = usernameField.textProperty().get();
+            if ((username != null) && (!username.isEmpty()) && (username.length() >= 3)){
+                if (chatClient.checkUsername(usernameField.textProperty().get())){
+                    usernameText.setText("The username is taken.");
+                    validFields.put(usernameField, false);
+                }else {
+                    System.out.println("USername is not true");
+                    validFields.put(usernameField, true);
+                    usernameText.setText("The username is not taken.");
+                }
+            }
+            checkIfAllFieldsAreValid();
         });
     }
 
@@ -135,10 +172,11 @@ public class NewUserController implements Controller{
         checkIfAllFieldsAreValid();
     }
     /**
-     * Checks if all the fields are filled in. Disables the login button if password and username is not filled in.
+     * Checks if all the fields are filled in. Disables the login button if password the passwords does not match and username is not filled in.
      */
     private void checkIfAllFieldsAreValid(){
         long valid = validFields.values().stream().filter(aBoolean ->  aBoolean).count();
+        System.out.println(valid + " " + validFields.size());
         if (valid == validFields.size()){
             makeUserButton.setDisable(false);
         }else {

@@ -112,6 +112,26 @@ public class MembersOfConversation implements Serializable {
     }
 
     /**
+     * Builds a string that contains the name of all members in the register except the input username.
+     * @param username the username you don't want in the string.
+     * @return all the usernames that does not match the input username in a string.
+     */
+    public String getAllMembersExceptUsernameAsString(String username){
+        if (!checkIfUsernameIsMember(username)){
+            throw new IllegalArgumentException("The username " + username + " is not in the conversation.");
+        }
+        StringBuilder stringBuilder = new StringBuilder();
+
+        for (String member : memberList){
+            if (!member.equals(username)){
+                stringBuilder.append(" ");
+                stringBuilder.append(member);
+            }
+        }
+        return stringBuilder.toString();
+    }
+
+    /**
      * Gets the size of the conversation.
      * @return the amount of users in the conversation.
      */
