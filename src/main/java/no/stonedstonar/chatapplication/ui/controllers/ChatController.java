@@ -4,6 +4,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -21,8 +22,12 @@ import no.stonedstonar.chatapplication.model.TextMessage;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
 
 import java.io.IOException;
+import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 
 /**
  *
@@ -48,12 +53,14 @@ public class ChatController implements Controller{
 
     private long activeMessageLog;
 
+    private Map<Node, Boolean> validFields;
+
 
     /**
       * Makes an instance of the ChatController class.
       */
     public ChatController(){
-    
+        validFields = new HashMap<>();
     }
 
     /**
@@ -76,8 +83,20 @@ public class ChatController implements Controller{
         });
     }
 
+    /**
+     * Adds listeners to the control objects that needs it.
+     */
     private void addListeners(){
-
+        validFields.put(textMessageField, false);
+        sendButton.setDisable(true);
+        textMessageField.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (!newVal.isEmpty()){
+                validFields.put(textMessageField, true);
+            }else {
+                validFields.put(textMessageField, false);
+            }
+            checkIfAllFieldsAreValid();
+        });
     }
 
 
@@ -165,12 +184,13 @@ public class ChatController implements Controller{
     }
 
     /**
-     * Adds a message to the conversation.
+     * Adds a message to the conversation box.
      * @param message the message you want to add to the gui.
      */
     private void addMessage(TextMessage message){
         Text text = new Text();
-        Label label = new Label(message.getFromUsername());
+        LocalTime timeOfMessage = message.getTime();
+        Label label = new Label(message.getFromUsername() + " " + addZeroUntilLengthIsValid(timeOfMessage.getHour()) + ":" + addZeroUntilLengthIsValid(timeOfMessage.getMinute()));
         label.setTextFill(Color.valueOf("#666666"));
         label.setFont(Font.font(label.getFont().getName(), FontWeight.NORMAL, FontPosture.REGULAR, 12));
         text.setFont(Font.font(label.getFont().getName(), FontWeight.NORMAL, FontPosture.REGULAR, 12));
@@ -182,6 +202,21 @@ public class ChatController implements Controller{
         vBox.getChildren().add(text);
         //vBox.setBackground(new Background(new BackgroundFill(Color.valueOf("#dbdbdb"), CornerRadii.EMPTY, Insets.EMPTY)));
         messageBox.getChildren().add(vBox);
+    }
+
+    /**
+     * Adds a zero if the number input is under 10, so we get the right clock format.
+     * If the input is 3 then you get a string that is "03" instead of "3".
+     * @param number the number you want to convert to string.
+     * @return a string that is two digits in length.
+     */
+    private String addZeroUntilLengthIsValid(int number){
+        StringBuilder stringBuilder = new StringBuilder();
+        if (number < 10){
+            stringBuilder.append("0");
+        }
+        stringBuilder.append(number);
+        return stringBuilder.toString();
     }
 
     /**
@@ -208,6 +243,19 @@ public class ChatController implements Controller{
         loggedInLabel.textProperty().set(string);
         addAllConversations();
         setButtonFunctions();
+        addListeners();
+    }
+
+    /**
+     * Checks if all the fields are filled in. Disables the login button if password and username is not filled in.
+     */
+    private void checkIfAllFieldsAreValid(){
+        long valid = validFields.values().stream().filter(aBoolean ->  aBoolean).count();
+        if (valid == validFields.size()){
+            sendButton.setDisable(false);
+        }else {
+            sendButton.setDisable(true);
+        }
     }
 
     /**

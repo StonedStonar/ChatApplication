@@ -11,6 +11,7 @@ import java.io.*;
 import java.net.Socket;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.logging.Logger;
 
 /**
  * A class that represents the logic that the chat client should hold.
@@ -23,6 +24,8 @@ public class ChatClient {
 
     private List<MessageLog> messageLogs;
 
+    private Logger logger;
+
     public static void main(String[] args) {
         ChatClient chatClient = new ChatClient();
         chatClient.run();
@@ -32,7 +35,7 @@ public class ChatClient {
       * Makes an instance of the ChatClient class.
       */
     public ChatClient(){
-
+        logger = Logger.getLogger(getClass().toString());
     }
 
     /**

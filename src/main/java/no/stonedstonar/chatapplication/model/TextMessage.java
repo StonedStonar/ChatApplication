@@ -1,6 +1,8 @@
 package no.stonedstonar.chatapplication.model;
 
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 /**
  *
@@ -13,6 +15,10 @@ public class TextMessage implements Serializable {
 
     private String fromUsername;
 
+    private LocalDate date;
+
+    private LocalTime time;
+
 
     /**
       * Makes an instance of the Message class.
@@ -24,6 +30,24 @@ public class TextMessage implements Serializable {
         checkString(fromUsername, "From username");
         this.message = message;
         this.fromUsername = fromUsername;
+        date = LocalDate.now();
+        time = LocalTime.now();
+    }
+
+    /**
+     * Gets the time that this message was sent.
+     * @return the time object that holds the time.
+     */
+    public LocalTime getTime(){
+        return time;
+    }
+
+    /**
+     * Gets the date this message was sent.
+     * @return the local date object that holds the date.
+     */
+    public LocalDate getDate(){
+        return date;
     }
 
     /**

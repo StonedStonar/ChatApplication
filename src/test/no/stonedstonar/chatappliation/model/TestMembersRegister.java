@@ -1,11 +1,10 @@
 package no.stonedstonar.chatappliation.model;
 
-import no.stonedstonar.chatapplication.model.MembersOfConversation;
+import no.stonedstonar.chatapplication.model.MembersRegister;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Member;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,19 +15,19 @@ import static org.junit.jupiter.api.Assertions.*;
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
-public class TestMembersOfConversation {
+public class TestMembersRegister {
 
-    private MembersOfConversation membersOfConversation;
+    private MembersRegister membersRegister;
 
     /**
      * Makes a MembersOfConversation that can be used for testing.
      */
     @BeforeEach
     private void makeMembersOfConversation(){
-        membersOfConversation = new MembersOfConversation();
+        membersRegister = new MembersRegister();
         try{
-            membersOfConversation.addMember("bjarne21");
-            membersOfConversation.addMember("ironman2019");
+            membersRegister.addMember("bjarne21");
+            membersRegister.addMember("ironman2019");
         }catch (IllegalArgumentException exception){
             fail("Could not add two members for testing.");
         }
@@ -41,7 +40,7 @@ public class TestMembersOfConversation {
     @DisplayName("Tests if addMember works with invalid username.")
     public void testIfAddMemberWorksWithInvalidUsername(){
         try {
-            membersOfConversation.addMember("");
+            membersRegister.addMember("");
             fail("Expected to get a exception since the input is invalid.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -55,7 +54,7 @@ public class TestMembersOfConversation {
     @DisplayName("Tests if addMember works with valid input.")
     public void testIfAddMemberWorksWithValidInput(){
         try {
-            membersOfConversation.addMember("inge");
+            membersRegister.addMember("inge");
             assertTrue(true);
         }catch (IllegalArgumentException exception){
             fail("Expected the user to be added since the input is valid.");
@@ -70,7 +69,7 @@ public class TestMembersOfConversation {
     @DisplayName("Tests if addMember works with user already in the object.")
     public void testIfAddMemberWorksWithDuplicate(){
         try {
-            membersOfConversation.addMember("bjarne21");
+            membersRegister.addMember("bjarne21");
             fail("Expected to get a exception since bjarne21 is already in the register.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -84,7 +83,7 @@ public class TestMembersOfConversation {
     @DisplayName("Tests if addAllMembers works with invalid input.")
     public void testIfAddAllMembersWorksWithInvalidInput(){
         try {
-            membersOfConversation.addAllMembers(null);
+            membersRegister.addAllMembers(null);
             fail("Expected to get a exception since the input is null.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -98,7 +97,7 @@ public class TestMembersOfConversation {
     @DisplayName("Tests if addAllMembers works with list size zero.")
     public void testIfAddAllMembersWorksWithListSizeZero(){
         try {
-            membersOfConversation.addAllMembers(new ArrayList<>());
+            membersRegister.addAllMembers(new ArrayList<>());
             fail("Expected to get a exception since the input list is size zero.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -115,8 +114,8 @@ public class TestMembersOfConversation {
             List<String> list = new ArrayList<>();
             list.add("lordVader");
             list.add("lordPoop");
-            membersOfConversation.addAllMembers(list);
-            assertTrue(membersOfConversation.getAmountOfMembers() == 4);
+            membersRegister.addAllMembers(list);
+            assertTrue(membersRegister.getAmountOfMembers() == 4);
         }catch (IllegalArgumentException exception){
             fail("Expected the users to be added since the input is valid.");
         }
@@ -132,7 +131,7 @@ public class TestMembersOfConversation {
             List<String> list = new ArrayList<>();
             list.add("lordVader");
             list.add("bjarne21");
-            membersOfConversation.addAllMembers(list);
+            membersRegister.addAllMembers(list);
             fail("Expected to get a exception since one member by the name bjarne21 is a part of this conversation already.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -146,7 +145,7 @@ public class TestMembersOfConversation {
     @DisplayName("Tests if removeMember works with invalid username.")
     public void testIfRemoveMemberWorksWithInvalidUsername(){
         try {
-            membersOfConversation.removeMember("");
+            membersRegister.removeMember("");
             fail("Expected to get a execption since the input username is invalid format");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -160,7 +159,7 @@ public class TestMembersOfConversation {
     @DisplayName("Tests if removeMember works with valid input.")
     public void testIfRemoveMemberWorksWithValidInput(){
         try {
-            membersOfConversation.removeMember("bjarne21");
+            membersRegister.removeMember("bjarne21");
             assertTrue(true);
         }catch (IllegalArgumentException exception){
             fail("Expected the member to be removed since they are a part of this conversation.");
@@ -174,7 +173,7 @@ public class TestMembersOfConversation {
     @DisplayName("Tests if removeMember works with member not in register.")
     public void testIfRemoveMemberWorksWithMemberNotInConversation(){
         try {
-            membersOfConversation.removeMember("bjarne22");
+            membersRegister.removeMember("bjarne22");
             fail("Expected to get a exception since bjarne22 is not a part of the register.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -188,7 +187,7 @@ public class TestMembersOfConversation {
     @DisplayName("Tests if checkIfUsernamesAreInConversation works with invalid input.")
     public void testIfCheckIfUsernamesAreInConversationWorksWithInvalidInput(){
         try {
-            membersOfConversation.checkIfUsernamesAreInConversation(null);
+            membersRegister.checkIfUsernamesAreInConversation(null);
             fail("Expected to get a exception since the input value is null.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -203,7 +202,7 @@ public class TestMembersOfConversation {
     public void testIfCheckIfUsernamesAreInConversationWorksWithListWithZeroObjects(){
         try {
             List<String> list = new ArrayList<>();
-            membersOfConversation.checkIfUsernamesAreInConversation(list);
+            membersRegister.checkIfUsernamesAreInConversation(list);
             fail("Expected to get a exception since the list is empty.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -220,7 +219,7 @@ public class TestMembersOfConversation {
             List<String> list = new ArrayList<>();
             list.add("bjarne21");
             list.add("ironman2019");
-            boolean valid = membersOfConversation.checkIfUsernamesAreInConversation(list);
+            boolean valid = membersRegister.checkIfUsernamesAreInConversation(list);
             assertTrue(valid);
         }catch (IllegalArgumentException exception){
             fail("Expected to get a boolean value that is true since the input is valid.");
@@ -237,7 +236,7 @@ public class TestMembersOfConversation {
             List<String> list = new ArrayList<>();
             list.add("bjarne21");
             list.add("thor11");
-            boolean valid = membersOfConversation.checkIfUsernamesAreInConversation(list);
+            boolean valid = membersRegister.checkIfUsernamesAreInConversation(list);
             assertFalse(valid);
         }catch (IllegalArgumentException exception){
             fail("Expected to get a false boolean back since one of the members in the input is not a part of this conversation.");

@@ -5,18 +5,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
+ * A register that represents a group that holds people.
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
-public class MembersOfConversation implements Serializable {
+public class MembersRegister implements Serializable {
 
     private List<String> memberList;
 
     /**
       * Makes an instance of the MembersOfConversation class.
       */
-    public MembersOfConversation(){
+    public MembersRegister(){
         memberList = new ArrayList<>();
     }
 

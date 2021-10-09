@@ -14,7 +14,7 @@ public class MessageLog implements Serializable {
 
     private ArrayList<TextMessage> textMessageList;
 
-    private MembersOfConversation membersOfConversation;
+    private MembersRegister membersRegister;
 
     private long messageLogNumber;
 
@@ -25,7 +25,7 @@ public class MessageLog implements Serializable {
     public MessageLog(long messageLogNumber){
         checkIfLongIsNegative(messageLogNumber, "messagelog number");
         textMessageList = new ArrayList<>();
-        membersOfConversation = new MembersOfConversation();
+        membersRegister = new MembersRegister();
         this.messageLogNumber = messageLogNumber;
     }
 
@@ -42,8 +42,8 @@ public class MessageLog implements Serializable {
      * Gets the members object.
      * @return the object that holds all the members of this conversation.
      */
-    public MembersOfConversation getMembersOfConversation(){
-        return membersOfConversation;
+    public MembersRegister getMembersOfConversation(){
+        return membersRegister;
     }
 
     /**

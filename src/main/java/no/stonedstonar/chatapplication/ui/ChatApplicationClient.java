@@ -30,7 +30,6 @@ public class ChatApplicationClient extends Application {
      */
     public ChatApplicationClient(){
         chatClient = new ChatClient();
-        //Todo: Make chat client
         chatApplicationClient = this;
     }
 

@@ -10,6 +10,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * A class that represents the logic that the server class should hold.
@@ -24,6 +26,8 @@ public class Server {
 
     private volatile ConversationRegister conversationRegister;
 
+    private volatile Logger logger;
+
     public static void main(String[] args) {
         Server server = new Server();
         try {
@@ -37,6 +41,7 @@ public class Server {
       * Makes an instance of the Server class.
       */
     public Server(){
+        logger = Logger.getLogger(getClass().toString());
         userRegister = new UserRegister();
         conversationRegister = new ConversationRegister();
 
@@ -63,7 +68,7 @@ public class Server {
         try {
             welcomeSocket = new ServerSocket(1380);
         }catch (IOException exception){
-            System.out.println("Could not open a socket. Please try again.");
+            logger.log(Level.SEVERE, "Could not open the server socket. Please restart the server.");
         }
     }
 
@@ -75,7 +80,7 @@ public class Server {
         try {
             while (run){
                 Socket client = welcomeSocket.accept();
-                System.out.println("Message recived from a new client.");
+                System.out.println("Message received from a new client.");
                 Thread clientThread = new Thread(() -> {
                     handleConnection(client);
                 });
@@ -83,7 +88,8 @@ public class Server {
             }
             System.out.println("Server shutting down");
         }catch (IOException exception){
-            System.out.println("FUCK");
+            String message = "The server has crashed and gotten the following exception class: " + exception.getClass() + " and message: " + exception.getMessage();
+            logger.log(Level.SEVERE, message);
         }
     }
 
@@ -107,6 +113,8 @@ public class Server {
                 exception.printStackTrace();
             }
         }catch (IllegalArgumentException exception){
+            String message = "The connection falied. Exception type: " + exception.getClass() + " Exception message: " + exception.getMessage();
+            logger.log(Level.WARNING, message);
             sendObject(exception, socket);
         }
 
