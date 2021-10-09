@@ -1,5 +1,10 @@
 package no.stonedstonar.chatapplication.model;
 
+import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
+import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
+import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
+import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotRemoveMessageLogException;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -14,7 +19,6 @@ public class ConversationRegister {
     private List<MessageLog> messageLogList;
 
     //Todo: Lage det slik at mange kan være del i en samtale.
-    //Todo: Lage det slik at kjennetegnet på gruppen er alle brukernavn i en lang streng. (Medlemmer kan sikkert være i en liste på eget objekt.)
 
     /**
       * Makes an instance of the MessageRegister class.
@@ -39,53 +43,61 @@ public class ConversationRegister {
      * Gets the message log that matches the message log number.
      * @param messageLogNumber the number that the message log has.
      * @return the message log that matches this number.
+     * @throws CouldNotGetMessageLogException gets thrown if the message log could not be found.
      */
-    public MessageLog getMessageLogByLogNumber(long messageLogNumber){
+    public MessageLog getMessageLogByLogNumber(long messageLogNumber) throws CouldNotGetMessageLogException {
         checkIfLongIsAboveZero(messageLogNumber, "message log number");
         Optional<MessageLog> optionalMessageLog = messageLogList.stream().filter(log -> log.getMessageLogNumber() == messageLogNumber).findFirst();
         if (optionalMessageLog.isPresent()){
             return optionalMessageLog.get();
         }else {
-            throw new IllegalArgumentException("The message log with the log number " + messageLogNumber + " is not a part of this register.");
+            throw new CouldNotGetMessageLogException("The message log with the log number " + messageLogNumber + " is not a part of this register.");
         }
     }
 
     /**
      * Adds a message log to the list.
-     * @param messageLog the message log thats going to be added.
+     * @param messageLog the message log that's going to be added.
+     * @throws CouldNotAddMessageLogException gets thrown if the message log is already in the register.
      */
-    private void addMessageLog(MessageLog messageLog){
+    private void addMessageLog(MessageLog messageLog) throws CouldNotAddMessageLogException {
         if (!checkIfMessageLogIsInList(messageLog)){
             messageLogList.add(messageLog);
         }else {
-            throw new IllegalArgumentException("The message log is already in the register.");
+            throw new CouldNotAddMessageLogException("The message log is already in the register.");
         }
     }
 
     /**
      * Adds a new message log based on a list of names that are in it.
      * @param usernames a list with all the usernames that are part of this message log.
+     * @throws CouldNotAddMessageLogException gets thrown if the message log is already in the register.
      */
-    public void addNewMessageLogWithUsernames(List<String> usernames){
-        checkIfObjectIsNull(usernames, "usernames");
-        if (usernames.size() > 0){
-            MessageLog messageLog = new MessageLog(makeNewMessageLogNumber());
-            messageLog.getMembersOfConversation().addAllMembers(usernames);
-            addMessageLog(messageLog);
-        }else {
-            throw new IllegalArgumentException("The size of the usernames must be larger than 0.");
+    public void addNewMessageLogWithUsernames(List<String> usernames) throws CouldNotAddMessageLogException {
+        try {
+            checkIfObjectIsNull(usernames, "usernames");
+            if (!usernames.isEmpty()){
+                MessageLog messageLog = new MessageLog(makeNewMessageLogNumber());
+                messageLog.getMembersOfConversation().addAllMembers(usernames);
+                addMessageLog(messageLog);
+            }else {
+                throw new IllegalArgumentException("The size of the usernames must be larger than 0.");
+            }
+        }catch (CouldNotAddMemberException exception){
+            System.out.println("This is literally impossible");
         }
     }
 
     /**
      * Removes a message log from the list.
      * @param messageLog the message log you want to remove.
+     * @throws CouldNotRemoveMessageLogException gets thrown if the message log could not be removed.
      */
-    public void removeMessageLog(MessageLog messageLog){
+    public void removeMessageLog(MessageLog messageLog) throws CouldNotRemoveMessageLogException {
         if (checkIfMessageLogIsInList(messageLog)){
             messageLogList.remove(messageLog);
         }else {
-            throw new IllegalArgumentException("The message log is not in the system.");
+            throw new CouldNotRemoveMessageLogException("The message log is not in the system.");
         }
     }
 

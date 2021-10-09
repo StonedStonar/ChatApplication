@@ -1,6 +1,13 @@
 package no.stonedstonar.chatapplication.model;
 
+import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
+import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotAddTextMessageException;
+import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotGetTextMessageException;
+import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotRemoveTextMessageException;
+
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -19,6 +26,7 @@ public class MessageLog implements Serializable {
     private long messageLogNumber;
 
     //Todo: Vurder en liste som holder alle tingene som vil abonere på dette objektet. Dermed når en ny melding kommer oppdaterer den GUIen eller lignende med en gang.
+
     /**
       * Makes an instance of the MessageLog class.
       */
@@ -49,26 +57,28 @@ public class MessageLog implements Serializable {
     /**
      * Adds a message to the list.
      * @param textMessage the message you want to add.
+     * @throws CouldNotAddTextMessageException gets thrown if the text message could not be added.
      */
-    public void addMessage(TextMessage textMessage){
+    public void addMessage(TextMessage textMessage) throws CouldNotAddTextMessageException {
         checkIfObjectIsNull(textMessage, "message");
         if (!textMessageList.contains(textMessage)){
             textMessageList.add(textMessage);
         }else {
-            throw new IllegalArgumentException("The message is already in the register.");
+            throw new CouldNotAddTextMessageException("The message is already in the register.");
         }
     }
 
     /**
      * Removes the wanted message form the list.
      * @param textMessage the message you want to remove.
+     * @throws CouldNotRemoveTextMessageException gets thrown if the text message could not be removed.
      */
-    public void removeMessage(TextMessage textMessage){
+    public void removeMessage(TextMessage textMessage) throws CouldNotRemoveTextMessageException {
         checkIfObjectIsNull(textMessage, "message");
         if (textMessageList.contains(textMessage)){
             textMessageList.remove(textMessage);
         }else {
-            throw new IllegalArgumentException("Could not remove the message since its not in the register.");
+            throw new CouldNotRemoveTextMessageException("Could not remove the message since its not in the register.");
         }
     }
 
@@ -80,19 +90,23 @@ public class MessageLog implements Serializable {
         return textMessageList;
     }
 
-    //Todo: Lag en metode som heller ser på dato og tidspunkt siden samme meldingen kan bli sendt flere ganger.
     /**
      * Gets the message that matches the message contents.
-     * @param messageContents the message you want to check for.
+     * @param fromUsername the username this message is from.
+     * @param localDate the local date object this message has.
+     * @param localTime the local time object this message has.
      * @return the message that matches the input message.
+     * @throws CouldNotGetTextMessageException gets thrown when a message could not be found.
      */
-    public TextMessage getMessage(String messageContents){
-        checkString(messageContents, "message");
-        Optional<TextMessage> optionalMessage = textMessageList.stream().filter(mess -> mess.getMessage().equals(messageContents)).findFirst();
+    public TextMessage getMessage(String fromUsername, LocalTime localTime, LocalDate localDate) throws CouldNotGetTextMessageException {
+        checkString(fromUsername, "from username");
+        checkIfObjectIsNull(localDate, "local date");
+        checkIfObjectIsNull(localTime, "local time");
+        Optional<TextMessage> optionalMessage = textMessageList.stream().filter(mess -> mess.getTime().equals(localTime)).filter(message -> message.getDate().equals(localDate)).filter(message -> message.getFromUsername().equals(fromUsername)).findFirst();
         if (optionalMessage.isPresent()){
             return optionalMessage.get();
         }else {
-            throw new IllegalArgumentException("The message with the contents \"" + messageContents + "\" is not a part of this messagelist.");
+            throw new CouldNotGetTextMessageException("The message that has the date and time \"" + localDate + " " + localTime+ "\" is not a part of this messages.");
         }
     }
     

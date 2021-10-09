@@ -1,5 +1,8 @@
 package no.stonedstonar.chatapplication.model;
 
+import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
+import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemberException;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,12 +26,13 @@ public class MembersRegister implements Serializable {
     /**
      * Adds a user to the conversation.
      * @param username the username.
+     * @throws CouldNotAddMemberException gets thrown if the member could not be added.
      */
-    public void addMember(String username){
+    public void addMember(String username) throws CouldNotAddMemberException {
         if (!checkIfUsernameIsMember(username)){
             memberList.add(username);
         }else {
-            throw new IllegalArgumentException("The user is already in the register.");
+            throw new CouldNotAddMemberException("The user is already in the register.");
         }
     }
 
@@ -36,15 +40,16 @@ public class MembersRegister implements Serializable {
      * Adds all the members to the conversation.
      * @param usernames the usernames of all the members of the conversation.
      */
-    public void addAllMembers(List<String> usernames){
+    public void addAllMembers(List<String> usernames) throws CouldNotAddMemberException{
         checkIfObjectIsNull(usernames, "usernames");
         if (!usernames.isEmpty()){
-            usernames.forEach((String username) -> {
-                if (checkIfUsernameIsMember(username)){
-                    throw new IllegalArgumentException("The user by the username " + username + " is already in the conversation.");
+            if (!checkIfNoneUsernamesAreInConversation(usernames)){
+                for (String name : usernames){
+                    addMember(name);
                 }
-            });
-            usernames.forEach(this::addMember);
+            }else {
+                throw new CouldNotAddMemberException("One person in the list is a member.");
+            }
         }else {
             throw new IllegalArgumentException("All the usernames could not be added since the list is zero in size.");
         }
@@ -53,12 +58,13 @@ public class MembersRegister implements Serializable {
     /**
      * Removes a user as a member.
      * @param username the username.
+     * @throws CouldNotRemoveMemberException gets thrown if the member could not be removed.
      */
-    public void removeMember(String username){
+    public void removeMember(String username) throws CouldNotRemoveMemberException {
         if (checkIfUsernameIsMember(username)){
             memberList.remove(username);
         }else {
-            throw new IllegalArgumentException("The member by the username " + username + " is not a part of this conversation.");
+            throw new CouldNotRemoveMemberException("The member by the username " + username + " is not a part of this conversation.");
         }
     }
 
@@ -98,17 +104,20 @@ public class MembersRegister implements Serializable {
     }
 
     /**
-     * Makes a string that contains all the members.
-     * @return a string that contains all the members of this conversation.
+     * Checks if one username is in the group already.
+     * @param usernames the list with all the usernames to be checked.
+     * @return <code>true</code> if one of the usernames are in the register.
+     *         <code>false</code> if none of the usernames are in the register.
      */
-    public String getAllMembersInAString(){
-        StringBuilder stringBuilder = new StringBuilder();
-
-        for (String member : memberList) {
-            stringBuilder.append(" ");
-            stringBuilder.append(member);
+    private boolean checkIfNoneUsernamesAreInConversation(List<String> usernames){
+        if (!usernames.isEmpty()){
+            return memberList.stream().anyMatch(username -> {
+               return usernames.stream().anyMatch(name -> name.equals(username));
+            });
+        }else {
+            System.out.println(usernames.size());
+            throw new IllegalArgumentException("The list must have some usernames in it.");
         }
-        return stringBuilder.toString();
     }
 
     /**
@@ -117,6 +126,7 @@ public class MembersRegister implements Serializable {
      * @return all the usernames that does not match the input username in a string.
      */
     public String getAllMembersExceptUsernameAsString(String username){
+        checkString(username, "username");
         if (!checkIfUsernameIsMember(username)){
             throw new IllegalArgumentException("The username " + username + " is not in the conversation.");
         }

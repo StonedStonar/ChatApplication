@@ -1,6 +1,8 @@
 package no.stonedstonar.chatappliation.model;
 
 import no.stonedstonar.chatapplication.model.MembersRegister;
+import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
+import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemberException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,7 +31,9 @@ public class TestMembersRegister {
             membersRegister.addMember("bjarne21");
             membersRegister.addMember("ironman2019");
         }catch (IllegalArgumentException exception){
-            fail("Could not add two members for testing.");
+            fail("Could not add two members since we get a format error.");
+        }catch (CouldNotAddMemberException exception){
+            fail("Could not add two members since the add method does not work.");
         }
     }
 
@@ -44,6 +48,8 @@ public class TestMembersRegister {
             fail("Expected to get a exception since the input is invalid.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
+        }catch (CouldNotAddMemberException exception){
+            fail("Expected to get a IllegalArgumentException since the format is invalid and not a " + exception.getClass());
         }
     }
 
@@ -56,8 +62,8 @@ public class TestMembersRegister {
         try {
             membersRegister.addMember("inge");
             assertTrue(true);
-        }catch (IllegalArgumentException exception){
-            fail("Expected the user to be added since the input is valid.");
+        }catch (IllegalArgumentException | CouldNotAddMemberException exception){
+            fail("Expected the user to be added since the input is valid and correct format.");
         }
     }
 
@@ -72,6 +78,8 @@ public class TestMembersRegister {
             membersRegister.addMember("bjarne21");
             fail("Expected to get a exception since bjarne21 is already in the register.");
         }catch (IllegalArgumentException exception){
+            fail("Expected tog et a CouldNotAddMemberException since the format is valid.");
+        }catch (CouldNotAddMemberException exception){
             assertTrue(true);
         }
     }
@@ -87,6 +95,8 @@ public class TestMembersRegister {
             fail("Expected to get a exception since the input is null.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
+        }catch (CouldNotAddMemberException exception){
+            fail("Expected to get a IllegalArgumentException since the format is invalid.");
         }
     }
 
@@ -101,6 +111,8 @@ public class TestMembersRegister {
             fail("Expected to get a exception since the input list is size zero.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
+        }catch (CouldNotAddMemberException exception){
+            fail("Expected to get a IllegalArgumentException since the format is invalid.");
         }
     }
 
@@ -116,7 +128,7 @@ public class TestMembersRegister {
             list.add("lordPoop");
             membersRegister.addAllMembers(list);
             assertTrue(membersRegister.getAmountOfMembers() == 4);
-        }catch (IllegalArgumentException exception){
+        }catch (IllegalArgumentException | CouldNotAddMemberException exception){
             fail("Expected the users to be added since the input is valid.");
         }
     }
@@ -134,6 +146,8 @@ public class TestMembersRegister {
             membersRegister.addAllMembers(list);
             fail("Expected to get a exception since one member by the name bjarne21 is a part of this conversation already.");
         }catch (IllegalArgumentException exception){
+            fail("Expected to get a CouldNotAddMemberException since the format is correct.");
+        }catch (CouldNotAddMemberException exception){
             assertTrue(true);
         }
     }
@@ -149,6 +163,8 @@ public class TestMembersRegister {
             fail("Expected to get a execption since the input username is invalid format");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
+        }catch (CouldNotRemoveMemberException exception){
+            fail("Expected to get a IllegalArgumentException since the format is invalid and not a " + exception.getClass());
         }
     }
 
@@ -161,7 +177,9 @@ public class TestMembersRegister {
         try {
             membersRegister.removeMember("bjarne21");
             assertTrue(true);
-        }catch (IllegalArgumentException exception){
+        }catch (IllegalArgumentException  exception){
+            fail("Expected the member to be removed since the format is valid.");
+        }catch (CouldNotRemoveMemberException exception){
             fail("Expected the member to be removed since they are a part of this conversation.");
         }
     }
@@ -176,6 +194,8 @@ public class TestMembersRegister {
             membersRegister.removeMember("bjarne22");
             fail("Expected to get a exception since bjarne22 is not a part of the register.");
         }catch (IllegalArgumentException exception){
+            fail("Expected to get a CouldNotRemoveMemberException since the format is valid.");
+        }catch (CouldNotRemoveMemberException exception){
             assertTrue(true);
         }
     }

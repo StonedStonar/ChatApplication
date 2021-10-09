@@ -19,9 +19,12 @@ import javafx.scene.text.Text;
 import no.stonedstonar.chatapplication.frontend.ChatClient;
 import no.stonedstonar.chatapplication.model.MessageLog;
 import no.stonedstonar.chatapplication.model.TextMessage;
+import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
+import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotAddTextMessageException;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
 
 import java.io.IOException;
+import java.net.SocketException;
 import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
@@ -51,6 +54,9 @@ public class ChatController implements Controller{
     @FXML
     private TextField textMessageField;
 
+    @FXML
+    private Button newContactButton;
+
     private long activeMessageLog;
 
     private Map<Node, Boolean> validFields;
@@ -75,12 +81,19 @@ public class ChatController implements Controller{
                 TextMessage textMessage = chatClient.sendMessage(contents, messageLog);
                 addMessage(textMessage);
                 textMessageField.textProperty().set("");
-            }catch (IllegalArgumentException exception){
+            }catch (IllegalArgumentException  exception){
                 //Todo: Gjør noe annet her.
-                System.out.println("Could not send the message.");
+                System.out.println("Could not send the message." + exception.getMessage());
+                exception.printStackTrace();
+            } catch (CouldNotAddTextMessageException exception) {
+                exception.printStackTrace();
+            } catch (SocketException e) {
+                e.printStackTrace();
+            } catch (CouldNotGetMessageLogException exception) {
+                exception.printStackTrace();
             }
-
         });
+        newContactButton.setDisable(true);
     }
 
     /**
