@@ -15,8 +15,7 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
-
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="477.0" prefWidth="627.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="489.0" prefWidth="627.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
    <center>
       <Pane prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
          <children>
@@ -25,7 +24,7 @@
                   <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
                </columnConstraints>
                <rowConstraints>
-                  <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" prefHeight="146.0" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" prefHeight="231.0" vgrow="SOMETIMES" />
                   <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" prefHeight="93.0" vgrow="SOMETIMES" />
                   <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" prefHeight="130.0" vgrow="SOMETIMES" />
                   <RowConstraints maxHeight="69.0" minHeight="10.0" prefHeight="18.0" vgrow="SOMETIMES" />
@@ -104,12 +103,18 @@
                            </font>
                         </TextField>
                         <Text fx:id="conversationText" strokeType="OUTSIDE" strokeWidth="0.0" text="Conversation name" />
+                        <Text strokeType="OUTSIDE" strokeWidth="0.0" text="A group can be made without a conversation name.">
+                           <VBox.margin>
+                              <Insets top="10.0" />
+                           </VBox.margin>
+                        </Text>
+                        <Text strokeType="OUTSIDE" strokeWidth="0.0" text="All it needs is that its more than one person in the conversation. " />
                      </children>
                      <GridPane.margin>
                         <Insets left="5.0" right="5.0" />
                      </GridPane.margin>
                   </VBox>
-                  <HBox alignment="CENTER_RIGHT" prefWidth="627.0" GridPane.rowIndex="3">
+                  <HBox alignment="CENTER_RIGHT" prefHeight="42.0" prefWidth="617.0" GridPane.rowIndex="3">
                      <children>
                         <Button fx:id="makeConversationButton" mnemonicParsing="false" text="Make conversation">
                            <font>
