@@ -1,11 +1,7 @@
 package no.stonedstonar.chatapplication.ui.controllers;
 
-import javafx.application.Application;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Pane;
-import javafx.scene.text.Text;
 import no.stonedstonar.chatapplication.frontend.ChatClient;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
 import no.stonedstonar.chatapplication.ui.windows.ChatWindow;
@@ -13,7 +9,6 @@ import no.stonedstonar.chatapplication.ui.windows.NewUserWindow;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -66,8 +61,8 @@ public class LoginController implements Controller{
             try {
                 String username = usernameField.textProperty().get();
                 String password = passwordField.textProperty().get();
-                ChatApplicationClient.getSortingApp().getChatClient().loginToUser(username, password);
-                ChatApplicationClient.getSortingApp().setNewScene(ChatWindow.getChatWindow());
+                ChatApplicationClient.getChatApplication().getChatClient().loginToUser(username, password);
+                ChatApplicationClient.getChatApplication().setNewScene(ChatWindow.getChatWindow());
             }catch (IOException exception){
                 //Todo: Sett inn error melding
             }catch (IllegalArgumentException exception){
@@ -84,7 +79,7 @@ public class LoginController implements Controller{
 
         newUserButton.setOnAction(actionEvent -> {
             try {
-                ChatApplicationClient.getSortingApp().setNewScene(NewUserWindow.getNewUserWindow());
+                ChatApplicationClient.getChatApplication().setNewScene(NewUserWindow.getNewUserWindow());
             } catch (IOException e) {
                 //Todo: Sett inn en exception response.
             }
@@ -106,9 +101,8 @@ public class LoginController implements Controller{
                 fields.put(usernameField, false);
             }catch (NumberFormatException exception){
                 if (newVal.length() >= 3){
-                    usernameText.textProperty().set("The username is valid format.");
+                    usernameText.setText("The username is a valid format.");
                     fields.put(usernameField, true);
-
                 }else {
                     usernameText.textProperty().set(username3Letters);
                     fields.put(usernameField, false);

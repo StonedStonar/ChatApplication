@@ -2,6 +2,9 @@ package no.stonedstonar.chatappliation.model;
 
 import no.stonedstonar.chatapplication.model.User;
 import no.stonedstonar.chatapplication.model.UserRegister;
+import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserException;
+import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
+import no.stonedstonar.chatapplication.model.exception.user.CouldNotRemoveUserException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,6 +35,8 @@ public class TestUserRegister {
             userRegister.addUser(new User("lordVoldemort", "password"));
         }catch (IllegalArgumentException exception){
             fail("Expected the test user register to be made without any errors.");
+        }catch (CouldNotAddUserException exception){
+            fail("Expected the test users to be added since they are not in the register already.");
         }
     }
 
@@ -46,6 +51,8 @@ public class TestUserRegister {
             fail("Expected to get a exception since the input is null");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
+        }catch (CouldNotAddUserException exception){
+            fail("Expected to get a IllegalArgumentException since the user is not in the register already.");
         }
     }
 
@@ -60,6 +67,8 @@ public class TestUserRegister {
             assertTrue(true);
         }catch (IllegalArgumentException exception){
             fail("Expected to add the user since the input is valid.");
+        }catch (CouldNotAddUserException exception){
+            fail("Expected the user to be added since they are not in the register already.");
         }
     }
 
@@ -75,6 +84,8 @@ public class TestUserRegister {
             userRegister.addUser(user);
             fail("Expected to get a exception since the user is already in the register.");
         }catch (IllegalArgumentException exception){
+            fail("Expected to get a CouldNotAddUserException since the format is valid.");
+        }catch (CouldNotAddUserException exception){
             assertTrue(true);
         }
     }
@@ -90,6 +101,8 @@ public class TestUserRegister {
             fail("Expected to get a exception since the input is null");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
+        }catch (CouldNotRemoveUserException exception){
+            fail("Expected to get a IllegalArgumentException sine the format is invalid.");
         }
     }
 
@@ -104,6 +117,8 @@ public class TestUserRegister {
             assertTrue(true);
         }catch (IllegalArgumentException exception){
             fail("Expected the user to be removed since the input is valid.");
+        }catch (CouldNotRemoveUserException exception){
+            fail("Expected the user to be removed since they are in the register.");
         }
     }
 
@@ -118,6 +133,8 @@ public class TestUserRegister {
             userRegister.removeUser(user);
             fail("Expected to get a exception since the input user is not in the register.");
         }catch (IllegalArgumentException exception){
+            fail("Expected to get a CouldNotRemoveUserException since the format is valid.");
+        }catch (CouldNotRemoveUserException exception){
             assertTrue(true);
         }
     }
@@ -133,6 +150,8 @@ public class TestUserRegister {
             fail("Expected to get a exception since the input username is invalid.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
+        }catch (CouldNotLoginToUserException exception){
+            fail("Expected to get a IllegalArgumentException since the format is invalid.");
         }
     }
 
@@ -147,6 +166,8 @@ public class TestUserRegister {
             fail("Expected to get a exception since the input password is invalid.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
+        }catch (CouldNotLoginToUserException exception){
+            fail("Expected to get a IllegalArgumentException since the format is invalid.");
         }
     }
 
@@ -160,6 +181,8 @@ public class TestUserRegister {
             userRegister.login("bjarne21", "p");
             fail("Expected to get a exception since the passwords does not match");
         }catch (IllegalArgumentException exception){
+            fail("Expected to get a CouldNotLoginToUserException since the format is valid.");
+        }catch (CouldNotLoginToUserException exception){
             assertTrue(true);
         }
     }
@@ -179,6 +202,8 @@ public class TestUserRegister {
             }
         }catch (IllegalArgumentException exception){
             fail("Expected the user to be logged in since the input is valid.");
+        }catch (CouldNotLoginToUserException exception){
+            fail("Expected the user to be logged in since they are in the register.");
         }
     }
 

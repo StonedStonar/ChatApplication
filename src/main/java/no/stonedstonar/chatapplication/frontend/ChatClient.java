@@ -1,5 +1,8 @@
 package no.stonedstonar.chatapplication.frontend;
 
+import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
+import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotAddTextMessageException;
+import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotGetTextMessageException;
 import no.stonedstonar.chatapplication.model.networktransport.LoginTransport;
 import no.stonedstonar.chatapplication.model.networktransport.MessageTransport;
 import no.stonedstonar.chatapplication.model.networktransport.UserRequest;
@@ -9,7 +12,11 @@ import no.stonedstonar.chatapplication.model.User;
 
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * A class that represents the logic that the chat client should hold.
@@ -22,16 +29,17 @@ public class ChatClient {
 
     private List<MessageLog> messageLogs;
 
+    private Logger logger;
+
     public static void main(String[] args) {
         ChatClient chatClient = new ChatClient();
-        chatClient.run();
     }
 
     /**
       * Makes an instance of the ChatClient class.
       */
     public ChatClient(){
-
+        logger = Logger.getLogger(getClass().toString());
     }
 
     /**
@@ -54,35 +62,56 @@ public class ChatClient {
         }
     }
 
-    public void run(){
-        String username = "fjell";
-        String password =  "passord";
-        loginToUser(username, password);
-        System.out.println("You are now logged into " + user.getUsername());
-        System.out.println("Your conversations are " + messageLogs.toString());
-        MessageLog messageLog = messageLogs.get(0);
-        System.out.println("Before adding a message: " + messageLog.getMessageList().size());
-        System.out.println();
-        sendMessage("fuck", messageLog);
-        System.out.print("After adding a message: " + messageLog.getMessageList().size());
-    }
-
     /**
      * Sends a message to a person if this client is logged in.
      * @param messageContents the contents of the message.
      * @param messageLog the message log that holds the message log number.
+     * @return the message that was just sent.
+     * @throws SocketException gets thrown if the socket could not be made.
+     * @throws CouldNotGetTextMessageException gets thrown if the server could not add the message.
+     * @throws CouldNotGetMessageLogException gets thrown if the server could not get the message log.
      */
-    public void sendMessage(String messageContents, MessageLog messageLog){
+    public TextMessage sendMessage(String messageContents, MessageLog messageLog) throws SocketException, CouldNotAddTextMessageException, CouldNotGetMessageLogException {
         Socket socket;
+        //Todo: Add a function to check if the message was added successfully.And alter the documentation.
         try {
             socket = new Socket("localhost", 1380);
             checkString(messageContents, "message");
             TextMessage textMessage = new TextMessage(messageContents, user.getUsername());
-            messageLog.addMessage(textMessage);
             MessageTransport messageTransport = new MessageTransport(textMessage, messageLog);
             sendObject(messageTransport, socket);
+            Object object = getObject(socket);
+            if (object instanceof CouldNotAddTextMessageException || object instanceof CouldNotGetMessageLogException){
+                if (object instanceof CouldNotGetMessageLogException){
+                    throw (CouldNotGetMessageLogException) object;
+                }else {
+                    throw (CouldNotAddTextMessageException) object;
+                }
+            }
+            messageLog.addMessage(textMessage);
+            return textMessage;
         } catch (IOException e) {
-            System.out.println("The socket failed to be made.");
+            //Todo: Kanskje istedet for å kaste en exception så burde programmet håndtere denne erroren selv.
+            logger.log(Level.WARNING, "The socket failed to be made.");
+            throw new SocketException("The socket failed to be made.");
+        }catch (CouldNotAddTextMessageException | CouldNotGetMessageLogException exception){
+            String message = "Something has gone wrong on the serverside " + exception.getClass() + " exception content: " + exception.getMessage();
+            logger.log(Level.WARNING, message);
+            throw exception;
+        }
+    }
+
+    /**
+     * Gets the message log that matches that long number.
+     * @param messageLogNumber the number that message log has.
+     * @return the message log that matches that number.
+     */
+    public MessageLog getMessageLogByLongNumber(long messageLogNumber){
+        try {
+            MessageLog messageLog = messageLogs.stream().filter(log -> log.getMessageLogNumber() == messageLogNumber).findFirst().get();
+            return messageLog;
+        }catch (NoSuchElementException exception){
+            throw new IllegalArgumentException("The messagelog with the log number " + messageLogNumber + " is not in the list.");
         }
     }
 
@@ -123,10 +152,11 @@ public class ChatClient {
         try {
             Socket socket = new Socket("localhost", 1380);
             checkString(username, "username");
-            sendObject(username, socket);
+            UserRequest userRequest = new UserRequest.UserRequestBuilder().setUsername(username).setCheckUsername(true).build();
+            sendObject(userRequest, socket);
             Object object = getObject(socket);
-            if (object instanceof Boolean b){
-                return b;
+            if (object instanceof Boolean valid){
+                return valid;
             }else {
                 //Todo: Fiks this.
                 throw new IllegalArgumentException("Could not check username.");
@@ -200,7 +230,7 @@ public class ChatClient {
      * @param stringToCheck the string you want to check.
      * @param errorPrefix the error the exception should have if the string is invalid.
      */
-    public void checkString(String stringToCheck, String errorPrefix){
+    private void checkString(String stringToCheck, String errorPrefix){
         checkIfObjectIsNull(stringToCheck, errorPrefix);
         if (stringToCheck.isEmpty()){
             throw new IllegalArgumentException("The " + errorPrefix + " cannot be empty.");
@@ -212,7 +242,7 @@ public class ChatClient {
      * @param object the object you want to check.
      * @param error the error message the exception should have.
      */
-    public void checkIfObjectIsNull(Object object, String error){
+    private void checkIfObjectIsNull(Object object, String error){
         if (object == null){
             throw new IllegalArgumentException("The " + error + " cannot be null.");
         }

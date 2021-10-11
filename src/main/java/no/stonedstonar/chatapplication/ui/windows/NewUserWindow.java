@@ -32,8 +32,8 @@ public class NewUserWindow implements Window{
     }
 
     /**
-     * Gets the login window.
-     * @return the login window.
+     * Gets the new user window.
+     * @return the new user window.
      */
     public static NewUserWindow getNewUserWindow(){
         if (newUserWindow == null){

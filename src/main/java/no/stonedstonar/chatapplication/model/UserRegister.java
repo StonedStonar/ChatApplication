@@ -1,11 +1,16 @@
 package no.stonedstonar.chatapplication.model;
 
+import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserException;
+import no.stonedstonar.chatapplication.model.exception.user.CouldNotGetUserException;
+import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
+import no.stonedstonar.chatapplication.model.exception.user.CouldNotRemoveUserException;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 /**
- *
+ * Represents a register that can hold users.
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
@@ -23,26 +28,28 @@ public class UserRegister {
     /**
      * Adds a user to the register.
      * @param user the user you want to add.
+     * @throws CouldNotAddUserException gets thrown if the user could not be added to the register.
      */
-    public void addUser(User user){
+    public void addUser(User user) throws CouldNotAddUserException {
         checkIfObjectIsNull(user, "user");
         if (!checkIfUsernameIsTaken(user.getUsername())){
             userList.add(user);
         }else {
-            throw new IllegalArgumentException("The user by the username " + user.getUsername() + " is already in the system.");
+            throw new CouldNotAddUserException("The user by the username " + user.getUsername() + " is already in the system.");
         }
     }
 
     /**
      * Removes a user from the register.
      * @param user the user you want to remove.
+     * @throws CouldNotRemoveUserException gets thrown if the user could not be removed.
      */
-    public void removeUser(User user){
+    public void removeUser(User user) throws CouldNotRemoveUserException {
         checkIfObjectIsNull(user, "user");
         if (checkIfUsernameIsTaken(user.getUsername())){
             userList.remove(user);
         }else {
-            throw new IllegalArgumentException("The user by the username " + user.getUsername() + " is already in the system.");
+            throw new CouldNotRemoveUserException("The user by the username " + user.getUsername() + " is already in the system.");
         }
     }
 
@@ -53,14 +60,20 @@ public class UserRegister {
      * @param username the username of the user.
      * @param password the password of the user.
      * @return the user that matches that username and password.
+     * @throws CouldNotLoginToUserException gets thrown if the details of the user does not match.
      */
-    public User login(String username, String password){
+    public User login(String username, String password) throws CouldNotLoginToUserException {
         checkString(password, "password");
-        User user = getUserByUsername(username);
-        if (user.checkPassword(password)){
-            return user;
-        }else {
-            throw new IllegalArgumentException("The passwords does not match.");
+        checkString(username, "username");
+        try {
+            User user = getUserByUsername(username);
+            if (user.checkPassword(password)){
+                return user;
+            }else {
+                throw new CouldNotLoginToUserException("The passwords does not match.");
+            }
+        }catch (CouldNotGetUserException exception){
+            throw new CouldNotLoginToUserException("The username is not in this register.");
         }
     }
 
@@ -79,13 +92,14 @@ public class UserRegister {
      * Gets the user that matches this username.
      * @param username the username you want.
      * @return the user that matches this username.
+     * @throws CouldNotGetUserException gets thrown if the user could not be found.
      */
-    private User getUserByUsername(String username) {
+    private User getUserByUsername(String username) throws CouldNotGetUserException {
         Optional<User> opUser = userList.stream().filter(name -> name.getUsername().equals(username)).findFirst();
         if (opUser.isPresent()) {
             return opUser.get();
         } else{
-            throw new IllegalArgumentException("The user by the username " + username + " is not a part of this register.");
+            throw new CouldNotGetUserException("The user by the username " + username + " is not a part of this register.");
         }
     }
 
