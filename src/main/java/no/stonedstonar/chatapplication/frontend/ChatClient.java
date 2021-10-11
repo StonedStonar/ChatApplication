@@ -1,18 +1,17 @@
 package no.stonedstonar.chatapplication.frontend;
 
+import no.stonedstonar.chatapplication.model.*;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotAddTextMessageException;
 import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotGetTextMessageException;
+import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.model.networktransport.LoginTransport;
 import no.stonedstonar.chatapplication.model.networktransport.MessageLogRequest;
 import no.stonedstonar.chatapplication.model.networktransport.MessageTransport;
 import no.stonedstonar.chatapplication.model.networktransport.UserRequest;
-import no.stonedstonar.chatapplication.model.TextMessage;
-import no.stonedstonar.chatapplication.model.MessageLog;
-import no.stonedstonar.chatapplication.model.User;
 import no.stonedstonar.chatapplication.model.networktransport.builder.MessageLogRequestBuilder;
 import no.stonedstonar.chatapplication.model.networktransport.builder.UserRequestBuilder;
 
@@ -33,7 +32,7 @@ public class ChatClient {
 
     private User user;
 
-    private List<MessageLog> messageLogs;
+    private PersonalConversationRegister personalConversationRegister;
 
     private Logger logger;
 
@@ -53,10 +52,11 @@ public class ChatClient {
 
     /**
      * Returns the message log of the user.
-     * @return the message log of the user.
+     * @return the personal message log of the user.
      */
-    public List<MessageLog> getMessageLogs(){
-        return messageLogs;
+    public List<PersonalMessageLog> getMessageLogs(){
+        System.out.println(personalConversationRegister.getMessageLogList().size());
+        return personalConversationRegister.getMessageLogList();
     }
 
     /**
@@ -80,14 +80,14 @@ public class ChatClient {
      * @throws IOException gets thrown if something goes wrong with the socket.
      * @throws ClassNotFoundException gets thrown if the class could not be found for that object.
      */
-    public long makeNewConversation(List<String> usernames) throws CouldNotAddMessageLogException, CouldNotAddMemberException, IOException, ClassNotFoundException {
+    public void makeNewConversation(List<String> usernames) throws CouldNotAddMessageLogException, CouldNotAddMemberException, IOException, ClassNotFoundException {
         checkIfListIsEmptyOrNull(usernames, "usernames");
         try (Socket socket = new Socket("localhost", 1380)){
             MessageLogRequest messageLogRequest = new MessageLogRequestBuilder().setNewMessageLog(true).addUsernames(usernames).build();
             sendObject(messageLogRequest, socket);
             Object object = getObject(socket);
             if (object instanceof MessageLog messageLog){
-                return messageLog.getMessageLogNumber();
+                personalConversationRegister.addMessageLog(messageLog);
             }else if (object instanceof CouldNotAddMessageLogException exception){
                 throw exception;
             }else if (object instanceof CouldNotAddMemberException exception){
@@ -146,14 +146,10 @@ public class ChatClient {
      * Gets the message log that matches that long number.
      * @param messageLogNumber the number that message log has.
      * @return the message log that matches that number.
+     * @throws CouldNotGetMessageLogException gets thrown if the message log could not be found.
      */
-    public MessageLog getMessageLogByLongNumber(long messageLogNumber){
-        try {
-            MessageLog messageLog = messageLogs.stream().filter(log -> log.getMessageLogNumber() == messageLogNumber).findFirst().get();
-            return messageLog;
-        }catch (NoSuchElementException exception){
-            throw new IllegalArgumentException("The messagelog with the log number " + messageLogNumber + " is not in the list.");
-        }
+    public PersonalMessageLog getMessageLogByLongNumber(long messageLogNumber) throws CouldNotGetMessageLogException {
+        return personalConversationRegister.getPersonalMessageLogByNumber(messageLogNumber);
     }
 
     /**
@@ -164,7 +160,7 @@ public class ChatClient {
      * @throws CouldNotLoginToUserException gets thrown if the password or username is incorrect.
      * @throws ClassNotFoundException gets thrown if the class could not be found for that object.
      */
-    public void loginToUser(String username, String password) throws IOException, CouldNotLoginToUserException, ClassNotFoundException {;
+    public void loginToUser(String username, String password) throws IOException, CouldNotLoginToUserException, ClassNotFoundException, CouldNotAddMessageLogException {;
         checkString(username, "username");
         checkString(password, "password");
         try (Socket socket = new Socket(localHost, portNumber)){
@@ -172,14 +168,16 @@ public class ChatClient {
             sendObject(userRequest, socket);
             Object object = getObject(socket);
             if (object instanceof LoginTransport loginTransport){
-                user = loginTransport.getUser();
-                messageLogs = loginTransport.getMessageLogList();
+                this.user = loginTransport.getUser();
+                personalConversationRegister = new PersonalConversationRegister(loginTransport.getMessageLogList());
             }else if (object instanceof CouldNotLoginToUserException exception){
                 throw exception;
             }else if (object instanceof IllegalArgumentException exception){
                 throw exception;
+            }else if (object instanceof CouldNotAddMessageLogException exception){
+                throw exception;
             }
-        } catch (CouldNotLoginToUserException | IllegalArgumentException | IOException | ClassNotFoundException exception) {
+        } catch (CouldNotLoginToUserException | IllegalArgumentException | IOException | ClassNotFoundException | CouldNotAddMessageLogException exception) {
             String message = "Something has gone wrong on the serverside " + exception.getClass() + " exception content: " + exception.getMessage();
             logger.log(Level.WARNING, message);
             throw exception;
@@ -225,20 +223,19 @@ public class ChatClient {
      * @throws IOException gets thrown if the socket failed to be made
      * @throws ClassNotFoundException gets thrown if the class could not be found for that object.
      */
-    public void makeNewUser(String username, String password) throws IOException, ClassNotFoundException {
+    public void makeNewUser(String username, String password) throws IOException, ClassNotFoundException, CouldNotLoginToUserException, CouldNotAddUserException {
         try (Socket socket = new Socket(localHost, 1380)){
             checkString(username, "username");
             checkString(password, "password");
             UserRequest userRequest = new UserRequestBuilder().setNewUser(true).setUsername(username).setPassword(password).build();
             sendObject(userRequest, socket);
             Object object = getObject(socket);
-            if (object instanceof LoginTransport loginTransport){
-                user = loginTransport.getUser();
-                messageLogs = loginTransport.getMessageLogList();
-            }else if (object instanceof IllegalArgumentException exception){
+            if (object instanceof IllegalArgumentException exception){
+                throw exception;
+            }else if (object instanceof CouldNotAddUserException exception) {
                 throw exception;
             }
-        }catch (IOException | IllegalArgumentException | ClassNotFoundException exception){
+        }catch (IOException | IllegalArgumentException | ClassNotFoundException | CouldNotAddUserException exception){
             //Todo: lag en handler
             String message = "Something has gone wrong on the serverside " + exception.getClass() + " exception content: " + exception.getMessage();
             logger.log(Level.WARNING, message);

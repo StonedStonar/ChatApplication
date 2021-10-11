@@ -5,6 +5,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -15,8 +16,7 @@ import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import no.stonedstonar.chatapplication.frontend.ChatClient;
-import no.stonedstonar.chatapplication.model.MessageLog;
-import no.stonedstonar.chatapplication.model.TextMessage;
+import no.stonedstonar.chatapplication.model.*;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotAddTextMessageException;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
@@ -34,7 +34,7 @@ import java.util.Map;
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
-public class ChatController implements Controller{
+public class ChatController implements Controller, ConversationObserver, MessageObserver {
 
     @FXML
     private Label loggedInLabel;
@@ -74,8 +74,8 @@ public class ChatController implements Controller{
             try {
                 String contents = textMessageField.textProperty().get();
                 ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
-                MessageLog messageLog = chatClient.getMessageLogByLongNumber(activeMessageLog);
-                TextMessage textMessage = chatClient.sendMessage(contents, messageLog);
+                PersonalMessageLog personalMessageLog= chatClient.getMessageLogByLongNumber(activeMessageLog);
+                TextMessage textMessage = chatClient.sendMessage(contents, personalMessageLog);
                 addMessage(textMessage);
                 textMessageField.textProperty().set("");
             }catch (IllegalArgumentException  exception){
@@ -128,23 +128,33 @@ public class ChatController implements Controller{
     private void addAllConversations(){
         contactsBox.getChildren().clear();
         ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
-        List<MessageLog> messageLogList = chatClient.getMessageLogs();
+        List<PersonalMessageLog> messageLogList = chatClient.getMessageLogs();
         if (!messageLogList.isEmpty()){
             messageLogList.forEach(this::addNewConversation);
+            PersonalMessageLog firstPersonalMessageLog = messageLogList.get(0);
+            showMessagesFromMessageLog(firstPersonalMessageLog);
         }
-        showMessagesFromMessageLog(messageLogList.get(0));
+        if (!messageLogList.isEmpty()){
+
+        }else {
+            VBox vBox = new VBox();
+            vBox.setMinWidth(Long.MAX_VALUE);
+            Text text = new Text("You have none conversations. \nPlease add one.");
+            vBox.getChildren().add(text);
+            contactsBox.getChildren().add(vBox);
+        }
     }
 
     /**
      * Makes a new conversation to select on the left side.
-     * @param messageLog the message log this conversation is about.
+     * @param personalMessageLog the message log this conversation is about.
      */
-    private void addNewConversation(MessageLog messageLog){
+    private void addNewConversation(PersonalMessageLog personalMessageLog){
         VBox vBox = new VBox();
         vBox.setMinWidth(Long.MAX_VALUE);
-        String nameOfConversation = messageLog.getMembersOfConversation().getAllMembersExceptUsernameAsString(ChatApplicationClient.getChatApplication().getChatClient().getUsername());
+        String nameOfConversation = personalMessageLog.getMembersOfConversation().getAllMembersExceptUsernameAsString(ChatApplicationClient.getChatApplication().getChatClient().getUsername());
         Text text = new Text(nameOfConversation);
-        long messageLogNumber = messageLog.getMessageLogNumber();
+        long messageLogNumber = personalMessageLog.getMessageLogNumber();
         vBox.getChildren().add(text);
         vBox.setPadding(new Insets(3,3,3,3));
         VBox.setMargin(vBox, new Insets(5,5,5,5));
@@ -167,7 +177,14 @@ public class ChatController implements Controller{
         });
 
         pane.setOnMouseClicked(mouseEvent -> {
-            handleConversationSwitch(messageLogNumber);
+            try {
+                handleConversationSwitch(messageLogNumber);
+            }catch (CouldNotGetMessageLogException exception){
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Could not change the conversation.");
+                alert.setHeaderText("Could not change conversation.");
+                alert.setContentText("A error occurred while trying to switch conversation. \n Please try again or restart the program if the problem persists.");
+            }
         });
     }
 
@@ -175,22 +192,24 @@ public class ChatController implements Controller{
      * Handles the switch from one conversation to another.
      * @param messageLogNumber the message log number this conversation has.
      */
-    private void handleConversationSwitch(long messageLogNumber){
+    private void handleConversationSwitch(long messageLogNumber) throws CouldNotGetMessageLogException {
         ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
-        MessageLog messageLog = chatClient.getMessageLogByLongNumber(messageLogNumber);
+        chatClient.getMessageLogByLongNumber(this.activeMessageLog).removeObserver(this);
+        PersonalMessageLog messageLog = chatClient.getMessageLogByLongNumber(messageLogNumber);
         showMessagesFromMessageLog(messageLog);
     }
 
     /**
      * Loads the messages of this conversation.
-     * @param messageLog the messagelog you want to load.
+     * @param personalMessageLog the message log you want to load.
      */
-    public void showMessagesFromMessageLog(MessageLog messageLog){
+    public void showMessagesFromMessageLog(PersonalMessageLog personalMessageLog){
         messageBox.getChildren().clear();
-        List<TextMessage> messages = messageLog.getMessageList();
-        activeMessageLog = messageLog.getMessageLogNumber();
+        personalMessageLog.registerObserver(this);
+        List<TextMessage> messages = personalMessageLog.getMessageList();
+        activeMessageLog = personalMessageLog.getMessageLogNumber();
         if (!messages.isEmpty()){
-            messageLog.getMessageList().forEach(message -> {
+            personalMessageLog.getMessageList().forEach(message -> {
                 addMessage(message);
             });
         }else {
@@ -261,9 +280,13 @@ public class ChatController implements Controller{
         String string = loggedInLabel.textProperty().get();
         string += " " + ChatApplicationClient.getChatApplication().getChatClient().getUsername();
         loggedInLabel.textProperty().set(string);
-        addAllConversations();
         setButtonFunctions();
         addListeners();
+        try {
+            addAllConversations();
+        }catch (Exception exception){
+            System.out.println(exception.getClass() + " " + exception.getMessage());
+        }
     }
 
     /**
@@ -287,5 +310,15 @@ public class ChatController implements Controller{
         if (object == null){
             throw new IllegalArgumentException("The " + error + " cannot be null.");
         }
+    }
+
+    @Override
+    public void updateMessageLog(MessageLog messageLog, boolean removed) {
+
+    }
+
+    @Override
+    public void updateMessage(TextMessage textMessage, boolean removed) {
+        addMessage(textMessage);
     }
 }

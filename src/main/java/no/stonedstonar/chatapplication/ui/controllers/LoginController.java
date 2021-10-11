@@ -3,6 +3,7 @@ package no.stonedstonar.chatapplication.ui.controllers;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import no.stonedstonar.chatapplication.frontend.ChatClient;
+import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
 import no.stonedstonar.chatapplication.ui.windows.ChatWindow;
@@ -77,6 +78,8 @@ public class LoginController implements Controller{
                 exception.printStackTrace();
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
+            } catch (CouldNotAddMessageLogException exception) {
+                exception.printStackTrace();
             }
         });
         cancelButton.setOnAction(actionEvent -> {

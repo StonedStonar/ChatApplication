@@ -132,7 +132,7 @@ public class ConversationController implements Controller{
 
         makeConversationButton.setOnAction(event -> {
             try {
-                long messageLogNumber = chatClient.makeNewConversation(usernames);
+                chatClient.makeNewConversation(usernames);
                 ChatApplicationClient.getChatApplication().setNewScene(ChatWindow.getChatWindow());
             } catch (CouldNotAddMessageLogException exception) {
                 //Todo: Fix all exceptions

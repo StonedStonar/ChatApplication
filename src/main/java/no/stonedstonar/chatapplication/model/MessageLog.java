@@ -41,6 +41,15 @@ public class MessageLog implements Serializable {
         this.messageLogNumber = messageLogNumber;
     }
 
+    /**
+     * Sets the members register object to be another.
+     * @param membersRegister the members register you want it to be.
+     */
+    protected void setMembersRegister(MembersRegister membersRegister){
+        checkIfObjectIsNull(membersRegister, "members register");
+        this.membersRegister = membersRegister;
+    }
+
 
     /**
      * Gets the message log number.
@@ -119,7 +128,7 @@ public class MessageLog implements Serializable {
      * @param stringToCheck the string you want to check.
      * @param errorPrefix the error the exception should have if the string is invalid.
      */
-    private void checkString(String stringToCheck, String errorPrefix){
+    protected void checkString(String stringToCheck, String errorPrefix){
         checkIfObjectIsNull(stringToCheck, errorPrefix);
         if (stringToCheck.isEmpty()){
             throw new IllegalArgumentException("The " + errorPrefix + " cannot be empty.");
@@ -131,7 +140,7 @@ public class MessageLog implements Serializable {
      * @param object the object you want to check.
      * @param error the error message the exception should have.
      */
-    private void checkIfObjectIsNull(Object object, String error){
+    protected void checkIfObjectIsNull(Object object, String error){
        if (object == null){
            throw new IllegalArgumentException("The " + error + " cannot be null.");
        }
@@ -142,7 +151,7 @@ public class MessageLog implements Serializable {
      * @param number the number to check.
      * @param prefix the prefix the error should have.
      */
-    private void checkIfLongIsNegative(long number, String prefix){
+    protected void checkIfLongIsNegative(long number, String prefix){
         if (number <= 0){
             throw new IllegalArgumentException("Expected the " + prefix + " to be larger than zero.");
         }

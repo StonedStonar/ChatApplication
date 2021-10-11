@@ -31,7 +31,7 @@ public class Server {
 
     private volatile UserRegister userRegister;
 
-    private volatile ServerConversationRegister serverConversationRegister;
+    private volatile ConversationRegister conversationRegister;
 
     private volatile Logger logger;
 
@@ -50,7 +50,7 @@ public class Server {
     public Server(){
         logger = Logger.getLogger(getClass().toString());
         userRegister = new UserRegister();
-        serverConversationRegister = new ServerConversationRegister();
+        conversationRegister = new ConversationRegister();
         try {
             welcomeSocket = new ServerSocket(1380);
         }catch (IOException exception){
@@ -76,9 +76,9 @@ public class Server {
             threeMembers.add(user.getUsername());
             threeMembers.add(user1.getUsername());
             threeMembers.add(user3.getUsername());
-            serverConversationRegister.addNewMessageLogWithUsernames(threeMembers);
-            serverConversationRegister.addNewMessageLogWithUsernames(twoMembers);
-            List<MessageLog> messageLogs = serverConversationRegister.getAllMessageLogsOfUsername("bjarne22");
+            conversationRegister.addNewMessageLogWithUsernames(threeMembers);
+            conversationRegister.addNewMessageLogWithUsernames(twoMembers);
+            List<MessageLog> messageLogs = conversationRegister.getAllMessageLogsOfUsername("bjarne22");
             messageLogs.get(0).addMessage(new TextMessage("Haha", "bjarne22"));
             messageLogs.get(0).addMessage(new TextMessage("Nope", "fjell"));
             messageLogs.get(0).addMessage(new TextMessage("So funny bjarne", "bass"));
@@ -148,7 +148,6 @@ public class Server {
             logger.log(Level.WARNING, message);
             sendObject(exception, socket);
         }
-
     }
 
     /**
@@ -160,7 +159,7 @@ public class Server {
     private void handleIncomingMessage(MessageTransport messageTransport, Socket socket) throws IOException {
         System.out.println("New message to add to a message log");
         try {
-            MessageLog messageLog = serverConversationRegister.getMessageLogByLogNumber(messageTransport.getMessageLogNumber());
+            MessageLog messageLog = conversationRegister.getMessageLogByLogNumber(messageTransport.getMessageLogNumber());
             messageLog.addMessage(messageTransport.getMessage());
             System.out.println("The message log is now " + messageLog.getMessageList().size() + " messages long.");
             sendObject(messageTransport, socket);
@@ -181,15 +180,13 @@ public class Server {
         try {
             if (userRequest.isLogin()){
                 User user = userRegister.login(userRequest.getUsername(), userRequest.getPassword());
-                List<MessageLog> messageLogs = serverConversationRegister.getAllMessageLogsOfUsername(user.getUsername());
+                List<MessageLog> messageLogs = conversationRegister.getAllMessageLogsOfUsername(user.getUsername());
                 LoginTransport loginTransport = new LoginTransport(user, messageLogs);
                 sendObject(loginTransport, socket);
             }else if (userRequest.isNewUser()){
                 User user = new User(userRequest.getUsername(), userRequest.getPassword());
                 userRegister.addUser(user);
-                List<MessageLog> messageLogs = serverConversationRegister.getAllMessageLogsOfUsername(user.getUsername());
-                LoginTransport loginTransport = new LoginTransport(user, messageLogs);
-                sendObject(loginTransport, socket);
+                sendObject(true, socket);
             } else if (userRequest.isCheckUsername()){
                 sendObject(userRegister.checkIfUsernameIsTaken(userRequest.getUsername()), socket);
             }
@@ -208,7 +205,6 @@ public class Server {
      */
     private void handleMessageLogInteraction(MessageLogRequest messageLogRequest, Socket socket) throws IOException {
         try {
-            //Todo: Add all the other kind of requests.
             if (messageLogRequest.isNewMessageLog()){
                 makeNewMessageLog(messageLogRequest, socket);
             }else if (messageLogRequest.isDeleteMessageLog()){
@@ -235,7 +231,7 @@ public class Server {
      */
     private void makeNewMessageLog(MessageLogRequest messageLogRequest, Socket socket) throws IOException, CouldNotAddMessageLogException, CouldNotAddMemberException {
         List<String> usernames = messageLogRequest.getUsernames();
-        MessageLog messageLog = serverConversationRegister.addNewMessageLogWithUsernames(usernames);
+        MessageLog messageLog = conversationRegister.addNewMessageLogWithUsernames(usernames);
         sendObject(messageLog, socket);
     }
 

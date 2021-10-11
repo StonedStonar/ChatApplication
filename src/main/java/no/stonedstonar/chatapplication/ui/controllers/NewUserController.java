@@ -4,6 +4,8 @@ import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import no.stonedstonar.chatapplication.frontend.ChatClient;
+import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserException;
+import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
 import no.stonedstonar.chatapplication.ui.windows.ChatWindow;
 import no.stonedstonar.chatapplication.ui.windows.LoginWindow;
@@ -65,7 +67,7 @@ public class NewUserController implements Controller{
                 String password = passwordField.textProperty().get();
                 ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
                 chatClient.makeNewUser(username, password);
-                ChatApplicationClient.getChatApplication().setNewScene(ChatWindow.getChatWindow());
+                ChatApplicationClient.getChatApplication().setNewScene(LoginWindow.getLoginWindow());
             }catch (IllegalArgumentException exception){
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setContentText("The user with the name " + usernameField.textProperty().get() + " is already in the register.");
@@ -77,6 +79,10 @@ public class NewUserController implements Controller{
 
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
+            } catch (CouldNotLoginToUserException exception) {
+                exception.printStackTrace();
+            } catch (CouldNotAddUserException exception) {
+                exception.printStackTrace();
             }
         });
         cancelButton.setOnAction(actionEvent -> {
