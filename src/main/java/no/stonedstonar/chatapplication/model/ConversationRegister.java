@@ -18,8 +18,6 @@ public class ConversationRegister {
 
     private List<MessageLog> messageLogList;
 
-    //Todo: Lage det slik at mange kan være del i en samtale.
-
     /**
       * Makes an instance of the MessageRegister class.
       */
@@ -27,17 +25,6 @@ public class ConversationRegister {
         messageLogList = new ArrayList<>();
     }
 
-    /**
-     * Gets the message logs that matches this username.
-     * @param username the username that the message log is for.
-     * @return the message logs that belongs to this username in a list.
-     */
-    public List<MessageLog> getAllMessageLogsOfUsername(String username){
-        checkString(username, "username");
-        return messageLogList.stream().filter(messageLog -> {
-            return messageLog.getMembersOfConversation().checkIfUsernameIsMember(username);
-        }).toList();
-    }
 
     /**
      * Gets the message log that matches the message log number.
@@ -60,7 +47,7 @@ public class ConversationRegister {
      * @param messageLog the message log that's going to be added.
      * @throws CouldNotAddMessageLogException gets thrown if the message log is already in the register.
      */
-    private void addMessageLog(MessageLog messageLog) throws CouldNotAddMessageLogException {
+    protected void addMessageLog(MessageLog messageLog) throws CouldNotAddMessageLogException {
         if (!checkIfMessageLogIsInList(messageLog)){
             messageLogList.add(messageLog);
         }else {
@@ -69,22 +56,11 @@ public class ConversationRegister {
     }
 
     /**
-     * Adds a new message log based on a list of names that are in it.
-     * @param usernames a list with all the usernames that are part of this message log.
-     * @return the message log that was just added to the system.
-     * @throws CouldNotAddMessageLogException gets thrown if the message log is already in the register.
-     * @throws CouldNotAddMemberException gets thrown if a member could not be added.
+     * Gets all the message logs that are in this conversation.
+     * @return a list with all the message logs.
      */
-    public MessageLog addNewMessageLogWithUsernames(List<String> usernames) throws CouldNotAddMessageLogException, CouldNotAddMemberException {
-        checkIfObjectIsNull(usernames, "usernames");
-        if (!usernames.isEmpty()){
-            MessageLog messageLog = new MessageLog(makeNewMessageLogNumber());
-            messageLog.getMembersOfConversation().addAllMembers(usernames);
-            addMessageLog(messageLog);
-            return messageLog;
-        }else {
-            throw new IllegalArgumentException("The size of the usernames must be larger than 0.");
-        }
+    protected List<MessageLog> getMessageLogList(){
+        return messageLogList;
     }
 
     /**
@@ -98,18 +74,6 @@ public class ConversationRegister {
         }else {
             throw new CouldNotRemoveMessageLogException("The message log is not in the system.");
         }
-    }
-
-    /**
-     * Makes a new log number for each log that is in the list.
-     * @return the number that the new message log can have.
-     */
-    private long makeNewMessageLogNumber(){
-        long number = 1;
-        if (messageLogList.size() > 0){
-            number = (messageLogList.get(messageLogList.size() - 1).getMessageLogNumber() + 1);
-        }
-        return number;
     }
 
     /**
@@ -128,7 +92,7 @@ public class ConversationRegister {
      * @param stringToCheck the string you want to check.
      * @param errorPrefix the error the exception should have if the string is invalid.
      */
-    private void checkString(String stringToCheck, String errorPrefix){
+    protected void checkString(String stringToCheck, String errorPrefix){
         checkIfObjectIsNull(stringToCheck, errorPrefix);
         if (stringToCheck.isEmpty()){
             throw new IllegalArgumentException("The " + errorPrefix + " cannot be empty.");
@@ -140,7 +104,7 @@ public class ConversationRegister {
      * @param object the object you want to check.
      * @param error the error message the exception should have.
      */
-    private void checkIfObjectIsNull(Object object, String error){
+    protected void checkIfObjectIsNull(Object object, String error){
         if (object == null){
             throw new IllegalArgumentException("The " + error + " cannot be null.");
         }
@@ -151,7 +115,7 @@ public class ConversationRegister {
      * @param number the number you want to check.
      * @param prefix the prefix the error should have.
      */
-    private void checkIfLongIsAboveZero(long number, String prefix){
+    protected void checkIfLongIsAboveZero(long number, String prefix){
         if (number <= 0){
             throw new IllegalArgumentException("The " + prefix + " must be above 0.");
         }
