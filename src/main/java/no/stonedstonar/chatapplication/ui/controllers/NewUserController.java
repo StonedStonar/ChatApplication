@@ -73,7 +73,10 @@ public class NewUserController implements Controller{
                 alert.setHeaderText("Error making new user");
                 alert.show();
             }catch (IOException exception){
+                //Todo: Fix all the exceptions here too.
 
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
             }
         });
         cancelButton.setOnAction(actionEvent -> {
@@ -137,13 +140,20 @@ public class NewUserController implements Controller{
         usernameField.focusedProperty().addListener((valid) -> {
             String username = usernameField.textProperty().get();
             if ((username != null) && (!username.isEmpty()) && (username.length() >= 3)){
-                if (chatClient.checkUsername(usernameField.textProperty().get())){
-                    usernameText.setText("The username is taken.");
-                    validFields.put(usernameField, false);
-                }else {
-                    System.out.println("USername is not true");
-                    validFields.put(usernameField, true);
-                    usernameText.setText("The username is not taken.");
+                try {
+                    if (chatClient.checkUsername(usernameField.textProperty().get())){
+                        usernameText.setText("The username is taken.");
+                        validFields.put(usernameField, false);
+                    }else {
+                        System.out.println("USername is not true");
+                        validFields.put(usernameField, true);
+                        usernameText.setText("The username is not taken.");
+                    }
+                } catch (IOException e) {
+                    //Todo: Fix all the exceptions
+                    e.printStackTrace();
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
                 }
             }
             checkIfAllFieldsAreValid();

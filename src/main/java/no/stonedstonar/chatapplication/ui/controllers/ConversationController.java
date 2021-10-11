@@ -10,6 +10,9 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import no.stonedstonar.chatapplication.frontend.ChatClient;
+import no.stonedstonar.chatapplication.model.MessageLog;
+import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
+import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
 import no.stonedstonar.chatapplication.ui.windows.ChatWindow;
 
@@ -87,17 +90,24 @@ public class ConversationController implements Controller{
 
         addUsernameButton.setOnAction(event -> {
             String username = usernameField.textProperty().get();
-            if (chatClient.checkUsername(username)){
-                addUsername(username);
-                usernameField.textProperty().set("");
-                validFields.put(usernameField, false);
-            }else {
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Username error");
-                alert.setHeaderText("Username is not a user on the server.");
-                alert.setContentText("The username that you are trying to add is not a user on this app. " +
-                        "\nPlease try another username.");
-                alert.show();
+            try {
+                if (chatClient.checkUsername(username)){
+                    addUsername(username);
+                    usernameField.textProperty().set("");
+                    validFields.put(usernameField, false);
+                }else {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Username error");
+                    alert.setHeaderText("Username is not a user on the server.");
+                    alert.setContentText("The username that you are trying to add is not a user on this app. " +
+                            "\nPlease try another username.");
+                    alert.show();
+                }
+            } catch (IOException e) {
+                //Todo: Fix all these exceptions
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
             }
             checkIfRequiredFieldsAreOk();
             checkIfUsernameCanBeAdded();
@@ -118,6 +128,22 @@ public class ConversationController implements Controller{
                 validFields.put(usernameField, false);
             }
             checkIfRequiredFieldsAreOk();
+        });
+
+        makeConversationButton.setOnAction(event -> {
+            try {
+                long messageLogNumber = chatClient.makeNewConversation(usernames);
+                ChatApplicationClient.getChatApplication().setNewScene(ChatWindow.getChatWindow());
+            } catch (CouldNotAddMessageLogException exception) {
+                //Todo: Fix all exceptions
+                exception.printStackTrace();
+            } catch (IOException exception) {
+                exception.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            } catch (CouldNotAddMemberException exception) {
+                exception.printStackTrace();
+            }
         });
     }
 

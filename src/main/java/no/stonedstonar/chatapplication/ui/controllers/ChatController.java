@@ -83,11 +83,16 @@ public class ChatController implements Controller{
                 System.out.println("Could not send the message." + exception.getMessage());
                 exception.printStackTrace();
             } catch (CouldNotAddTextMessageException exception) {
+                //Todo: Fix all the fucking exceptions here.
                 exception.printStackTrace();
             } catch (SocketException e) {
                 e.printStackTrace();
             } catch (CouldNotGetMessageLogException exception) {
                 exception.printStackTrace();
+            } catch (IOException exception) {
+                exception.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
             }
         });
         newContactButton.setOnAction(event -> {

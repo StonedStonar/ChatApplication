@@ -3,6 +3,7 @@ package no.stonedstonar.chatapplication.ui.controllers;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import no.stonedstonar.chatapplication.frontend.ChatClient;
+import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
 import no.stonedstonar.chatapplication.ui.windows.ChatWindow;
 import no.stonedstonar.chatapplication.ui.windows.NewUserWindow;
@@ -71,6 +72,11 @@ public class LoginController implements Controller{
                 alert.setHeaderText("Error logging in.");
                 alert.setContentText("The username or password does not match a user. \nPlease try again.");
                 alert.show();
+            } catch (CouldNotLoginToUserException exception) {
+                //Todo: Fiks alle exceptionsene her.
+                exception.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
             }
         });
         cancelButton.setOnAction(actionEvent -> {

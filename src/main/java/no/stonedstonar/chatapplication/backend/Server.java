@@ -1,11 +1,14 @@
 package no.stonedstonar.chatapplication.backend;
 
 import no.stonedstonar.chatapplication.model.*;
+import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
+import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotAddTextMessageException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.model.networktransport.LoginTransport;
+import no.stonedstonar.chatapplication.model.networktransport.MessageLogRequest;
 import no.stonedstonar.chatapplication.model.networktransport.MessageTransport;
 import no.stonedstonar.chatapplication.model.networktransport.UserRequest;
 
@@ -130,6 +133,8 @@ public class Server {
                 handleIncomingMessage(messageTransport, socket);
             }else if (object instanceof UserRequest userRequest){
                 handleUserInteraction(userRequest, socket);
+            }else if (object instanceof MessageLogRequest messageLogRequest){
+                handleMessageLogInteraction(messageLogRequest, socket);
             }else {
                 throw new IllegalArgumentException("NONE IS A VALID OBJECT");
             }
@@ -193,6 +198,45 @@ public class Server {
             logger.log(Level.WARNING, message);
             sendObject(exception, socket);
         }
+    }
+
+    /**
+     * Handles the message log request objects.
+     * @param messageLogRequest the message log request to handle.
+     * @param socket the socket the communication is happening over.
+     * @throws IOException gets thrown if the socket closes or cannot finish its task.
+     */
+    private void handleMessageLogInteraction(MessageLogRequest messageLogRequest, Socket socket) throws IOException {
+        try {
+            //Todo: Add all the other kind of requests.
+            if (messageLogRequest.isNewMessageLog()){
+                makeNewMessageLog(messageLogRequest, socket);
+            }else if (messageLogRequest.isDeleteMessageLog()){
+
+            }else if (messageLogRequest.isAddMembers()){
+
+            }else if (messageLogRequest.isRemoveMembers()){
+
+            }
+        }catch (CouldNotAddMessageLogException | CouldNotAddMemberException exception) {
+            String message = "Something went wrong in the " + messageLogRequest + " with the exception " + exception.getMessage() + " and class " + exception.getClass();
+            logger.log(Level.WARNING, message);
+            sendObject(exception, socket);
+        }
+    }
+
+    /**
+     * Makes a new message log based on the request.
+     * @param messageLogRequest the request for making a new message log.
+     * @param socket the socket this message log is being made over.
+     * @throws IOException gets thrown if the socket closes or cannot finish its task.
+     * @throws CouldNotAddMessageLogException gets thrown if the message log could not be added.
+     * @throws CouldNotAddMemberException gets thrown if a member could not be added.
+     */
+    private void makeNewMessageLog(MessageLogRequest messageLogRequest, Socket socket) throws IOException, CouldNotAddMessageLogException, CouldNotAddMemberException {
+        List<String> usernames = messageLogRequest.getUsernames();
+        MessageLog messageLog = conversationRegister.addNewMessageLogWithUsernames(usernames);
+        sendObject(messageLog, socket);
     }
 
     /**

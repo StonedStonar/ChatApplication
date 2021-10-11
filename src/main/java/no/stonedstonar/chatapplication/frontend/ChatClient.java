@@ -1,14 +1,20 @@
 package no.stonedstonar.chatapplication.frontend;
 
+import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
+import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotAddTextMessageException;
 import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotGetTextMessageException;
+import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.model.networktransport.LoginTransport;
+import no.stonedstonar.chatapplication.model.networktransport.MessageLogRequest;
 import no.stonedstonar.chatapplication.model.networktransport.MessageTransport;
 import no.stonedstonar.chatapplication.model.networktransport.UserRequest;
 import no.stonedstonar.chatapplication.model.TextMessage;
 import no.stonedstonar.chatapplication.model.MessageLog;
 import no.stonedstonar.chatapplication.model.User;
+import no.stonedstonar.chatapplication.model.networktransport.builder.MessageLogRequestBuilder;
+import no.stonedstonar.chatapplication.model.networktransport.builder.UserRequestBuilder;
 
 import java.io.*;
 import java.net.Socket;
@@ -31,15 +37,18 @@ public class ChatClient {
 
     private Logger logger;
 
-    public static void main(String[] args) {
-        ChatClient chatClient = new ChatClient();
-    }
+    private String localHost;
+
+    private int portNumber;
 
     /**
       * Makes an instance of the ChatClient class.
       */
     public ChatClient(){
         logger = Logger.getLogger(getClass().toString());
+        localHost = "localhost";
+        portNumber = 1380;
+
     }
 
     /**
@@ -63,6 +72,37 @@ public class ChatClient {
     }
 
     /**
+     * Makes a new conversation.
+     * @param usernames the names of all the members of the new conversation.
+     * @return the message log that this conversation is now.
+     * @throws CouldNotAddMessageLogException gets thrown if the message log could not be added.
+     * @throws CouldNotAddMemberException gets thrown if the members could not be added.
+     * @throws IOException gets thrown if something goes wrong with the socket.
+     * @throws ClassNotFoundException gets thrown if the class could not be found for that object.
+     */
+    public long makeNewConversation(List<String> usernames) throws CouldNotAddMessageLogException, CouldNotAddMemberException, IOException, ClassNotFoundException {
+        checkIfListIsEmptyOrNull(usernames, "usernames");
+        try (Socket socket = new Socket("localhost", 1380)){
+            MessageLogRequest messageLogRequest = new MessageLogRequestBuilder().setNewMessageLog(true).addUsernames(usernames).build();
+            sendObject(messageLogRequest, socket);
+            Object object = getObject(socket);
+            if (object instanceof MessageLog messageLog){
+                return messageLog.getMessageLogNumber();
+            }else if (object instanceof CouldNotAddMessageLogException exception){
+                throw exception;
+            }else if (object instanceof CouldNotAddMemberException exception){
+                throw exception;
+            }else {
+                throw new IllegalArgumentException("The returned object is not what excepted.");
+            }
+        }catch (CouldNotAddMemberException | CouldNotAddMessageLogException | ClassNotFoundException exception){
+            String message = "Something has gone wrong on the serverside " + exception.getClass() + " exception content: " + exception.getMessage();
+            logger.log(Level.WARNING, message);
+            throw exception;
+        }
+    }
+
+    /**
      * Sends a message to a person if this client is logged in.
      * @param messageContents the contents of the message.
      * @param messageLog the message log that holds the message log number.
@@ -70,13 +110,14 @@ public class ChatClient {
      * @throws SocketException gets thrown if the socket could not be made.
      * @throws CouldNotGetTextMessageException gets thrown if the server could not add the message.
      * @throws CouldNotGetMessageLogException gets thrown if the server could not get the message log.
+     * @throws IOException gets thrown if something fails in the socket.
+     * @throws ClassNotFoundException gets thrown if the class could not be found for that object.
      */
-    public TextMessage sendMessage(String messageContents, MessageLog messageLog) throws SocketException, CouldNotAddTextMessageException, CouldNotGetMessageLogException {
-        Socket socket;
+    public TextMessage sendMessage(String messageContents, MessageLog messageLog) throws IOException, CouldNotAddTextMessageException, CouldNotGetMessageLogException, ClassNotFoundException {
+        checkString(messageContents, "message");
+        checkIfObjectIsNull(messageLog, "message log");
         //Todo: Add a function to check if the message was added successfully.And alter the documentation.
-        try {
-            socket = new Socket("localhost", 1380);
-            checkString(messageContents, "message");
+        try (Socket socket = new Socket(localHost, portNumber)){
             TextMessage textMessage = new TextMessage(messageContents, user.getUsername());
             MessageTransport messageTransport = new MessageTransport(textMessage, messageLog);
             sendObject(messageTransport, socket);
@@ -93,8 +134,8 @@ public class ChatClient {
         } catch (IOException e) {
             //Todo: Kanskje istedet for å kaste en exception så burde programmet håndtere denne erroren selv.
             logger.log(Level.WARNING, "The socket failed to be made.");
-            throw new SocketException("The socket failed to be made.");
-        }catch (CouldNotAddTextMessageException | CouldNotGetMessageLogException exception){
+            throw e;
+        }catch (CouldNotAddTextMessageException | ClassNotFoundException | CouldNotGetMessageLogException exception){
             String message = "Something has gone wrong on the serverside " + exception.getClass() + " exception content: " + exception.getMessage();
             logger.log(Level.WARNING, message);
             throw exception;
@@ -119,51 +160,61 @@ public class ChatClient {
      * Logs the client in as a user.
      * @param username the username of the user.
      * @param password the password that the user has.
+     * @throws IOException gets thrown if the socket failed to be made.
+     * @throws CouldNotLoginToUserException gets thrown if the password or username is incorrect.
+     * @throws ClassNotFoundException gets thrown if the class could not be found for that object.
      */
-    public void loginToUser(String username, String password){
-        Socket socket;
-        try {
-            socket = new Socket("localhost", 1380);
-            checkString(username, "username");
-            checkString(password, "password");
-            UserRequest userRequest = new UserRequest.UserRequestBuilder().setLogin(true).setUsername(username).setPassword(password).build();
+    public void loginToUser(String username, String password) throws IOException, CouldNotLoginToUserException, ClassNotFoundException {;
+        checkString(username, "username");
+        checkString(password, "password");
+        try (Socket socket = new Socket(localHost, portNumber)){
+            UserRequest userRequest = new UserRequestBuilder().setLogin(true).setUsername(username).setPassword(password).build();
             sendObject(userRequest, socket);
             Object object = getObject(socket);
             if (object instanceof LoginTransport loginTransport){
                 user = loginTransport.getUser();
                 messageLogs = loginTransport.getMessageLogList();
-            }else if (object instanceof IllegalArgumentException){
-                socket.close();
-                throw (IllegalArgumentException) object;
-            }else {
-                throw new IllegalArgumentException("The returned input is not a user.");
+            }else if (object instanceof CouldNotLoginToUserException exception){
+                throw exception;
+            }else if (object instanceof IllegalArgumentException exception){
+                throw exception;
             }
-        } catch (IOException e) {
-
+        } catch (CouldNotLoginToUserException | IllegalArgumentException | IOException | ClassNotFoundException exception) {
+            String message = "Something has gone wrong on the serverside " + exception.getClass() + " exception content: " + exception.getMessage();
+            logger.log(Level.WARNING, message);
+            throw exception;
         }
-
     }
 
     public void logOutOfUser(){
 
     }
 
-    public boolean checkUsername(String username){
-        try {
-            Socket socket = new Socket("localhost", 1380);
-            checkString(username, "username");
-            UserRequest userRequest = new UserRequest.UserRequestBuilder().setUsername(username).setCheckUsername(true).build();
+    /**
+     * Checks if the username is taken on the sersver.
+     * @param username the username of the person you want to check.
+     * @return <code>true</code> if the username is taken by another user.
+     *         <code>false</code> if the username is not taken by another user.
+     * @throws IOException gets thrown if the socket failed to be made
+     * @throws ClassNotFoundException gets thrown if the class could not be found for that object.
+     */
+    public boolean checkUsername(String username) throws IOException, ClassNotFoundException {
+        checkString(username, "username");
+        try (Socket socket = new Socket(localHost, portNumber)){
+            UserRequest userRequest = new UserRequestBuilder().setUsername(username).setCheckUsername(true).build();
             sendObject(userRequest, socket);
             Object object = getObject(socket);
             if (object instanceof Boolean valid){
                 return valid;
-            }else {
-                //Todo: Fiks this.
-                throw new IllegalArgumentException("Could not check username.");
+            }else if (object instanceof IllegalArgumentException exception){
+                throw exception;
+            }else{
+                throw new IllegalArgumentException("The response form the server is of a invalid format.");
             }
-        }catch (IOException exception){
-            //Todo: Also fiks this
-            throw new IllegalArgumentException("Facka you");
+        }catch (IOException | IllegalArgumentException | ClassNotFoundException exception){
+            String message = "Something has gone wrong on the serverside " + exception.getClass() + " exception content: " + exception.getMessage();
+            logger.log(Level.WARNING, message);
+            throw exception;
         }
     }
 
@@ -171,24 +222,27 @@ public class ChatClient {
      * Contacts the server and makes a new user if the username is not taken.
      * @param username the username the user wants.
      * @param password the password of the user.
+     * @throws IOException gets thrown if the socket failed to be made
+     * @throws ClassNotFoundException gets thrown if the class could not be found for that object.
      */
-    public void makeNewUser(String username, String password){
-        try {
-            Socket socket = new Socket("localhost", 1380);
+    public void makeNewUser(String username, String password) throws IOException, ClassNotFoundException {
+        try (Socket socket = new Socket(localHost, 1380)){
             checkString(username, "username");
             checkString(password, "password");
-            UserRequest userRequest = new UserRequest.UserRequestBuilder().setNewUser(true).setUsername(username).setPassword(password).build();
+            UserRequest userRequest = new UserRequestBuilder().setNewUser(true).setUsername(username).setPassword(password).build();
             sendObject(userRequest, socket);
             Object object = getObject(socket);
             if (object instanceof LoginTransport loginTransport){
                 user = loginTransport.getUser();
                 messageLogs = loginTransport.getMessageLogList();
             }else if (object instanceof IllegalArgumentException exception){
-                System.out.println("Execption from server");
                 throw exception;
             }
-        }catch (IOException exception){
+        }catch (IOException | IllegalArgumentException | ClassNotFoundException exception){
             //Todo: lag en handler
+            String message = "Something has gone wrong on the serverside " + exception.getClass() + " exception content: " + exception.getMessage();
+            logger.log(Level.WARNING, message);
+            throw exception;
         }
     }
 
@@ -198,30 +252,37 @@ public class ChatClient {
      * Sends a object through the socket.
      * @param object the object you want to send.
      * @param socket the socket the object should go through.
+     * @throws IOException gets thrown if the object could not be sent.
      */
-    private void sendObject(Object object, Socket socket){
-        try {
-            OutputStream outputStream = socket.getOutputStream();
-            ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
-            objectOutputStream.writeObject(object);
-        }catch (IOException exception){
-            System.out.println("Kunne ikke sende objektet.");
-        }
+    private void sendObject(Object object, Socket socket) throws IOException {
+        OutputStream outputStream = socket.getOutputStream();
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+        objectOutputStream.writeObject(object);
     }
 
     /**
      * Gets the message that is sent through the socket.
      * @param socket the socket that this message is coming through.
-     * @return the message this socket contians.
+     * @return the message this socket contains.
+     * @throws IOException gets thrown if the object could not be received.
+     * @throws ClassNotFoundException gets thrown if the class could not be found for that object.
      */
-    private Object getObject(Socket socket){
-        try {
-            ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
-            Object object = objectInputStream.readObject();
-            checkIfObjectIsNull(object, "object");
-            return object;
-        }catch (IOException | ClassNotFoundException exception){
-            throw new IllegalArgumentException(exception.getMessage());
+    private Object getObject(Socket socket) throws IOException, ClassNotFoundException {
+        ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
+        Object object = objectInputStream.readObject();
+        checkIfObjectIsNull(object, "object");
+        return object;
+    }
+
+    /**
+     * Checks if the list is empty or null.
+     * @param list the list you want to check.
+     * @param prefix the prefix the exception should have.
+     */
+    private void checkIfListIsEmptyOrNull(List list, String prefix){
+        checkIfObjectIsNull(list, prefix);
+        if (list.isEmpty()){
+            throw new IllegalArgumentException("The " + prefix + " cannot be zero in size.");
         }
     }
 

@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Observer;
 import java.util.Optional;
 
 /**
@@ -25,10 +26,13 @@ public class MessageLog implements Serializable {
 
     private long messageLogNumber;
 
+    private String nameOfMessageLog;
+
     //Todo: Vurder en liste som holder alle tingene som vil abonere på dette objektet. Dermed når en ny melding kommer oppdaterer den GUIen eller lignende med en gang.
 
     /**
       * Makes an instance of the MessageLog class.
+     * @param messageLogNumber the number this message log should have.
       */
     public MessageLog(long messageLogNumber){
         checkIfLongIsNegative(messageLogNumber, "messagelog number");

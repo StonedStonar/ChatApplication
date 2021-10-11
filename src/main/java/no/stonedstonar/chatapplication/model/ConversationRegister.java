@@ -71,20 +71,19 @@ public class ConversationRegister {
     /**
      * Adds a new message log based on a list of names that are in it.
      * @param usernames a list with all the usernames that are part of this message log.
+     * @return the message log that was just added to the system.
      * @throws CouldNotAddMessageLogException gets thrown if the message log is already in the register.
+     * @throws CouldNotAddMemberException gets thrown if a member could not be added.
      */
-    public void addNewMessageLogWithUsernames(List<String> usernames) throws CouldNotAddMessageLogException {
-        try {
-            checkIfObjectIsNull(usernames, "usernames");
-            if (!usernames.isEmpty()){
-                MessageLog messageLog = new MessageLog(makeNewMessageLogNumber());
-                messageLog.getMembersOfConversation().addAllMembers(usernames);
-                addMessageLog(messageLog);
-            }else {
-                throw new IllegalArgumentException("The size of the usernames must be larger than 0.");
-            }
-        }catch (CouldNotAddMemberException exception){
-            System.out.println("This is literally impossible");
+    public MessageLog addNewMessageLogWithUsernames(List<String> usernames) throws CouldNotAddMessageLogException, CouldNotAddMemberException {
+        checkIfObjectIsNull(usernames, "usernames");
+        if (!usernames.isEmpty()){
+            MessageLog messageLog = new MessageLog(makeNewMessageLogNumber());
+            messageLog.getMembersOfConversation().addAllMembers(usernames);
+            addMessageLog(messageLog);
+            return messageLog;
+        }else {
+            throw new IllegalArgumentException("The size of the usernames must be larger than 0.");
         }
     }
 
