@@ -54,6 +54,9 @@ public class ChatController implements Controller, ConversationObserver, Message
     @FXML
     private Button newContactButton;
 
+    @FXML
+    private Button testButton;
+
     private long activeMessageLog;
 
     private Map<Node, Boolean> validFields;
@@ -70,13 +73,13 @@ public class ChatController implements Controller, ConversationObserver, Message
      * Sets the functions of all the buttons in the window.
      */
     private void setButtonFunctions(){
+        ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
         sendButton.setOnAction(event -> {
             try {
                 String contents = textMessageField.textProperty().get();
-                ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
+
                 PersonalMessageLog personalMessageLog= chatClient.getMessageLogByLongNumber(activeMessageLog);
-                TextMessage textMessage = chatClient.sendMessage(contents, personalMessageLog);
-                addMessage(textMessage);
+                chatClient.sendMessage(contents, personalMessageLog);
                 textMessageField.textProperty().set("");
             }catch (IllegalArgumentException  exception){
                 //Todo: Gjør noe annet her.
@@ -101,6 +104,9 @@ public class ChatController implements Controller, ConversationObserver, Message
             }catch (IOException exception){
 
             }
+        });
+        testButton.setOnAction(event -> {
+            chatClient.setMessageLogFocus(activeMessageLog);
         });
     }
 
@@ -194,7 +200,11 @@ public class ChatController implements Controller, ConversationObserver, Message
      */
     private void handleConversationSwitch(long messageLogNumber) throws CouldNotGetMessageLogException {
         ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
-        chatClient.getMessageLogByLongNumber(this.activeMessageLog).removeObserver(this);
+        try {
+            chatClient.getMessageLogByLongNumber(this.activeMessageLog).removeObserver(this);
+        }catch (IllegalArgumentException exception){
+            System.out.println("Should only happen once.");
+        }
         PersonalMessageLog messageLog = chatClient.getMessageLogByLongNumber(messageLogNumber);
         showMessagesFromMessageLog(messageLog);
     }
@@ -319,6 +329,7 @@ public class ChatController implements Controller, ConversationObserver, Message
 
     @Override
     public void updateMessage(TextMessage textMessage, boolean removed) {
+        System.out.println("New message");
         addMessage(textMessage);
     }
 }

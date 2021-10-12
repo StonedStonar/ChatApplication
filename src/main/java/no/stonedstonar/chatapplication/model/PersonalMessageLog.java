@@ -1,6 +1,5 @@
 package no.stonedstonar.chatapplication.model;
 
-import javafx.scene.text.Text;
 import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotAddTextMessageException;
 import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotRemoveTextMessageException;
 
@@ -15,11 +14,11 @@ import java.util.List;
  */
 public class PersonalMessageLog extends MessageLog implements ObservableMessageLog, Serializable {
 
-    private List<MessageObserver> messageObservers;
+    private volatile List<MessageObserver> messageObservers;
 
-    private TextMessage textMessage;
+    private volatile TextMessage textMessageObs;
 
-    private boolean removed;
+    private volatile boolean removed;
 
     /**
       * Makes an instance of the PersonalMessageLog class.
@@ -36,15 +35,31 @@ public class PersonalMessageLog extends MessageLog implements ObservableMessageL
     @Override
     public void addMessage(TextMessage textMessage) throws CouldNotAddTextMessageException {
         super.addMessage(textMessage);
-        this.textMessage = textMessage;
+        this.textMessageObs = textMessage;
         removed = false;
         notifyObservers();
     }
 
     @Override
+    public void addAllMessages(List<TextMessage> textMessages) throws CouldNotAddTextMessageException {
+        checkIfListIsValid(textMessages, "text message");
+        if (!checkIfAllMessagesAreNewMessages(textMessages)){
+            List<TextMessage> textMessageList = getMessageList();
+            textMessages.forEach(message -> {
+                textMessageList.add(textMessageObs);
+                this.textMessageObs = message;
+                removed = false;
+                notifyObservers();
+            });
+        }else {
+            throw new CouldNotAddTextMessageException("Could not add the new messages since one of them are already in the reigster.");
+        }
+    }
+
+    @Override
     public void removeMessage(TextMessage textMessage) throws CouldNotRemoveTextMessageException {
         super.removeMessage(textMessage);
-        this.textMessage = textMessage;
+        this.textMessageObs = textMessage;
         removed = true;
         notifyObservers();
     }
@@ -72,7 +87,9 @@ public class PersonalMessageLog extends MessageLog implements ObservableMessageL
 
     @Override
     public void notifyObservers() {
-        messageObservers.forEach(obs -> obs.update(textMessage, removed));
+        for (MessageObserver obs : messageObservers) {
+            obs.updateMessage(textMessageObs, removed);
+        }
     }
 
 }

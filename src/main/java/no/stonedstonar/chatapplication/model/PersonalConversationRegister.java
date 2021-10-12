@@ -20,7 +20,7 @@ public class PersonalConversationRegister implements ObservableConversation, Ser
 
     private MessageLog messageLog;
 
-    private List<PersonalMessageLog> personalMessageLogs;
+    private volatile List<PersonalMessageLog> personalMessageLogs;
 
     private boolean removed;
 
@@ -63,6 +63,8 @@ public class PersonalConversationRegister implements ObservableConversation, Ser
         }
     }
 
+
+
     /**
      * Gets the personal message log that matches the message log number.
      * @param messageLogNumber the number that the message log has.
@@ -102,8 +104,10 @@ public class PersonalConversationRegister implements ObservableConversation, Ser
 
     @Override
     public void notifyObservers() {
-        conversationObservers.forEach(obs -> obs.update(messageLog, removed));
+        conversationObservers.forEach(obs -> obs.updateMessageLog(messageLog, removed));
     }
+
+
 
     /**
      * Checks if a string is of a valid format or not.

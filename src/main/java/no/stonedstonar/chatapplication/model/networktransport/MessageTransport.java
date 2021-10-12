@@ -1,9 +1,11 @@
 package no.stonedstonar.chatapplication.model.networktransport;
 
+import javafx.scene.text.Text;
 import no.stonedstonar.chatapplication.model.TextMessage;
 import no.stonedstonar.chatapplication.model.MessageLog;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * Represents a class that transports the message to the right messagelog.
@@ -12,27 +14,28 @@ import java.io.Serializable;
  */
 public class MessageTransport implements Serializable {
 
-    private TextMessage textMessage;
+    private List<TextMessage> textMessageList;
 
     private long messageLogNumber;
 
     /**
       * Makes an instance of the MessageTransport class
-      * @param textMessage the message you want to transport.
+      * @param textMessageList the message you want to transport.
       * @param messageLog the message log that this message is a part of.
       */
-    public MessageTransport(TextMessage textMessage, MessageLog messageLog){
-        checkIfObjectIsNull(textMessage, "message");
+    public MessageTransport(List<TextMessage> textMessageList, MessageLog messageLog){
+        checkIfObjectIsNull(textMessageList, "message");
+        checkIfLongIsAboveZero(messageLog.getMessageLogNumber(), "message log number");
         this.messageLogNumber = messageLog.getMessageLogNumber();
-        this.textMessage = textMessage;
+        this.textMessageList = textMessageList;
     }
 
     /**
      * Gets the message.
      * @return the message the user wanted to send.
      */
-    public TextMessage getMessage(){
-        return textMessage;
+    public List<TextMessage> getMessages(){
+        return textMessageList;
     }
 
     /**
@@ -52,5 +55,16 @@ public class MessageTransport implements Serializable {
        if (object == null){
            throw new IllegalArgumentException("The " + error + " cannot be null.");
        }
+    }
+
+    /**
+     * Checks if a long is above 0.
+     * @param number the number you want to check.
+     * @param prefix the prefix the error should have.
+     */
+    private void checkIfLongIsAboveZero(long number, String prefix){
+        if (number <= 0){
+            throw new IllegalArgumentException("The " + prefix + " must be above 0.");
+        }
     }
 }

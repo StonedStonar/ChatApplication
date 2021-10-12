@@ -20,7 +20,11 @@ public class MessageLogRequest implements Serializable {
 
     private boolean newMessageLog;
 
+    private boolean checkForMessages;
+
     private List<String> usernames;
+
+    private long listSize;
 
     private long messageLogNumber;
 
@@ -34,6 +38,25 @@ public class MessageLogRequest implements Serializable {
         newMessageLog = messageLogRequestBuilder.isNewMessageLog();
         usernames = messageLogRequestBuilder.getUsernames();
         messageLogNumber = messageLogRequestBuilder.getMessageLogNumber();
+        checkForMessages = messageLogRequestBuilder.isCheckForMessages();
+        listSize = messageLogRequestBuilder.getListSize();
+    }
+
+    /**
+     * Says true if the request is a check for new messages.
+     * @return <code>true</code> if the request is about checking for new messages.
+     *         <code>false</code> if the request is not about checking for new messages.
+     */
+    public boolean isCheckForMessages(){
+        return checkForMessages;
+    }
+
+    /**
+     * Gets the size of the message log that you want to check.
+     * @return the size of the message log.
+     */
+    public long getListSize(){
+        return listSize;
     }
 
     /**

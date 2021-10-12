@@ -1,5 +1,6 @@
 package no.stonedstonar.chatapplication.frontend;
 
+import javafx.scene.text.Text;
 import no.stonedstonar.chatapplication.model.*;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
@@ -18,6 +19,8 @@ import no.stonedstonar.chatapplication.model.networktransport.builder.UserReques
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.logging.Level;
@@ -32,13 +35,19 @@ public class ChatClient {
 
     private User user;
 
-    private PersonalConversationRegister personalConversationRegister;
+    private volatile PersonalConversationRegister personalConversationRegister;
 
     private Logger logger;
 
     private String localHost;
 
     private int portNumber;
+
+    private long messageLogFocus;
+
+    private Thread thread;
+
+    private boolean run;
 
     /**
       * Makes an instance of the ChatClient class.
@@ -47,7 +56,52 @@ public class ChatClient {
         logger = Logger.getLogger(getClass().toString());
         localHost = "localhost";
         portNumber = 1380;
+        messageLogFocus = 0;
+    }
 
+    /**
+     *
+     * @param messageLogNumber
+     */
+    public void setMessageLogFocus(long messageLogNumber){
+        System.out.println("Setting log number.");
+        //Todo: Make a check for the log number.
+        run = false;
+        messageLogFocus = messageLogNumber;
+
+        try {
+
+            PersonalMessageLog personalMessageLog = getMessageLogByLongNumber(messageLogFocus);
+            thread =  new Thread(() ->{
+                checkCurrentMessageLogForUpdates(personalMessageLog);
+            });
+            System.out.println("Thread starting");
+            thread.start();
+            System.out.println("Thread started");
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public void checkCurrentMessageLogForUpdates(PersonalMessageLog personalMessageLog){
+        System.out.println("Started thread");
+        run = true;
+        while(run){
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            try (Socket socket = new Socket(localHost, portNumber)) {
+                logger.log(Level.FINE, "Syncing.");
+                checkMessageLogForNewMessages(personalMessageLog, socket);
+                logger.log(Level.FINE, "Synced");
+            }catch (CouldNotAddTextMessageException | IOException | ClassNotFoundException exception) {
+                exception.printStackTrace();
+                System.out.println(exception.getClass() + " " + exception.getMessage());
+            }
+        }
     }
 
     /**
@@ -106,20 +160,21 @@ public class ChatClient {
      * Sends a message to a person if this client is logged in.
      * @param messageContents the contents of the message.
      * @param messageLog the message log that holds the message log number.
-     * @return the message that was just sent.
      * @throws SocketException gets thrown if the socket could not be made.
      * @throws CouldNotGetTextMessageException gets thrown if the server could not add the message.
      * @throws CouldNotGetMessageLogException gets thrown if the server could not get the message log.
      * @throws IOException gets thrown if something fails in the socket.
      * @throws ClassNotFoundException gets thrown if the class could not be found for that object.
      */
-    public TextMessage sendMessage(String messageContents, MessageLog messageLog) throws IOException, CouldNotAddTextMessageException, CouldNotGetMessageLogException, ClassNotFoundException {
+    public void sendMessage(String messageContents, MessageLog messageLog) throws IOException, CouldNotAddTextMessageException, CouldNotGetMessageLogException, ClassNotFoundException {
         checkString(messageContents, "message");
         checkIfObjectIsNull(messageLog, "message log");
         //Todo: Add a function to check if the message was added successfully.And alter the documentation.
         try (Socket socket = new Socket(localHost, portNumber)){
             TextMessage textMessage = new TextMessage(messageContents, user.getUsername());
-            MessageTransport messageTransport = new MessageTransport(textMessage, messageLog);
+            ArrayList<TextMessage> textMessageList = new ArrayList<>();
+            textMessageList.add(textMessage);
+            MessageTransport messageTransport = new MessageTransport(textMessageList, messageLog);
             sendObject(messageTransport, socket);
             Object object = getObject(socket);
             if (object instanceof CouldNotAddTextMessageException || object instanceof CouldNotGetMessageLogException){
@@ -130,7 +185,6 @@ public class ChatClient {
                 }
             }
             messageLog.addMessage(textMessage);
-            return textMessage;
         } catch (IOException e) {
             //Todo: Kanskje istedet for å kaste en exception så burde programmet håndtere denne erroren selv.
             logger.log(Level.WARNING, "The socket failed to be made.");
@@ -186,6 +240,50 @@ public class ChatClient {
 
     public void logOutOfUser(){
 
+    }
+
+
+    public void checkForNewMessages() throws CouldNotAddTextMessageException, IOException, ClassNotFoundException {
+        try (Socket socket = new Socket(localHost, portNumber)){
+            socket.setKeepAlive(true);
+            List<PersonalMessageLog> messageLogList = personalConversationRegister.getMessageLogList();
+            Iterator<PersonalMessageLog> it = messageLogList.iterator();
+            while(it.hasNext()) {
+                PersonalMessageLog log = it.next();
+                checkMessageLogForNewMessages(log, socket);
+                System.out.println("While");
+            }
+            System.out.println("Closing socket");
+            socket.setKeepAlive(false);
+        } catch (IOException | ClassNotFoundException | CouldNotAddTextMessageException exception) {
+            String message = "Something has gone wrong on the serverside " + exception.getClass() + " exception content: " + exception.getMessage();
+            logger.log(Level.WARNING, message);
+            throw exception;
+        }
+    }
+
+    /**
+     * Checks for new messages and adds them if need be.
+     * @param log the message log you want to check.
+     * @param socket the socket the communication happens over.
+     * @throws IOException gets thrown if the socket failed to be made.
+     * @throws ClassNotFoundException gets thrown if the class could not be found.
+     * @throws CouldNotAddTextMessageException gets thrown if the text message could not be added.
+     */
+    public void checkMessageLogForNewMessages(PersonalMessageLog log, Socket socket) throws IOException, ClassNotFoundException, CouldNotAddTextMessageException {
+        long size = log.getMessageList().size();
+        long messageLogNumber = log.getMessageLogNumber();
+        MessageLogRequest messageLogRequest = new MessageLogRequestBuilder().setCheckForMessages(true).addListSize(size).addMessageLogNumber(messageLogNumber).build();
+        System.out.println(messageLogNumber);
+        sendObject(messageLogRequest, socket);
+        Object object = getObject(socket);
+        if(object instanceof MessageTransport messageTransport){
+            List<TextMessage> textMessageList = messageTransport.getMessages();
+            if (!textMessageList.isEmpty()){
+                log.addAllMessages(textMessageList);
+            }
+        }
+        System.out.println("all messsages are added for " + messageLogNumber);
     }
 
     /**

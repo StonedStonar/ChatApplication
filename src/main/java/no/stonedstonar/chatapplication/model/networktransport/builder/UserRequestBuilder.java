@@ -19,6 +19,8 @@ public class UserRequestBuilder {
 
     private boolean checkUsername;
 
+
+
     /**
      * Makes an instance of the UserRequestBuilder class.
      * Sets all the boolean values to false as a standard.

@@ -1,5 +1,6 @@
 package no.stonedstonar.chatapplication.model.networktransport.builder;
 
+import no.stonedstonar.chatapplication.model.MessageLog;
 import no.stonedstonar.chatapplication.model.networktransport.MessageLogRequest;
 
 import java.util.ArrayList;
@@ -24,6 +25,10 @@ public class MessageLogRequestBuilder {
 
     private long messageLogNumber;
 
+    private long listSize;
+
+    private boolean checkForMessages;
+
     /**
      * Makes an instance of the MessageLogRequest class.
      */
@@ -32,8 +37,10 @@ public class MessageLogRequestBuilder {
         removeMembers = false;
         addMembers = false;
         newMessageLog = false;
+        checkForMessages = false;
         usernames = new ArrayList<>();
         messageLogNumber = 0;
+        listSize = 0;
     }
 
     /**
@@ -49,6 +56,7 @@ public class MessageLogRequestBuilder {
             removeMembers = false;
             addMembers = false;
             newMessageLog = false;
+            checkForMessages = false;
         }else {
             deleteMessageLog = false;
         }
@@ -68,6 +76,7 @@ public class MessageLogRequestBuilder {
             removeMembers = valid;
             addMembers = false;
             newMessageLog = false;
+            checkForMessages = false;
         }else {
             removeMembers = false;
         }
@@ -87,6 +96,7 @@ public class MessageLogRequestBuilder {
             removeMembers = false;
             addMembers = valid;
             newMessageLog = false;
+            checkForMessages = false;
         }else{
             addMembers = false;
         }
@@ -106,8 +116,29 @@ public class MessageLogRequestBuilder {
             removeMembers = false;
             addMembers = false;
             newMessageLog = valid;
+            checkForMessages = false;
         }else {
             newMessageLog = false;
+        }
+        return this;
+    }
+
+    /**
+     * Says if the request is about checking for new messages.
+     * All the other booleans will be set to false if this is set to true.
+     * @param valid <code>true</code> if the request wants to check for new memssages.
+     *              <code>false</code> if the does not want to check for new messages.
+     * @return this builder object.
+     */
+    public MessageLogRequestBuilder setCheckForMessages(boolean valid){
+        if (valid){
+            deleteMessageLog = false;
+            removeMembers = false;
+            addMembers = false;
+            newMessageLog = false;
+            checkForMessages = valid;
+        }else {
+            checkForMessages = false;
         }
         return this;
     }
@@ -129,9 +160,38 @@ public class MessageLogRequestBuilder {
      * @return this builder object.
      */
     public MessageLogRequestBuilder addMessageLogNumber(long messageLogNumber){
-        checkIfLongIsAboveZero(messageLogNumber, "messagelog number");
+        checkIfLongIsAboveZero(messageLogNumber, "messagelog number", false);
         this.messageLogNumber = messageLogNumber;
         return this;
+    }
+
+    /**
+     * Adds a list size to the request.
+     * @param listSize the list size of the message log.
+     * @return this builder object.
+     */
+    public MessageLogRequestBuilder addListSize(long listSize){
+        checkIfLongIsAboveZero(listSize, "list size", true);
+        this.listSize = listSize;
+        return this;
+    }
+
+
+    /**
+     * Says true if the request is a check for new messages.
+     * @return <code>true</code> if the request is about checking for new messages.
+     *         <code>false</code> if the request is not about checking for new messages.
+     */
+    public boolean isCheckForMessages(){
+        return checkForMessages;
+    }
+
+    /**
+     * Gets the size of the message log that you want to check.
+     * @return the size of the message log.
+     */
+    public long getListSize(){
+        return listSize;
     }
 
     /**
@@ -223,9 +283,15 @@ public class MessageLogRequestBuilder {
      * @param logNumber the log number you want to check.
      * @param prefix the error the exception should mention.
      */
-    public void checkIfLongIsAboveZero(long logNumber, String prefix){
-        if(logNumber <= 0){
-            throw new IllegalArgumentException("The " + prefix + " cannot be negative or null.");
+    public void checkIfLongIsAboveZero(long logNumber, String prefix, boolean equalZero){
+        if (equalZero){
+            if (logNumber < 0){
+                throw new IllegalArgumentException("The " + prefix + " cannot be negative or null.");
+            }
+        }else {
+            if(logNumber <= 0){
+                throw new IllegalArgumentException("The " + prefix + " cannot be negative or null.");
+            }
         }
     }
 }

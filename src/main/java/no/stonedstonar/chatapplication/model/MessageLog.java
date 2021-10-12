@@ -28,14 +28,12 @@ public class MessageLog implements Serializable {
 
     private String nameOfMessageLog;
 
-    //Todo: Vurder en liste som holder alle tingene som vil abonere på dette objektet. Dermed når en ny melding kommer oppdaterer den GUIen eller lignende med en gang.
-
     /**
       * Makes an instance of the MessageLog class.
      * @param messageLogNumber the number this message log should have.
       */
     public MessageLog(long messageLogNumber){
-        checkIfLongIsNegative(messageLogNumber, "messagelog number");
+        checkIfLongIsNegative(messageLogNumber, "messagelog number", false);
         textMessageList = new ArrayList<>();
         membersRegister = new MembersRegister();
         this.messageLogNumber = messageLogNumber;
@@ -79,6 +77,51 @@ public class MessageLog implements Serializable {
         }else {
             throw new CouldNotAddTextMessageException("The message is already in the register.");
         }
+    }
+
+    /**
+     * Adds all the input messages to the message log.
+     * @param textMessages the list with the text messages.
+     * @throws CouldNotAddTextMessageException gets thrown if one text message is already in the list.
+     */
+    public void addAllMessages(List<TextMessage> textMessages) throws CouldNotAddTextMessageException {
+        checkIfListIsValid(textMessages, "text message");
+        if (!checkIfAllMessagesAreNewMessages(textMessages)){
+            textMessageList.addAll(textMessages);
+        }else {
+            throw new CouldNotAddTextMessageException("Could not add the new messages since one of them are already in the reigster.");
+        }
+    }
+
+    /**
+     * Gets the newest messages from the message log.
+     * @param sizeOfList the size of the other message log.
+     * @return a list with the new text messages.
+     */
+    public List<TextMessage> checkForNewMessages(long sizeOfList){
+        List<TextMessage> newTextMessages = new ArrayList<>();
+        checkIfLongIsNegative(sizeOfList, "size of list", true);
+        if (textMessageList.size() > sizeOfList){
+            int sizeOfTextMessages = textMessageList.size();
+            long counter = sizeOfList;
+            while (counter < sizeOfTextMessages){
+                newTextMessages.add(textMessageList.get((int) counter));
+                counter += 1;
+            }
+        }
+        return newTextMessages;
+    }
+
+    /**
+     * Checks if all the messages in the list is new messages to this message log.
+     * @param textMessages the list of text messages you want to check.
+     * @return <code>true</code> if one of the input messages matches one in the list.
+     *         <code>false</code> if none of the input messages are in the message log.
+     */
+    protected boolean checkIfAllMessagesAreNewMessages(List<TextMessage> textMessages){
+        return textMessages.stream().anyMatch(message -> {
+            return textMessageList.contains(message);
+        });
     }
 
     /**
@@ -151,9 +194,28 @@ public class MessageLog implements Serializable {
      * @param number the number to check.
      * @param prefix the prefix the error should have.
      */
-    protected void checkIfLongIsNegative(long number, String prefix){
-        if (number <= 0){
-            throw new IllegalArgumentException("Expected the " + prefix + " to be larger than zero.");
+    protected void checkIfLongIsNegative(long number, String prefix, boolean underZero){
+        if(underZero){
+            if (number < 0){
+                throw new IllegalArgumentException("Expected the " + prefix + " to be larger than -1.");
+            }
+        }else{
+            if (number <= 0){
+                throw new IllegalArgumentException("Expected the " + prefix + " to be larger than zero.");
+            }
         }
     }
+
+    /**
+     * Checks if a list is of a valid format.
+     * @param list the list you want to check.
+     * @param prefix the prefix the error should have.
+     */
+    protected void checkIfListIsValid(List list, String prefix){
+        checkIfObjectIsNull(list, prefix);
+        if (list.isEmpty()){
+            throw new IllegalArgumentException("The " + prefix + " list cannot be zero in size.");
+        }
+    }
+
 }
