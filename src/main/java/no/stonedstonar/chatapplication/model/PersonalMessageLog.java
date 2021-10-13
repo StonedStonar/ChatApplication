@@ -92,4 +92,8 @@ public class PersonalMessageLog extends MessageLog implements ObservableMessageL
         }
     }
 
+    @Override
+    public boolean checkIfObjectIsObserver(MessageObserver messageObserver) {
+        return messageObservers.stream().anyMatch(obs -> obs.equals(messageObserver));
+    }
 }

@@ -201,10 +201,9 @@ public class ChatController implements Controller, ConversationObserver, Message
      */
     private void handleConversationSwitch(long messageLogNumber) throws CouldNotGetMessageLogException {
         ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
-        try {
-            chatClient.getMessageLogByLongNumber(this.activeMessageLog).removeObserver(this);
-        }catch (IllegalArgumentException exception){
-            System.out.println("Should only happen once.");
+        PersonalMessageLog lastPersonalMessageLog = chatClient.getMessageLogByLongNumber(this.activeMessageLog);
+        if (lastPersonalMessageLog.checkIfObjectIsObserver(this)){
+            lastPersonalMessageLog.removeObserver(this);
         }
         PersonalMessageLog messageLog = chatClient.getMessageLogByLongNumber(messageLogNumber);
         showMessagesFromMessageLog(messageLog);
@@ -219,6 +218,10 @@ public class ChatController implements Controller, ConversationObserver, Message
         personalMessageLog.registerObserver(this);
         List<TextMessage> messages = personalMessageLog.getMessageList();
         activeMessageLog = personalMessageLog.getMessageLogNumber();
+        Thread thread = new Thread(()-> {
+            ChatApplicationClient.getChatApplication().getChatClient().setMessageLogFocus(activeMessageLog);
+        });
+        thread.start();
         if (!messages.isEmpty()){
             personalMessageLog.getMessageList().forEach(message -> {
                 addMessage(message);
@@ -298,10 +301,6 @@ public class ChatController implements Controller, ConversationObserver, Message
         }catch (Exception exception){
             System.out.println(exception.getClass() + " " + exception.getMessage());
         }
-        Thread thread = new Thread(()-> {
-            ChatApplicationClient.getChatApplication().getChatClient().setMessageLogFocus(activeMessageLog);
-        });
-        thread.start();
     }
 
     /**
