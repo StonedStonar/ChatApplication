@@ -115,7 +115,13 @@ public class ChatApplicationClient extends Application {
             throw new IllegalArgumentException("The " + errorPrefix + " cannot be empty.");
         }
     }
-    
+
+    @Override
+    public void stop() throws Exception {
+        super.stop();
+        chatClient.stopThread();
+    }
+
     /**
      * Checks if an object is null.
      * @param object the object you want to check.

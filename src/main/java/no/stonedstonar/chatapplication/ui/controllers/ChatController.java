@@ -1,5 +1,6 @@
 package no.stonedstonar.chatapplication.ui.controllers;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
@@ -297,6 +298,10 @@ public class ChatController implements Controller, ConversationObserver, Message
         }catch (Exception exception){
             System.out.println(exception.getClass() + " " + exception.getMessage());
         }
+        Thread thread = new Thread(()-> {
+            ChatApplicationClient.getChatApplication().getChatClient().setMessageLogFocus(activeMessageLog);
+        });
+        thread.start();
     }
 
     /**
@@ -329,7 +334,9 @@ public class ChatController implements Controller, ConversationObserver, Message
 
     @Override
     public void updateMessage(TextMessage textMessage, boolean removed) {
-        System.out.println("New message");
-        addMessage(textMessage);
+        Platform.runLater(() ->{
+            System.out.println("New message");
+            addMessage(textMessage);
+        });
     }
 }

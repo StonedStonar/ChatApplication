@@ -66,11 +66,12 @@ public class ChatClient {
     public void setMessageLogFocus(long messageLogNumber){
         System.out.println("Setting log number.");
         //Todo: Make a check for the log number.
-        run = false;
+        if (run){
+            stopThread();
+        }
         messageLogFocus = messageLogNumber;
 
         try {
-
             PersonalMessageLog personalMessageLog = getMessageLogByLongNumber(messageLogFocus);
             thread =  new Thread(() ->{
                 checkCurrentMessageLogForUpdates(personalMessageLog);
@@ -81,24 +82,31 @@ public class ChatClient {
         } catch (Throwable e) {
             e.printStackTrace();
         }
-
     }
 
+
+    public void stopThread(){
+        run = false;
+        thread.interrupt();
+    }
+
+    /**
+     * Checks the current message log for new messages.
+     * @param personalMessageLog the active message log.
+     */
     public void checkCurrentMessageLogForUpdates(PersonalMessageLog personalMessageLog){
         System.out.println("Started thread");
         run = true;
-        while(run){
+        while((run) && (!thread.isInterrupted())){
             try {
                 Thread.sleep(5000);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                stopThread();
             }
             try (Socket socket = new Socket(localHost, portNumber)) {
-                logger.log(Level.FINE, "Syncing.");
                 checkMessageLogForNewMessages(personalMessageLog, socket);
-                logger.log(Level.FINE, "Synced");
             }catch (CouldNotAddTextMessageException | IOException | ClassNotFoundException exception) {
-                exception.printStackTrace();
+                stopThread();
                 System.out.println(exception.getClass() + " " + exception.getMessage());
             }
         }
@@ -238,11 +246,12 @@ public class ChatClient {
         }
     }
 
-    public void logOutOfUser(){
-
-    }
-
-
+    /**
+     * Checks all the message logs for new messages.
+     * @throws IOException gets thrown if the socket failed to be made.
+     * @throws ClassNotFoundException gets thrown if the class could not be found.
+     * @throws CouldNotAddTextMessageException gets thrown if the text message could not be added.
+     */
     public void checkForNewMessages() throws CouldNotAddTextMessageException, IOException, ClassNotFoundException {
         try (Socket socket = new Socket(localHost, portNumber)){
             socket.setKeepAlive(true);
@@ -270,7 +279,7 @@ public class ChatClient {
      * @throws ClassNotFoundException gets thrown if the class could not be found.
      * @throws CouldNotAddTextMessageException gets thrown if the text message could not be added.
      */
-    public void checkMessageLogForNewMessages(PersonalMessageLog log, Socket socket) throws IOException, ClassNotFoundException, CouldNotAddTextMessageException {
+    public synchronized void checkMessageLogForNewMessages(PersonalMessageLog log, Socket socket) throws IOException, ClassNotFoundException, CouldNotAddTextMessageException {
         long size = log.getMessageList().size();
         long messageLogNumber = log.getMessageLogNumber();
         MessageLogRequest messageLogRequest = new MessageLogRequestBuilder().setCheckForMessages(true).addListSize(size).addMessageLogNumber(messageLogNumber).build();
