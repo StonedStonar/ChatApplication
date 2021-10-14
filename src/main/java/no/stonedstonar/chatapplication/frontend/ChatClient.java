@@ -183,7 +183,6 @@ public class ChatClient {
     public void sendMessage(String messageContents, MessageLog messageLog) throws IOException, CouldNotAddTextMessageException, CouldNotGetMessageLogException, InvalidResponseException {
         checkString(messageContents, "message");
         checkIfObjectIsNull(messageLog, "message log");
-        //Todo: Add a function to check if the message was added successfully. And alter the documentation.
         try (Socket socket = new Socket(localHost, portNumber)){
             TextMessage textMessage = new TextMessage(messageContents, user.getUsername());
             ArrayList<TextMessage> textMessageList = new ArrayList<>();
@@ -191,12 +190,15 @@ public class ChatClient {
             MessageTransport messageTransport = new MessageTransport(textMessageList, messageLog);
             sendObject(messageTransport, socket);
             Object object = getObject(socket);
-            if (object instanceof CouldNotAddTextMessageException exception){
+            if (object instanceof  MessageTransport){
+                messageLog.addMessage(textMessage);
+            }else if (object instanceof CouldNotAddTextMessageException exception){
                 throw exception;
             }else if (object instanceof CouldNotGetMessageLogException exception){
                 throw exception;
+            }else {
+                throw new InvalidResponseException("The object is of a invalid format.");
             }
-            messageLog.addMessage(textMessage);
         } catch (IOException | CouldNotAddTextMessageException | InvalidResponseException | CouldNotGetMessageLogException exception){
             logWaringError(exception);
             throw exception;

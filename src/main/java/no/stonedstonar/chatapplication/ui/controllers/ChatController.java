@@ -18,6 +18,7 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import no.stonedstonar.chatapplication.frontend.ChatClient;
 import no.stonedstonar.chatapplication.model.*;
+import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotAddTextMessageException;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
@@ -76,40 +77,65 @@ public class ChatController implements Controller, ConversationObserver, Message
     private void setButtonFunctions(){
         ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
         sendButton.setOnAction(event -> {
-            try {
-                String contents = textMessageField.textProperty().get();
-
-                PersonalMessageLog personalMessageLog= chatClient.getMessageLogByLongNumber(activeMessageLog);
-                chatClient.sendMessage(contents, personalMessageLog);
-                textMessageField.textProperty().set("");
-            }catch (IllegalArgumentException  exception){
-                //Todo: Gjør noe annet her.
-                System.out.println("Could not send the message." + exception.getMessage());
-                exception.printStackTrace();
-            } catch (CouldNotAddTextMessageException exception) {
-                //Todo: Fix all the fucking exceptions here.
+            String contents = textMessageField.textProperty().get();
+            try{
+                sendNewMessage(contents, chatClient);
+            }catch (IllegalArgumentException exception){
                 Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle();
-            } catch (SocketException e) {
-                e.printStackTrace();
-            } catch (CouldNotGetMessageLogException exception) {
-                exception.printStackTrace();
-            } catch (IOException exception) {
-                exception.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+                alert.setTitle("Could not send message");
+                alert.setHeaderText("Could not send empty message");
+                alert.setContentText("Could not send text message since the contents are empty. " +
+                        "Please try again.");
+                textMessageField.textProperty().set("");
+                alert.show();
             }
-        });
+            });
+
         newContactButton.setOnAction(event -> {
             try {
                 ChatApplicationClient.getChatApplication().setNewScene(NewConversationWindow.getNewUserWindow());
             }catch (IOException exception){
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Loading window error.");
+                alert.setHeaderText("Loading new conversation window error.");
+                alert.setContentText("Could not change window to \"New conversation\". The program will now restart.");
+                alert.showAndWait();
+                try {
+                    ChatApplicationClient.getChatApplication().stop();
+                }catch (Exception exception1){
 
+                }
             }
         });
-        testButton.setOnAction(event -> {
-            chatClient.setMessageLogFocus(activeMessageLog);
-        });
+    }
+
+    /**
+     * Sends a new message to the user.
+     * @param messageContents the message's contents.
+     * @param chatClient the chat client of the application
+     */
+    private void sendNewMessage(String messageContents, ChatClient chatClient){
+        try {
+            PersonalMessageLog personalMessageLog= chatClient.getMessageLogByLongNumber(activeMessageLog);
+            chatClient.sendMessage(messageContents, personalMessageLog);
+            textMessageField.textProperty().set("");
+        }catch (IllegalArgumentException  exception){
+            //Todo: Gjør noe annet her.
+            System.out.println("Could not send the message." + exception.getMessage());
+            exception.printStackTrace();
+        } catch (CouldNotAddTextMessageException exception) {
+            //Todo: Fix all the fucking exceptions here.
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("");
+        } catch (SocketException e) {
+            e.printStackTrace();
+        } catch (CouldNotGetMessageLogException exception) {
+            exception.printStackTrace();
+        } catch (IOException exception) {
+            exception.printStackTrace();
+        } catch (InvalidResponseException e) {
+            e.printStackTrace();
+        }
     }
 
     private void makeErrorAlert(){
@@ -317,6 +343,18 @@ public class ChatController implements Controller, ConversationObserver, Message
             sendButton.setDisable(false);
         }else {
             sendButton.setDisable(true);
+        }
+    }
+
+    /**
+     * Checks if a string is of a valid format or not.
+     * @param stringToCheck the string you want to check.
+     * @param errorPrefix the error the exception should have if the string is invalid.
+     */
+    private void checkString(String stringToCheck, String errorPrefix){
+        checkIfObjectIsNull(stringToCheck, errorPrefix);
+        if (stringToCheck.isEmpty()){
+            throw new IllegalArgumentException("The " + errorPrefix + " cannot be empty.");
         }
     }
 
