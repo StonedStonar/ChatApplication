@@ -88,7 +88,8 @@ public class ChatController implements Controller, ConversationObserver, Message
                 exception.printStackTrace();
             } catch (CouldNotAddTextMessageException exception) {
                 //Todo: Fix all the fucking exceptions here.
-                exception.printStackTrace();
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle();
             } catch (SocketException e) {
                 e.printStackTrace();
             } catch (CouldNotGetMessageLogException exception) {
@@ -109,6 +110,10 @@ public class ChatController implements Controller, ConversationObserver, Message
         testButton.setOnAction(event -> {
             chatClient.setMessageLogFocus(activeMessageLog);
         });
+    }
+
+    private void makeErrorAlert(){
+        Alert alert = new Alert()
     }
 
     /**

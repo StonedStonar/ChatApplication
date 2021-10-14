@@ -11,6 +11,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import no.stonedstonar.chatapplication.frontend.ChatClient;
 import no.stonedstonar.chatapplication.model.MessageLog;
+import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
@@ -106,7 +107,7 @@ public class ConversationController implements Controller{
             } catch (IOException e) {
                 //Todo: Fix all these exceptions
                 e.printStackTrace();
-            } catch (ClassNotFoundException e) {
+            } catch (InvalidResponseException e) {
                 e.printStackTrace();
             }
             checkIfRequiredFieldsAreOk();
@@ -139,10 +140,10 @@ public class ConversationController implements Controller{
                 exception.printStackTrace();
             } catch (IOException exception) {
                 exception.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
             } catch (CouldNotAddMemberException exception) {
                 exception.printStackTrace();
+            } catch (InvalidResponseException e) {
+                e.printStackTrace();
             }
         });
     }

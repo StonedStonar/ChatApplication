@@ -1,6 +1,7 @@
 package no.stonedstonar.chatapplication.backend;
 
 import no.stonedstonar.chatapplication.model.*;
+import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
@@ -37,11 +38,7 @@ public class Server {
 
     public static void main(String[] args) {
         Server server = new Server();
-        try {
-            server.run();
-        }catch (IllegalArgumentException exception){
-            System.out.println("Exception in main run method: " + exception.getMessage());
-        }
+        server.run();
     }
 
     /**
@@ -101,7 +98,7 @@ public class Server {
                 Thread clientThread = new Thread(() -> {
                     try {
                         handleConnection(client);
-                    }catch (IOException | ClassNotFoundException exception){
+                    }catch (IOException exception){
                         if (!client.isClosed()){
                             try {
                                 client.close();
@@ -126,25 +123,20 @@ public class Server {
      * @throws IOException gets thrown if the socket closes or cannot finish its task.
      * @throws ClassNotFoundException gets thrown if the class cannot be found.
      */
-    private void handleConnection(Socket socket) throws IOException, ClassNotFoundException {
+    private void handleConnection(Socket socket) throws IOException, InvalidResponseException {
         do{
-            try {
-                if (socket.getInputStream().available() > 0) {
-                    Object object = getObject(socket);
-                    if(object instanceof MessageTransport messageTransport){
-                        handleIncomingMessage(messageTransport, socket);
-                    }else if (object instanceof UserRequest userRequest){
-                        handleUserInteraction(userRequest, socket);
-                    }else if (object instanceof MessageLogRequest messageLogRequest){
-                        handleMessageLogInteraction(messageLogRequest, socket);
-                    }else {
-                        throw new IllegalArgumentException("NONE IS A VALID OBJECT");
-                    }
+            if (socket.getInputStream().available() > 0) {
+                Object object = getObject(socket);
+                if(object instanceof MessageTransport messageTransport){
+                    handleIncomingMessage(messageTransport, socket);
+                }else if (object instanceof UserRequest userRequest){
+                    handleUserInteraction(userRequest, socket);
+                }else if (object instanceof MessageLogRequest messageLogRequest){
+                    handleMessageLogInteraction(messageLogRequest, socket);
+                }else {
+
+                    throw new IllegalArgumentException("NONE IS A VALID OBJECT");
                 }
-            }catch (IllegalArgumentException exception){
-                String message = "The connection failed. Exception type: " + exception.getClass() + " Exception message: " + exception.getMessage();
-                logger.log(Level.WARNING, message);
-                sendObject(exception, socket);
             }
         }while (!socket.isClosed());
     }
@@ -208,14 +200,11 @@ public class Server {
             if (messageLogRequest.isNewMessageLog()){
                 makeNewMessageLog(messageLogRequest, socket);
             }else if (messageLogRequest.isCheckForMessages()){
-                MessageLog messageLog = conversationRegister.getMessageLogByLogNumber(messageLogRequest.getMessageLogNumber());
-                List<TextMessage> textMessageList = messageLog.checkForNewMessages(messageLogRequest.getListSize());
-                MessageTransport messageTransport = new MessageTransport(textMessageList, messageLog);
-                sendObject(messageTransport, socket);
+                checkForNewMessagesInMessageLog(messageLogRequest, socket);
             }else if (messageLogRequest.isAddMembers()){
-
+                addNewMembersToMessageLog(messageLogRequest, socket);
             }else if (messageLogRequest.isRemoveMembers()){
-
+                
             }
         }catch (CouldNotAddMessageLogException | CouldNotAddMemberException | CouldNotGetMessageLogException exception) {
             String message = "Something went wrong in the " + messageLogRequest + " with the exception " + exception.getMessage() + " and class " + exception.getClass();
@@ -236,6 +225,24 @@ public class Server {
         List<String> usernames = messageLogRequest.getUsernames();
         MessageLog messageLog = conversationRegister.addNewMessageLogWithUsernames(usernames);
         sendObject(messageLog, socket);
+    }
+
+    private void addNewMembersToMessageLog(MessageLogRequest messageLogRequest, Socket socket){
+
+    }
+
+    /**
+     * Checks if a message log has new messages compared to the messagelog request.
+     * @param messageLogRequest the request that wants messages for a message log.
+     * @param socket socket that the communication is happening over.
+     * @throws CouldNotGetMessageLogException gets thrown if the message log could not be found.
+     * @throws IOException gets thrown if something goes wrong with the communication.
+     */
+    private void checkForNewMessagesInMessageLog(MessageLogRequest messageLogRequest, Socket socket) throws CouldNotGetMessageLogException, IOException {
+        MessageLog messageLog = conversationRegister.getMessageLogByLogNumber(messageLogRequest.getMessageLogNumber());
+        List<TextMessage> textMessageList = messageLog.checkForNewMessages(messageLogRequest.getListSize());
+        MessageTransport messageTransport = new MessageTransport(textMessageList, messageLog);
+        sendObject(messageTransport, socket);
     }
 
     /**
@@ -259,19 +266,17 @@ public class Server {
      * Gets the message that is sent through the socket.
      * @param socket the socket that this message is coming through.
      * @return the message this socket contains.
-     * @throws IOException gets thrown if the socket closes or cannot finish its task.
-     * @throws ClassNotFoundException gets thrown if the class cannot be found.
+     * @throws IOException gets thrown if the object could not be received.
+     * @throws InvalidResponseException gets thrown if the class could not be found for that object.
      */
-    private Object getObject(Socket socket) throws IOException, ClassNotFoundException {
+    private Object getObject(Socket socket) throws IOException, InvalidResponseException {
         try {
             ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
             Object object = objectInputStream.readObject();
             checkIfObjectIsNull(object, "object");
             return object;
-        }catch (IOException | ClassNotFoundException exception){
-            String message = "Object could not be received.";
-            logger.log(Level.WARNING, message);
-            throw exception;
+        }catch (ClassNotFoundException exception){
+            throw new InvalidResponseException("The class of the response was invalid.");
         }
     }
 

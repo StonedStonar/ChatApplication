@@ -1,7 +1,7 @@
 package no.stonedstonar.chatapplication.frontend;
 
-import javafx.scene.text.Text;
 import no.stonedstonar.chatapplication.model.*;
+import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
@@ -22,7 +22,6 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -45,7 +44,7 @@ public class ChatClient {
 
     private long messageLogFocus;
 
-    private Thread thread;
+    private Thread checkForMessagesThread;
 
     private boolean run;
 
@@ -60,8 +59,8 @@ public class ChatClient {
     }
 
     /**
-     *
-     * @param messageLogNumber
+     * Sets the message log that is active in the gui. Starts a listening thread.
+     * @param messageLogNumber the message log you want to listen for new messages on.
      */
     public void setMessageLogFocus(long messageLogNumber){
         System.out.println("Setting log number.");
@@ -70,24 +69,23 @@ public class ChatClient {
             stopThread();
         }
         messageLogFocus = messageLogNumber;
-
         try {
             PersonalMessageLog personalMessageLog = getMessageLogByLongNumber(messageLogFocus);
-            thread =  new Thread(() ->{
+            checkForMessagesThread =  new Thread(() ->{
                 checkCurrentMessageLogForUpdates(personalMessageLog);
             });
-            System.out.println("Thread starting");
-            thread.start();
-            System.out.println("Thread started");
+            checkForMessagesThread.start();
         } catch (Throwable e) {
             e.printStackTrace();
         }
     }
 
-
+    /**
+     * Sets the run boolean to false and interrupts the thread.
+     */
     public void stopThread(){
         run = false;
-        thread.interrupt();
+        checkForMessagesThread.interrupt();
     }
 
     /**
@@ -95,9 +93,9 @@ public class ChatClient {
      * @param personalMessageLog the active message log.
      */
     public void checkCurrentMessageLogForUpdates(PersonalMessageLog personalMessageLog){
-        System.out.println("Started thread");
+        //Todo: sette opp slik at hvis tiden går så og så mye skal alle loggene sjekkes etter oppdateringer.
         run = true;
-        while((run) && (!thread.isInterrupted())){
+        while((run) && (!checkForMessagesThread.isInterrupted())){
             try {
                 Thread.sleep(5000);
             } catch (InterruptedException e) {
@@ -105,9 +103,9 @@ public class ChatClient {
             }
             try (Socket socket = new Socket(localHost, portNumber)) {
                 checkMessageLogForNewMessages(personalMessageLog, socket);
-            }catch (CouldNotAddTextMessageException | IOException | ClassNotFoundException exception) {
+            }catch (CouldNotAddTextMessageException | IOException | InvalidResponseException | CouldNotGetMessageLogException exception) {
+                logWaringError(exception);
                 stopThread();
-                System.out.println(exception.getClass() + " " + exception.getMessage());
             }
         }
     }
@@ -134,15 +132,24 @@ public class ChatClient {
     }
 
     /**
+     * Logs the warning errors and throws the exception.
+     * @param exception the exception you want to log.
+     */
+    private synchronized void logWaringError(Exception exception) {
+        String message = "Something has gone wrong on the serverside " + exception.getClass() + " exception content: " + exception.getMessage();
+        logger.log(Level.WARNING, message);
+    }
+
+    /**
      * Makes a new conversation.
      * @param usernames the names of all the members of the new conversation.
      * @return the message log that this conversation is now.
      * @throws CouldNotAddMessageLogException gets thrown if the message log could not be added.
      * @throws CouldNotAddMemberException gets thrown if the members could not be added.
      * @throws IOException gets thrown if something goes wrong with the socket.
-     * @throws ClassNotFoundException gets thrown if the class could not be found for that object.
+     * @throws InvalidResponseException gets thrown if the class could not be found for that object or the response is a different object than expected.
      */
-    public void makeNewConversation(List<String> usernames) throws CouldNotAddMessageLogException, CouldNotAddMemberException, IOException, ClassNotFoundException {
+    public void makeNewConversation(List<String> usernames) throws CouldNotAddMessageLogException, CouldNotAddMemberException, IOException, InvalidResponseException {
         checkIfListIsEmptyOrNull(usernames, "usernames");
         try (Socket socket = new Socket("localhost", 1380)){
             MessageLogRequest messageLogRequest = new MessageLogRequestBuilder().setNewMessageLog(true).addUsernames(usernames).build();
@@ -157,9 +164,8 @@ public class ChatClient {
             }else {
                 throw new IllegalArgumentException("The returned object is not what excepted.");
             }
-        }catch (CouldNotAddMemberException | CouldNotAddMessageLogException | ClassNotFoundException exception){
-            String message = "Something has gone wrong on the serverside " + exception.getClass() + " exception content: " + exception.getMessage();
-            logger.log(Level.WARNING, message);
+        }catch (CouldNotAddMemberException | CouldNotAddMessageLogException | InvalidResponseException exception){
+            logWaringError(exception);
             throw exception;
         }
     }
@@ -172,12 +178,12 @@ public class ChatClient {
      * @throws CouldNotGetTextMessageException gets thrown if the server could not add the message.
      * @throws CouldNotGetMessageLogException gets thrown if the server could not get the message log.
      * @throws IOException gets thrown if something fails in the socket.
-     * @throws ClassNotFoundException gets thrown if the class could not be found for that object.
+     * @throws InvalidResponseException gets thrown if the class could not be found for that object or the response is a different object than expected.
      */
-    public void sendMessage(String messageContents, MessageLog messageLog) throws IOException, CouldNotAddTextMessageException, CouldNotGetMessageLogException, ClassNotFoundException {
+    public void sendMessage(String messageContents, MessageLog messageLog) throws IOException, CouldNotAddTextMessageException, CouldNotGetMessageLogException, InvalidResponseException {
         checkString(messageContents, "message");
         checkIfObjectIsNull(messageLog, "message log");
-        //Todo: Add a function to check if the message was added successfully.And alter the documentation.
+        //Todo: Add a function to check if the message was added successfully. And alter the documentation.
         try (Socket socket = new Socket(localHost, portNumber)){
             TextMessage textMessage = new TextMessage(messageContents, user.getUsername());
             ArrayList<TextMessage> textMessageList = new ArrayList<>();
@@ -185,21 +191,14 @@ public class ChatClient {
             MessageTransport messageTransport = new MessageTransport(textMessageList, messageLog);
             sendObject(messageTransport, socket);
             Object object = getObject(socket);
-            if (object instanceof CouldNotAddTextMessageException || object instanceof CouldNotGetMessageLogException){
-                if (object instanceof CouldNotGetMessageLogException){
-                    throw (CouldNotGetMessageLogException) object;
-                }else {
-                    throw (CouldNotAddTextMessageException) object;
-                }
+            if (object instanceof CouldNotAddTextMessageException exception){
+                throw exception;
+            }else if (object instanceof CouldNotGetMessageLogException exception){
+                throw exception;
             }
             messageLog.addMessage(textMessage);
-        } catch (IOException e) {
-            //Todo: Kanskje istedet for å kaste en exception så burde programmet håndtere denne erroren selv.
-            logger.log(Level.WARNING, "The socket failed to be made.");
-            throw e;
-        }catch (CouldNotAddTextMessageException | ClassNotFoundException | CouldNotGetMessageLogException exception){
-            String message = "Something has gone wrong on the serverside " + exception.getClass() + " exception content: " + exception.getMessage();
-            logger.log(Level.WARNING, message);
+        } catch (IOException | CouldNotAddTextMessageException | InvalidResponseException | CouldNotGetMessageLogException exception){
+            logWaringError(exception);
             throw exception;
         }
     }
@@ -220,9 +219,9 @@ public class ChatClient {
      * @param password the password that the user has.
      * @throws IOException gets thrown if the socket failed to be made.
      * @throws CouldNotLoginToUserException gets thrown if the password or username is incorrect.
-     * @throws ClassNotFoundException gets thrown if the class could not be found for that object.
+     * @throws InvalidResponseException gets thrown if the class could not be found for that object or the response is a different object than expected.
      */
-    public void loginToUser(String username, String password) throws IOException, CouldNotLoginToUserException, ClassNotFoundException, CouldNotAddMessageLogException {;
+    public void loginToUser(String username, String password) throws IOException, CouldNotLoginToUserException, InvalidResponseException {;
         checkString(username, "username");
         checkString(password, "password");
         try (Socket socket = new Socket(localHost, portNumber)){
@@ -236,10 +235,8 @@ public class ChatClient {
                 throw exception;
             }else if (object instanceof IllegalArgumentException exception){
                 throw exception;
-            }else if (object instanceof CouldNotAddMessageLogException exception){
-                throw exception;
             }
-        } catch (CouldNotLoginToUserException | IllegalArgumentException | IOException | ClassNotFoundException | CouldNotAddMessageLogException exception) {
+        } catch (CouldNotLoginToUserException | IllegalArgumentException | IOException | InvalidResponseException exception) {
             String message = "Something has gone wrong on the serverside " + exception.getClass() + " exception content: " + exception.getMessage();
             logger.log(Level.WARNING, message);
             throw exception;
@@ -249,10 +246,14 @@ public class ChatClient {
     /**
      * Checks all the message logs for new messages.
      * @throws IOException gets thrown if the socket failed to be made.
-     * @throws ClassNotFoundException gets thrown if the class could not be found.
+     * @throws InvalidResponseException gets thrown if the class could not be found for that object or the response is a different object than expected.
      * @throws CouldNotAddTextMessageException gets thrown if the text message could not be added.
+     * @throws CouldNotGetMessageLogException gets thrown if the server can't find the message log.
      */
-    public void checkForNewMessages() throws CouldNotAddTextMessageException, IOException, ClassNotFoundException {
+    //Todo: Finn en berdre måte å synkronisere meldinger på. De kan sende meldinger likt og da burde man kanskje ta basis i den siste meldingen som ble sendt fra lista?
+    // Det som kan funke er å ha en liste for hver person i samtalen. Så de er separate.
+    // Da er det dermed umulig at to meldinger kommer likt og ingen av dem får oppdateringen. 
+    public void checkForNewMessages() throws CouldNotAddTextMessageException, IOException, InvalidResponseException, CouldNotGetMessageLogException {
         try (Socket socket = new Socket(localHost, portNumber)){
             socket.setKeepAlive(true);
             List<PersonalMessageLog> messageLogList = personalConversationRegister.getMessageLogList();
@@ -264,9 +265,8 @@ public class ChatClient {
             }
             System.out.println("Closing socket");
             socket.setKeepAlive(false);
-        } catch (IOException | ClassNotFoundException | CouldNotAddTextMessageException exception) {
-            String message = "Something has gone wrong on the serverside " + exception.getClass() + " exception content: " + exception.getMessage();
-            logger.log(Level.WARNING, message);
+        } catch (IOException | InvalidResponseException | CouldNotAddTextMessageException | CouldNotGetMessageLogException exception) {
+            logWaringError(exception);
             throw exception;
         }
     }
@@ -276,23 +276,34 @@ public class ChatClient {
      * @param log the message log you want to check.
      * @param socket the socket the communication happens over.
      * @throws IOException gets thrown if the socket failed to be made.
-     * @throws ClassNotFoundException gets thrown if the class could not be found.
-     * @throws CouldNotAddTextMessageException gets thrown if the text message could not be added.
+     * @throws InvalidResponseException gets thrown if the class could not be found for that object or the response is a different object than expected.
+     * @throws CouldNotAddTextMessageException gets thrown if the text message could not be added to the local message log.
+     * @throws CouldNotGetMessageLogException gets thrown if the server cant find the message log.
      */
-    public synchronized void checkMessageLogForNewMessages(PersonalMessageLog log, Socket socket) throws IOException, ClassNotFoundException, CouldNotAddTextMessageException {
-        long size = log.getMessageList().size();
-        long messageLogNumber = log.getMessageLogNumber();
-        MessageLogRequest messageLogRequest = new MessageLogRequestBuilder().setCheckForMessages(true).addListSize(size).addMessageLogNumber(messageLogNumber).build();
-        System.out.println(messageLogNumber);
-        sendObject(messageLogRequest, socket);
-        Object object = getObject(socket);
-        if(object instanceof MessageTransport messageTransport){
-            List<TextMessage> textMessageList = messageTransport.getMessages();
-            if (!textMessageList.isEmpty()){
-                log.addAllMessages(textMessageList);
+    public synchronized void checkMessageLogForNewMessages(PersonalMessageLog log, Socket socket) throws IOException, CouldNotAddTextMessageException, CouldNotGetMessageLogException, InvalidResponseException {
+        try {
+            long size = log.getMessageList().size();
+            long messageLogNumber = log.getMessageLogNumber();
+            MessageLogRequest messageLogRequest = new MessageLogRequestBuilder().setCheckForMessages(true).addListSize(size).addMessageLogNumber(messageLogNumber).build();
+            System.out.println(messageLogNumber);
+            sendObject(messageLogRequest, socket);
+            Object object = getObject(socket);
+            if(object instanceof MessageTransport messageTransport){
+                List<TextMessage> textMessageList = messageTransport.getMessages();
+                if (!textMessageList.isEmpty()){
+                    log.addAllMessages(textMessageList);
+                }
+            }else if(object instanceof CouldNotGetMessageLogException exception){
+                throw exception;
+            }else if(object instanceof IllegalArgumentException exception){
+                throw exception;
+            }else{
+                throw new InvalidResponseException("The response from the server was invalid format.");
             }
+        }catch (CouldNotGetMessageLogException | IllegalArgumentException | CouldNotAddTextMessageException | IOException | InvalidResponseException exception){
+            logWaringError(exception);
+            throw exception;
         }
-        System.out.println("all messsages are added for " + messageLogNumber);
     }
 
     /**
@@ -301,9 +312,9 @@ public class ChatClient {
      * @return <code>true</code> if the username is taken by another user.
      *         <code>false</code> if the username is not taken by another user.
      * @throws IOException gets thrown if the socket failed to be made
-     * @throws ClassNotFoundException gets thrown if the class could not be found for that object.
+     * @throws InvalidResponseException gets thrown if the class could not be found for that object or the response is a different object than expected.
      */
-    public boolean checkUsername(String username) throws IOException, ClassNotFoundException {
+    public boolean checkUsername(String username) throws IOException, InvalidResponseException{
         checkString(username, "username");
         try (Socket socket = new Socket(localHost, portNumber)){
             UserRequest userRequest = new UserRequestBuilder().setUsername(username).setCheckUsername(true).build();
@@ -313,12 +324,12 @@ public class ChatClient {
                 return valid;
             }else if (object instanceof IllegalArgumentException exception){
                 throw exception;
-            }else{
-                throw new IllegalArgumentException("The response form the server is of a invalid format.");
+            }else {
+                //Todo: Vurder en methode som sjekker flere ganger at responsen er responsen. Det Arne forklarte
+                throw new InvalidResponseException("The response form the server is of a invalid format.");
             }
-        }catch (IOException | IllegalArgumentException | ClassNotFoundException exception){
-            String message = "Something has gone wrong on the serverside " + exception.getClass() + " exception content: " + exception.getMessage();
-            logger.log(Level.WARNING, message);
+        }catch (IOException | IllegalArgumentException | InvalidResponseException exception){
+            logWaringError(exception);
             throw exception;
         }
     }
@@ -328,24 +339,26 @@ public class ChatClient {
      * @param username the username the user wants.
      * @param password the password of the user.
      * @throws IOException gets thrown if the socket failed to be made
-     * @throws ClassNotFoundException gets thrown if the class could not be found for that object.
+     * @throws InvalidResponseException gets thrown if the class could not be found for that object or the response is a different object than expected.
      */
-    public void makeNewUser(String username, String password) throws IOException, ClassNotFoundException, CouldNotLoginToUserException, CouldNotAddUserException {
+    public void makeNewUser(String username, String password) throws IOException, CouldNotLoginToUserException, CouldNotAddUserException, InvalidResponseException {
         try (Socket socket = new Socket(localHost, 1380)){
             checkString(username, "username");
             checkString(password, "password");
             UserRequest userRequest = new UserRequestBuilder().setNewUser(true).setUsername(username).setPassword(password).build();
             sendObject(userRequest, socket);
             Object object = getObject(socket);
-            if (object instanceof IllegalArgumentException exception){
-                throw exception;
-            }else if (object instanceof CouldNotAddUserException exception) {
-                throw exception;
+            if (!(object instanceof Boolean)){
+                if (object instanceof IllegalArgumentException exception){
+                    throw exception;
+                }else if (object instanceof CouldNotAddUserException exception) {
+                    throw exception;
+                }else {
+                    throw new InvalidResponseException("The response from the sever was of the wrong class.");
+                }
             }
-        }catch (IOException | IllegalArgumentException | ClassNotFoundException | CouldNotAddUserException exception){
-            //Todo: lag en handler
-            String message = "Something has gone wrong on the serverside " + exception.getClass() + " exception content: " + exception.getMessage();
-            logger.log(Level.WARNING, message);
+        }catch (IOException | IllegalArgumentException | CouldNotAddUserException | InvalidResponseException exception){
+            logWaringError(exception);
             throw exception;
         }
     }
@@ -369,13 +382,17 @@ public class ChatClient {
      * @param socket the socket that this message is coming through.
      * @return the message this socket contains.
      * @throws IOException gets thrown if the object could not be received.
-     * @throws ClassNotFoundException gets thrown if the class could not be found for that object.
+     * @throws InvalidResponseException gets thrown if the class could not be found for that object.
      */
-    private Object getObject(Socket socket) throws IOException, ClassNotFoundException {
-        ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
-        Object object = objectInputStream.readObject();
-        checkIfObjectIsNull(object, "object");
-        return object;
+    private Object getObject(Socket socket) throws IOException, InvalidResponseException {
+        try {
+            ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
+            Object object = objectInputStream.readObject();
+            checkIfObjectIsNull(object, "object");
+            return object;
+        }catch (ClassNotFoundException exception){
+            throw new InvalidResponseException("The class of the response was invalid.");
+        }
     }
 
     /**

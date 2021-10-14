@@ -4,6 +4,7 @@ import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import no.stonedstonar.chatapplication.frontend.ChatClient;
+import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
@@ -77,12 +78,12 @@ public class NewUserController implements Controller{
             }catch (IOException exception){
                 //Todo: Fix all the exceptions here too.
 
-            } catch (ClassNotFoundException e) {
+            }catch (CouldNotLoginToUserException exception) {
+                exception.printStackTrace();
+            }catch (CouldNotAddUserException exception) {
+                exception.printStackTrace();
+            }catch (InvalidResponseException e) {
                 e.printStackTrace();
-            } catch (CouldNotLoginToUserException exception) {
-                exception.printStackTrace();
-            } catch (CouldNotAddUserException exception) {
-                exception.printStackTrace();
             }
         });
         cancelButton.setOnAction(actionEvent -> {
@@ -158,7 +159,7 @@ public class NewUserController implements Controller{
                 } catch (IOException e) {
                     //Todo: Fix all the exceptions
                     e.printStackTrace();
-                } catch (ClassNotFoundException e) {
+                } catch (InvalidResponseException e) {
                     e.printStackTrace();
                 }
             }
