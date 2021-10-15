@@ -138,8 +138,19 @@ public class ChatController implements Controller, ConversationObserver, Message
         }
     }
 
-    private void makeErrorAlert(){
-        Alert alert = new Alert()
+    /**
+     * Makes an alert and shows the input.
+     * @param alertType the alert type this alert should be.
+     * @param title the title of the alert.
+     * @param headerTitle the header title of the alert.
+     * @param contentText the main text of the alert.
+     */
+    private void makeAlertAndShow(Alert.AlertType alertType, String title, String headerTitle, String contentText){
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(headerTitle);
+        alert.setContentText(contentText);
+        alert.show();
     }
 
     /**
