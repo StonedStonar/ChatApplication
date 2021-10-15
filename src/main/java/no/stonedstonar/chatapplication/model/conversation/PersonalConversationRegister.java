@@ -1,8 +1,9 @@
-package no.stonedstonar.chatapplication.model;
+package no.stonedstonar.chatapplication.model.conversation;
 
+import no.stonedstonar.chatapplication.model.message.PersonalMessageLog;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
-import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotRemoveMessageLogException;
+import no.stonedstonar.chatapplication.model.message.MessageLog;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -18,7 +19,7 @@ public class PersonalConversationRegister implements ObservableConversation, Ser
 
     private List<ConversationObserver> conversationObservers;
 
-    private MessageLog messageLog;
+    private PersonalMessageLog personalMessageLog;
 
     private volatile List<PersonalMessageLog> personalMessageLogs;
 
@@ -55,7 +56,7 @@ public class PersonalConversationRegister implements ObservableConversation, Ser
         PersonalMessageLog personalMessageLog = new PersonalMessageLog(messageLog);
         if (!personalMessageLogs.stream().anyMatch(log -> log.getMessageLogNumber() == messageLog.getMessageLogNumber())){
             personalMessageLogs.add(personalMessageLog);
-            this.messageLog = messageLog;
+            this.personalMessageLog = personalMessageLog;
             removed = false;
             notifyObservers();
         }else {
@@ -104,9 +105,14 @@ public class PersonalConversationRegister implements ObservableConversation, Ser
 
     @Override
     public void notifyObservers() {
-        conversationObservers.forEach(obs -> obs.updateMessageLog(messageLog, removed));
+        conversationObservers.forEach(obs -> obs.updateMessageLog(personalMessageLog, removed));
     }
 
+    @Override
+    public boolean checkIfObjectIsObserver(ConversationObserver conversationObserver) {
+        checkIfObjectIsNull(conversationObserver, "conversation observer");
+        return conversationObservers.stream().anyMatch(obs -> obs.equals(conversationObserver));
+    }
 
 
     /**

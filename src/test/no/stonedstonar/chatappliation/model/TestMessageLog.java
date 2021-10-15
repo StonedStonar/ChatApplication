@@ -1,7 +1,7 @@
 package no.stonedstonar.chatappliation.model;
 
-import no.stonedstonar.chatapplication.model.MessageLog;
-import no.stonedstonar.chatapplication.model.TextMessage;
+import no.stonedstonar.chatapplication.model.message.MessageLog;
+import no.stonedstonar.chatapplication.model.message.TextMessage;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotAddTextMessageException;
 import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotGetTextMessageException;
@@ -9,7 +9,6 @@ import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotRemov
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.w3c.dom.Text;
 
 import java.time.LocalDate;
 import java.time.LocalTime;

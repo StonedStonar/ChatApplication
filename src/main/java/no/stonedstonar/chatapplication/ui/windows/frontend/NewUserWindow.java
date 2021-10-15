@@ -1,16 +1,16 @@
-package no.stonedstonar.chatapplication.ui.windows;
+package no.stonedstonar.chatapplication.ui.windows.frontend;
 
 import javafx.scene.Scene;
 import no.stonedstonar.chatapplication.ui.controllers.Controller;
-import no.stonedstonar.chatapplication.ui.controllers.LoginController;
-import no.stonedstonar.chatapplication.ui.controllers.NewUserController;
+import no.stonedstonar.chatapplication.ui.controllers.frontend.NewUserController;
+import no.stonedstonar.chatapplication.ui.windows.Window;
 
 /**
- *
+ * Represents the new user window.
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
-public class NewUserWindow implements Window{
+public class NewUserWindow implements Window {
 
     private String fxmlFileName;
 

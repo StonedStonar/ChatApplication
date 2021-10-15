@@ -1,6 +1,7 @@
 package no.stonedstonar.chatapplication.backend;
 
-import no.stonedstonar.chatapplication.model.*;
+import javafx.application.Platform;
+import no.stonedstonar.chatapplication.model.conversation.ConversationRegister;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
@@ -8,10 +9,11 @@ import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMes
 import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotAddTextMessageException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
-import no.stonedstonar.chatapplication.model.networktransport.LoginTransport;
-import no.stonedstonar.chatapplication.model.networktransport.MessageLogRequest;
-import no.stonedstonar.chatapplication.model.networktransport.MessageTransport;
-import no.stonedstonar.chatapplication.model.networktransport.UserRequest;
+import no.stonedstonar.chatapplication.model.message.MessageLog;
+import no.stonedstonar.chatapplication.model.message.TextMessage;
+import no.stonedstonar.chatapplication.model.networktransport.*;
+import no.stonedstonar.chatapplication.model.User;
+import no.stonedstonar.chatapplication.model.UserRegister;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -20,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -29,7 +30,7 @@ import java.util.logging.Logger;
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
-public class Server {
+public class Server implements ObservableServer{
 
     private ServerSocket welcomeSocket;
 
@@ -38,6 +39,16 @@ public class Server {
     private volatile ConversationRegister conversationRegister;
 
     private volatile Logger logger;
+
+    private boolean run;
+
+    private List<ServerObserver> serverObservers;
+
+    private volatile String message;
+
+    private volatile Level level;
+
+    private ExecutorService executors;
 
     public static void main(String[] args) {
         Server server = new Server();
@@ -51,10 +62,13 @@ public class Server {
         logger = Logger.getLogger(getClass().toString());
         userRegister = new UserRegister();
         conversationRegister = new ConversationRegister();
+        run = true;
+        serverObservers = new ArrayList<>();
+        executors = Executors.newFixedThreadPool(8);
         try {
             welcomeSocket = new ServerSocket(1380);
         }catch (IOException exception){
-            logger.log(Level.SEVERE, "Could not open the server socket. Please restart the server.");
+            logEvent(Level.SEVERE, "Could not open the server socket. Please restart the server.");
         }
     }
 
@@ -84,7 +98,7 @@ public class Server {
             messageLogs.get(0).addMessage(new TextMessage("So funny bjarne", "bass"));
         }catch (Exception exception){
             String message = "The test data could not be added " + exception.getClass() + " exception message: " + exception.getMessage();
-            logger.log(Level.SEVERE, message);
+            logEvent(Level.SEVERE, message);
         }
     }
 
@@ -92,13 +106,12 @@ public class Server {
      * Makes the server run and accept incoming communication.
      */
     public void run(){
-        boolean run = true;
         addTestData();
         try {
             while (run){
                 Socket client = welcomeSocket.accept();
-                System.out.println("Message received from a new client.");
-                Thread clientThread = new Thread(() -> {
+                logEvent(Level.FINE, "Message received from a new client.");
+                executors.submit(()->{
                     try {
                         handleConnection(client);
                     }catch (IOException | InvalidResponseException exception){
@@ -106,18 +119,35 @@ public class Server {
                             try {
                                 client.close();
                             } catch (IOException e) {
-                                logger.log(Level.SEVERE, "A client connection cannot be closed.");
+                                logEvent(Level.SEVERE, "A client connection cannot be closed.");
                             }
                         }
                     }
                 });
-                clientThread.start();
+
             }
-            System.out.println("Server shutting down");
         }catch (IOException exception){
             String message = "The server has crashed and gotten the following exception class: " + exception.getClass() + " and message: " + exception.getMessage();
-            logger.log(Level.SEVERE, message);
+            logEvent(Level.SEVERE, message);
         }
+    }
+
+    /**
+     * Stops the server
+     */
+    public synchronized void stopServer(){
+        Platform.runLater(()->{
+            run = false;
+            executors.shutdown();
+            while (!executors.isTerminated()){
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+
+                }
+            }
+            logEvent(Level.FINE, "Server is shutting down.");
+        });
     }
 
     /**
@@ -128,20 +158,19 @@ public class Server {
      */
     private void handleConnection(Socket socket) throws IOException, InvalidResponseException {
         do{
-            if (socket.getInputStream().available() > 0) {
-                Object object = getObject(socket);
-                if(object instanceof MessageTransport messageTransport){
-                    handleIncomingMessage(messageTransport, socket);
-                }else if (object instanceof UserRequest userRequest){
-                    handleUserInteraction(userRequest, socket);
-                }else if (object instanceof MessageLogRequest messageLogRequest){
-                    handleMessageLogInteraction(messageLogRequest, socket);
-                }else {
-
-                    throw new IllegalArgumentException("NONE IS A VALID OBJECT");
-                }
+            Object object = getObject(socket);
+            if(object instanceof MessageTransport messageTransport){
+                handleIncomingMessage(messageTransport, socket);
+            }else if (object instanceof UserRequest userRequest){
+                handleUserInteraction(userRequest, socket);
+            }else if (object instanceof MessageLogRequest messageLogRequest){
+                handleMessageLogInteraction(messageLogRequest, socket);
+            }else if (object instanceof SetKeepAliveRequest setKeepAliveRequest) {
+                socket.setKeepAlive(setKeepAliveRequest.isKeepAlive());
+            }else {
+                throw new IllegalArgumentException("NONE IS A VALID OBJECT");
             }
-        }while (!socket.isClosed());
+        }while (socket.getKeepAlive());
     }
 
     /**
@@ -160,7 +189,7 @@ public class Server {
             sendObject(messageTransport, socket);
         }catch (CouldNotAddTextMessageException | CouldNotGetMessageLogException exception){
             String message = "Something went wrong in adding " + messageTransport.getMessages().size() + " with the exception " + exception.getMessage() + " and class " + exception.getClass();
-            logger.log(Level.WARNING, message);
+            logEvent(Level.WARNING, message);
             sendObject(exception, socket);
         }
     }
@@ -187,7 +216,7 @@ public class Server {
             }
         }catch (CouldNotLoginToUserException | IllegalArgumentException | CouldNotAddUserException exception){
             String message = "Something went wrong in the " + userRequest + " with the exception " + exception.getMessage() + " and class " + exception.getClass();
-            logger.log(Level.WARNING, message);
+            logEvent(Level.WARNING, message);
             sendObject(exception, socket);
         }
     }
@@ -211,7 +240,7 @@ public class Server {
             }
         }catch (CouldNotAddMessageLogException | CouldNotAddMemberException | CouldNotGetMessageLogException exception) {
             String message = "Something went wrong in the " + messageLogRequest + " with the exception " + exception.getMessage() + " and class " + exception.getClass();
-            logger.log(Level.WARNING, message);
+            logEvent(Level.WARNING, message);
             sendObject(exception, socket);
         }
     }
@@ -260,7 +289,7 @@ public class Server {
             objectOutputStream.writeObject(object);
         }catch (IOException exception){
             String message = "Object could not be sent. " + object.getClass();
-            logger.log(Level.WARNING, message);
+            logEvent(Level.WARNING, message);
             throw exception;
         }
     }
@@ -284,15 +313,15 @@ public class Server {
     }
 
     /**
-     * Checks if a string is of a valid format or not.
-     * @param stringToCheck the string you want to check.
-     * @param errorPrefix the error the exception should have if the string is invalid.
+     * Logs an error or event in this server.
+     * @param level the level the message should have.
+     * @param message the message.
      */
-    private void checkString(String stringToCheck, String errorPrefix){
-        checkIfObjectIsNull(stringToCheck, errorPrefix);
-        if (stringToCheck.isEmpty()){
-            throw new IllegalArgumentException("The " + errorPrefix + " cannot be empty.");
-        }
+    private synchronized void logEvent(Level level, String message ){
+        logger.log(level, message);
+        this.level = level;
+        this.message = message;
+        notifyObservers();
     }
 
     /**
@@ -304,5 +333,38 @@ public class Server {
         if (object == null){
             throw new IllegalArgumentException("The " + error + " cannot be null.");
         }
+    }
+
+    @Override
+    public void registerObserver(ServerObserver serverObserver) {
+        checkIfObjectIsNull(serverObserver, "server observer");
+        if (!serverObservers.contains(serverObserver)){
+            serverObservers.add(serverObserver);
+        }else {
+            throw new IllegalArgumentException("The server observer is already a observer of this server.");
+        }
+    }
+
+    @Override
+    public void removeObserver(ServerObserver serverObserver) {
+        checkIfObjectIsNull(serverObserver, "server observer");
+        if (serverObservers.contains(serverObserver)){
+            serverObservers.remove(serverObserver);
+        }else {
+            throw new IllegalArgumentException("The server observer is not a observer of this server.");
+        }
+    }
+
+    @Override
+    public void notifyObservers() {
+        for (ServerObserver serverObserver : serverObservers) {
+            serverObserver.updateMessage(message, level);
+        }
+    }
+
+    @Override
+    public boolean checkIfObjectIsObserver(ServerObserver serverObserver) {
+        checkIfObjectIsNull(serverObserver, "server observer");
+        return serverObservers.stream().anyMatch(obs -> obs.equals(serverObserver));
     }
 }

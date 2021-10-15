@@ -1,4 +1,7 @@
-package no.stonedstonar.chatapplication.model;
+package no.stonedstonar.chatapplication.model.conversation;
+
+import no.stonedstonar.chatapplication.model.message.PersonalMessageLog;
+
 /**
  *
  * @version 0.1
@@ -12,5 +15,5 @@ public interface ConversationObserver {
      * @param removed <code>true</code> if the message log was removed.
      *                <code>false</code> if the message log was added.
      */
-    void updateMessageLog(MessageLog messageLog, boolean removed);
+    void updateMessageLog(PersonalMessageLog messageLog, boolean removed);
 }

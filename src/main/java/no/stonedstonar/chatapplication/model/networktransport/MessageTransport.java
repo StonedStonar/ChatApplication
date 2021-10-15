@@ -1,8 +1,7 @@
 package no.stonedstonar.chatapplication.model.networktransport;
 
-import javafx.scene.text.Text;
-import no.stonedstonar.chatapplication.model.TextMessage;
-import no.stonedstonar.chatapplication.model.MessageLog;
+import no.stonedstonar.chatapplication.model.message.TextMessage;
+import no.stonedstonar.chatapplication.model.message.MessageLog;
 
 import java.io.Serializable;
 import java.util.List;

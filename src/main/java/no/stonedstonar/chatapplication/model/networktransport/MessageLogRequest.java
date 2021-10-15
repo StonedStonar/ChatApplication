@@ -24,7 +24,7 @@ public class MessageLogRequest implements Serializable {
 
     private List<String> usernames;
 
-    private long listSize;
+    private int listSize;
 
     private long messageLogNumber;
 
@@ -55,7 +55,7 @@ public class MessageLogRequest implements Serializable {
      * Gets the size of the message log that you want to check.
      * @return the size of the message log.
      */
-    public long getListSize(){
+    public int getListSize(){
         return listSize;
     }
 

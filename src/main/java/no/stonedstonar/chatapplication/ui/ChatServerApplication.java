@@ -2,12 +2,14 @@ package no.stonedstonar.chatapplication.ui;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
+import javafx.fxml.LoadException;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import no.stonedstonar.chatapplication.frontend.ChatClient;
+import no.stonedstonar.chatapplication.backend.Server;
 import no.stonedstonar.chatapplication.ui.controllers.Controller;
-import no.stonedstonar.chatapplication.ui.windows.frontend.LoginWindow;
+import no.stonedstonar.chatapplication.ui.controllers.frontend.ChatController;
 import no.stonedstonar.chatapplication.ui.windows.Window;
+import no.stonedstonar.chatapplication.ui.windows.backend.ServerWindow;
 
 import java.io.IOException;
 
@@ -16,53 +18,54 @@ import java.io.IOException;
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
-public class ChatApplicationClient extends Application {
-
-    private static volatile ChatApplicationClient chatApplicationClient;
-
-    private ChatClient chatClient;
+public class ChatServerApplication extends Application {
 
     private Stage stage;
 
+    private Server server;
+
+    private static volatile ChatServerApplication chatServerApplication;
+
     /**
-     * Makes an instance of the ChatApplicationGUI app.
+      * Makes an instance of the ChatServerApplication class.
+      */
+    public ChatServerApplication(){
+        server = new Server();
+        chatServerApplication = this;
+    }
+
+    /**
+     * Gets the chat server app object.
+     * @return the chat server app.
      */
-    public ChatApplicationClient(){
-        chatClient = new ChatClient();
-        chatApplicationClient = this;
+    public static ChatServerApplication getChatServerApplication() {
+        return chatServerApplication;
+    }
+
+    /**
+     * Gets the server from the server app.
+     * @return the server this app holds.
+     */
+    public Server getServer(){
+        return server;
+    }
+
+    @Override
+    public void stop() throws Exception {
+        super.stop();
+        server.stopServer();
     }
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        stage = primaryStage;
         try {
-            setNewScene(LoginWindow.getLoginWindow());
-            primaryStage.show();
-        }catch (Exception exception){
-            //Todo: Something
-            System.out.print("Exception hell. " +  exception.getClass() + " " + exception.getMessage());
+            stage = primaryStage;
+            setNewScene(ServerWindow.getServerWindow());
+            //server.run();
+            stage.show();
+        }catch (LoadException exception){
+            System.out.println(exception.getClass() + " " + exception.getMessage());
         }
-    }
-
-    /**
-     * Gets the chat app object.
-     * @return the chat app.
-     */
-    public static ChatApplicationClient getChatApplication(){
-        if (chatApplicationClient == null){
-            synchronized (ChatApplicationClient.class){
-                chatApplicationClient = new ChatApplicationClient();
-            }
-        }
-        return chatApplicationClient;
-    }
-
-    /**
-     * Gets the chat client and can call methods from it.
-     * @return the chat client of this application.
-     */
-    public ChatClient getChatClient(){
-        return chatClient;
     }
 
     /**
@@ -100,10 +103,9 @@ public class ChatApplicationClient extends Application {
     private Scene loadScene(String fullNameOfFile, Controller controller) throws IOException {
         FXMLLoader loader = new FXMLLoader(getClass().getResource(fullNameOfFile));
         loader.setController(controller);
-        Scene newScene = new Scene(loader.load());
-        return newScene;
+        return new Scene(loader.load());
     }
-    
+
     /**
      * Checks if a string is of a valid format or not.
      * @param stringToCheck the string you want to check.
@@ -115,16 +117,7 @@ public class ChatApplicationClient extends Application {
             throw new IllegalArgumentException("The " + errorPrefix + " cannot be empty.");
         }
     }
-
-    @Override
-    public void stop() throws Exception {
-        super.stop();
-        chatClient.stopThread();
-        while (!chatClient.checkIfThreadIsStopped()){
-            Thread.sleep(50);
-        }
-    }
-
+    
     /**
      * Checks if an object is null.
      * @param object the object you want to check.

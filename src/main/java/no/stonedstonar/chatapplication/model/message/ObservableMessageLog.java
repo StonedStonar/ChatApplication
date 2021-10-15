@@ -1,4 +1,6 @@
-package no.stonedstonar.chatapplication.model;
+package no.stonedstonar.chatapplication.model.message;
+
+import no.stonedstonar.chatapplication.model.message.MessageObserver;
 
 /**
  * An interface that represents what an observable message log should do.

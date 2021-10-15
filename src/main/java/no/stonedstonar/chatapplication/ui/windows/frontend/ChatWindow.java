@@ -1,15 +1,16 @@
-package no.stonedstonar.chatapplication.ui.windows;
+package no.stonedstonar.chatapplication.ui.windows.frontend;
 
 import javafx.scene.Scene;
+import no.stonedstonar.chatapplication.ui.controllers.frontend.ChatController;
 import no.stonedstonar.chatapplication.ui.controllers.Controller;
-import no.stonedstonar.chatapplication.ui.controllers.LoginController;
+import no.stonedstonar.chatapplication.ui.windows.Window;
 
 /**
- *
+ * Represents the chat window.
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
-public class LoginWindow implements Window{
+public class ChatWindow implements Window {
 
     private String fxmlFileName;
 
@@ -19,30 +20,29 @@ public class LoginWindow implements Window{
 
     private String titleOfScene;
 
-    private static volatile LoginWindow loginWindow;
+    private static volatile ChatWindow chatWindow;
 
     /**
-      * Makes an instance of the LoginWindow class.
+      * Makes an instance of the ChatWindow class.
       */
-    private LoginWindow(){
-        titleOfScene = "Login";
-        controller = new LoginController();
-        fxmlFileName = "loginWindow";
+    public ChatWindow(){
+        titleOfScene = "Chatting";
+        controller = new ChatController();
+        fxmlFileName = "chatWindow";
     }
 
     /**
-     * Gets the login window.
-     * @return the login window.
+     * Makes an instance of the ChatWindow class.
+     * @return the window.
      */
-    public static LoginWindow getLoginWindow(){
-        if (loginWindow == null){
-            synchronized (LoginWindow.class){
-                loginWindow = new LoginWindow();
+    public static ChatWindow getChatWindow(){
+        if (chatWindow == null){
+            synchronized (ChatWindow.class){
+                chatWindow = new ChatWindow();
             }
         }
-        return loginWindow;
+        return chatWindow;
     }
-
 
     @Override
     public Controller getController() {

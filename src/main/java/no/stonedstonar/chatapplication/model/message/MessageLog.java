@@ -1,6 +1,6 @@
-package no.stonedstonar.chatapplication.model;
+package no.stonedstonar.chatapplication.model.message;
 
-import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
+import no.stonedstonar.chatapplication.model.MembersRegister;
 import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotAddTextMessageException;
 import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotGetTextMessageException;
 import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotRemoveTextMessageException;
@@ -10,7 +10,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Observer;
 import java.util.Optional;
 
 /**
@@ -33,7 +32,7 @@ public class MessageLog implements Serializable {
      * @param messageLogNumber the number this message log should have.
       */
     public MessageLog(long messageLogNumber){
-        checkIfLongIsNegative(messageLogNumber, "messagelog number", false);
+        checkIfLongIsNegative(messageLogNumber, "messagelog number");
         textMessageList = new ArrayList<>();
         membersRegister = new MembersRegister();
         this.messageLogNumber = messageLogNumber;
@@ -98,9 +97,11 @@ public class MessageLog implements Serializable {
      * @param sizeOfList the size of the other message log.
      * @return a list with the new text messages.
      */
-    public List<TextMessage> checkForNewMessages(long sizeOfList){
+    public List<TextMessage> checkForNewMessages(int sizeOfList){
         List<TextMessage> newTextMessages = new ArrayList<>();
-        checkIfLongIsNegative(sizeOfList, "size of list", true);
+        if (sizeOfList < 0){
+            checkIfLongIsNegative(sizeOfList, "size of list");
+        }
         if (textMessageList.size() > sizeOfList){
             int sizeOfTextMessages = textMessageList.size();
             long counter = sizeOfList;
@@ -194,16 +195,11 @@ public class MessageLog implements Serializable {
      * @param number the number to check.
      * @param prefix the prefix the error should have.
      */
-    protected void checkIfLongIsNegative(long number, String prefix, boolean underZero){
-        if(underZero){
-            if (number < 0){
-                throw new IllegalArgumentException("Expected the " + prefix + " to be larger than -1.");
-            }
-        }else{
-            if (number <= 0){
-                throw new IllegalArgumentException("Expected the " + prefix + " to be larger than zero.");
-            }
+    protected void checkIfLongIsNegative(long number, String prefix){
+        if (number <= 0){
+            throw new IllegalArgumentException("Expected the " + prefix + " to be larger than zero.");
         }
+
     }
 
     /**

@@ -1,7 +1,6 @@
 package no.stonedstonar.chatapplication.frontend;
 
-import javafx.application.Platform;
-import no.stonedstonar.chatapplication.model.*;
+import no.stonedstonar.chatapplication.model.conversation.PersonalConversationRegister;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
@@ -10,12 +9,13 @@ import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotAddTe
 import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotGetTextMessageException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
-import no.stonedstonar.chatapplication.model.networktransport.LoginTransport;
-import no.stonedstonar.chatapplication.model.networktransport.MessageLogRequest;
-import no.stonedstonar.chatapplication.model.networktransport.MessageTransport;
-import no.stonedstonar.chatapplication.model.networktransport.UserRequest;
+import no.stonedstonar.chatapplication.model.message.MessageLog;
+import no.stonedstonar.chatapplication.model.message.PersonalMessageLog;
+import no.stonedstonar.chatapplication.model.message.TextMessage;
+import no.stonedstonar.chatapplication.model.networktransport.*;
 import no.stonedstonar.chatapplication.model.networktransport.builder.MessageLogRequestBuilder;
 import no.stonedstonar.chatapplication.model.networktransport.builder.UserRequestBuilder;
+import no.stonedstonar.chatapplication.model.User;
 
 import java.io.*;
 import java.net.*;
@@ -46,6 +46,10 @@ public class ChatClient {
 
     private Thread checkForMessagesThread;
 
+    private boolean runThread;
+
+    private boolean threadStopped;
+
     /**
       * Makes an instance of the ChatClient class.
       */
@@ -55,6 +59,24 @@ public class ChatClient {
         localHost = "localhost";
         portNumber = 1380;
         messageLogFocus = 0;
+        threadStopped = true;
+    }
+
+    /**
+     * Logs the user out and clears all the data.
+     */
+    public void logOutOfUser(){
+        stopThread();
+        messageLogFocus = 0;
+        while (!threadStopped){
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                logWaringError(e);
+            }
+        }
+        user = null;
+        personalConversationRegister = null;
     }
 
     /**
@@ -64,13 +86,17 @@ public class ChatClient {
     public void setMessageLogFocus(long messageLogNumber){
         System.out.println("Setting log number.");
         stopThread();
-        try {
-            Thread.sleep(200);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        while(!threadStopped){
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
         messageLogFocus = messageLogNumber;
         try {
+            threadStopped = false;
+            runThread = true;
             PersonalMessageLog personalMessageLog = getMessageLogByLongNumber(messageLogFocus);
             checkForMessagesThread =  new Thread(() ->{
                 checkCurrentMessageLogForUpdates(personalMessageLog);
@@ -85,7 +111,16 @@ public class ChatClient {
      * Sets the run boolean to false and interrupts the thread.
      */
     public void stopThread(){
-        run
+        runThread = false;
+    }
+
+    /**
+     * Checks if the listening thread is stopped.
+     * @return <code>true</code> if the thread is stopped.
+     *         <code>false</code> if the thread is still running.
+     */
+    public boolean checkIfThreadIsStopped(){
+        return threadStopped;
     }
 
     /**
@@ -94,19 +129,24 @@ public class ChatClient {
      */
     public void checkCurrentMessageLogForUpdates(PersonalMessageLog personalMessageLog){
         //Todo: sette opp slik at hvis tiden går så og så mye skal alle loggene sjekkes etter oppdateringer.
+        int count = 0;
         do {
             try {
+                if (count > 2){
+                    checkForNewMessages();
+                    count = 0;
+                }else {
+                    Socket socket = new Socket(localHost, portNumber);
+                    checkMessageLogForNewMessages(personalMessageLog, socket);
+                    count += 1;
+                }
                 Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                stopThread();
-            }
-            try (Socket socket = new Socket(localHost, portNumber)) {
-                checkMessageLogForNewMessages(personalMessageLog, socket);
-            }catch (CouldNotAddTextMessageException | IOException | InvalidResponseException | CouldNotGetMessageLogException exception) {
+            }catch (CouldNotAddTextMessageException | IOException | InvalidResponseException | CouldNotGetMessageLogException | InterruptedException exception){
                 logWaringError(exception);
                 stopThread();
             }
-        } while(!checkForMessagesThread.isInterrupted());
+        } while(runThread);
+        threadStopped = true;
     }
 
     /**
@@ -173,7 +213,6 @@ public class ChatClient {
      * Sends a message to a person if this client is logged in.
      * @param messageContents the contents of the message.
      * @param messageLog the message log that holds the message log number.
-     * @throws SocketException gets thrown if the socket could not be made.
      * @throws CouldNotGetTextMessageException gets thrown if the server could not add the message.
      * @throws CouldNotGetMessageLogException gets thrown if the server could not get the message log.
      * @throws IOException gets thrown if something fails in the socket.
@@ -257,6 +296,8 @@ public class ChatClient {
     public void checkForNewMessages() throws CouldNotAddTextMessageException, IOException, InvalidResponseException, CouldNotGetMessageLogException {
         try (Socket socket = new Socket(localHost, portNumber)){
             socket.setKeepAlive(true);
+            SetKeepAliveRequest setKeepAliveRequest = new SetKeepAliveRequest(true);
+            sendObject(setKeepAliveRequest, socket);
             List<PersonalMessageLog> messageLogList = personalConversationRegister.getMessageLogList();
             Iterator<PersonalMessageLog> it = messageLogList.iterator();
             while(it.hasNext()) {
@@ -264,8 +305,9 @@ public class ChatClient {
                 checkMessageLogForNewMessages(log, socket);
                 System.out.println("While");
             }
+            SetKeepAliveRequest notKeepAlive = new SetKeepAliveRequest(false);
+            sendObject(notKeepAlive, socket);
             System.out.println("Closing socket");
-            socket.setKeepAlive(false);
         } catch (IOException | InvalidResponseException | CouldNotAddTextMessageException | CouldNotGetMessageLogException exception) {
             logWaringError(exception);
             throw exception;
@@ -283,7 +325,7 @@ public class ChatClient {
      */
     public synchronized void checkMessageLogForNewMessages(PersonalMessageLog log, Socket socket) throws IOException, CouldNotAddTextMessageException, CouldNotGetMessageLogException, InvalidResponseException {
         try {
-            long size = log.getMessageList().size();
+            int size = log.getMessageList().size();
             long messageLogNumber = log.getMessageLogNumber();
             MessageLogRequest messageLogRequest = new MessageLogRequestBuilder().setCheckForMessages(true).addListSize(size).addMessageLogNumber(messageLogNumber).build();
             System.out.println(messageLogNumber);
@@ -342,7 +384,7 @@ public class ChatClient {
      * @throws IOException gets thrown if the socket failed to be made
      * @throws InvalidResponseException gets thrown if the class could not be found for that object or the response is a different object than expected.
      */
-    public void makeNewUser(String username, String password) throws IOException, CouldNotLoginToUserException, CouldNotAddUserException, InvalidResponseException {
+    public void makeNewUser(String username, String password) throws IOException, CouldNotAddUserException, InvalidResponseException {
         try (Socket socket = new Socket(localHost, 1380)){
             checkString(username, "username");
             checkString(password, "password");

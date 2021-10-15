@@ -1,4 +1,4 @@
-package no.stonedstonar.chatapplication.ui.controllers;
+package no.stonedstonar.chatapplication.ui.controllers.frontend;
 
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
@@ -10,12 +10,12 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import no.stonedstonar.chatapplication.frontend.ChatClient;
-import no.stonedstonar.chatapplication.model.MessageLog;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
-import no.stonedstonar.chatapplication.ui.windows.ChatWindow;
+import no.stonedstonar.chatapplication.ui.controllers.Controller;
+import no.stonedstonar.chatapplication.ui.windows.frontend.ChatWindow;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ import java.util.Map;
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
-public class ConversationController implements Controller{
+public class ConversationController implements Controller {
 
     @FXML
     private Label usernameLabel;
@@ -73,6 +73,14 @@ public class ConversationController implements Controller{
     public ConversationController(){
         validFields = new HashMap<>();
         usernames = new ArrayList<>();
+    }
+
+    /**
+     * Sets all the fields to empty.
+     */
+    public void setAllFieldsEmpty(){
+        usernameField.textProperty().set("");
+        conversationField.textProperty().set("");
     }
 
     /**
@@ -136,14 +144,13 @@ public class ConversationController implements Controller{
                 chatClient.makeNewConversation(usernames);
                 ChatApplicationClient.getChatApplication().setNewScene(ChatWindow.getChatWindow());
             } catch (CouldNotAddMessageLogException exception) {
-                //Todo: Fix all exceptions
-                exception.printStackTrace();
+                AlertTemplates.makeAndShowCouldNotGetMessageLogExceptionAlert();
             } catch (IOException exception) {
-                exception.printStackTrace();
+                AlertTemplates.makeAndShowCouldNotConnectToServerAlert();
             } catch (CouldNotAddMemberException exception) {
-                exception.printStackTrace();
+                AlertTemplates.makeAndShowCriticalErrorAlert(exception);
             } catch (InvalidResponseException e) {
-                e.printStackTrace();
+                AlertTemplates.makeAndShowInvalidResponseFromTheServer();
             }
         });
     }
@@ -276,32 +283,10 @@ public class ConversationController implements Controller{
             makeConversationButton.setDisable(true);
         }
     }
-    
-    /**
-     * Checks if a string is of a valid format or not.
-     * @param stringToCheck the string you want to check.
-     * @param errorPrefix the error the exception should have if the string is invalid.
-     */
-    private void checkString(String stringToCheck, String errorPrefix){
-        checkIfObjectIsNull(stringToCheck, errorPrefix);
-        if (stringToCheck.isEmpty()){
-            throw new IllegalArgumentException("The " + errorPrefix + " cannot be empty.");
-        }
-    }
-    
-    /**
-     * Checks if an object is null.
-     * @param object the object you want to check.
-     * @param error the error message the exception should have.
-     */
-    private void checkIfObjectIsNull(Object object, String error){
-       if (object == null){
-           throw new IllegalArgumentException("The " + error + " cannot be null.");
-       }
-    }
 
     @Override
     public void updateContent() {
+        setAllFieldsEmpty();
         setAllValidFieldsToFalseAndDisableButtons();
         addUserLoggedInToConversation();
         setButtonFunctions();

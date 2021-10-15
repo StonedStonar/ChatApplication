@@ -1,6 +1,6 @@
 package no.stonedstonar.chatapplication.model.networktransport;
 
-import no.stonedstonar.chatapplication.model.MessageLog;
+import no.stonedstonar.chatapplication.model.message.MessageLog;
 import no.stonedstonar.chatapplication.model.User;
 
 import java.io.Serializable;

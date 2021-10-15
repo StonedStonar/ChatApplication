@@ -1,9 +1,10 @@
-package no.stonedstonar.chatapplication.model;
+package no.stonedstonar.chatapplication.model.conversation;
 
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotRemoveMessageLogException;
+import no.stonedstonar.chatapplication.model.message.MessageLog;
 
 import java.util.ArrayList;
 import java.util.List;

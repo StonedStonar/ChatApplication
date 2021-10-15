@@ -1,7 +1,11 @@
-package no.stonedstonar.chatapplication.model;
+package no.stonedstonar.chatapplication.model.message;
 
 import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotAddTextMessageException;
 import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotRemoveTextMessageException;
+import no.stonedstonar.chatapplication.model.message.MessageLog;
+import no.stonedstonar.chatapplication.model.message.MessageObserver;
+import no.stonedstonar.chatapplication.model.message.ObservableMessageLog;
+import no.stonedstonar.chatapplication.model.message.TextMessage;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -78,7 +82,7 @@ public class PersonalMessageLog extends MessageLog implements ObservableMessageL
     @Override
     public void removeObserver(MessageObserver messageObserver) {
         checkIfObjectIsNull(messageObserver, "message observer");
-        if (!messageObservers.contains(messageObserver)){
+        if (messageObservers.contains(messageObserver)){
             messageObservers.remove(messageObserver);
         }else {
             throw new IllegalArgumentException("The message observer " + messageObserver + " is not a part of this message log.");
@@ -94,6 +98,7 @@ public class PersonalMessageLog extends MessageLog implements ObservableMessageL
 
     @Override
     public boolean checkIfObjectIsObserver(MessageObserver messageObserver) {
-        return messageObservers.stream().anyMatch(obs -> obs == messageObserver);
+        checkIfObjectIsNull(messageObserver, "message observer");
+        return messageObservers.stream().anyMatch(obs -> obs.equals(messageObserver));
     }
 }

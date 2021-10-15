@@ -1,11 +1,9 @@
-package no.stonedstonar.chatapplication.ui.controllers;
+package no.stonedstonar.chatapplication.ui.controllers.frontend;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -17,15 +15,19 @@ import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import no.stonedstonar.chatapplication.frontend.ChatClient;
-import no.stonedstonar.chatapplication.model.*;
+import no.stonedstonar.chatapplication.model.conversation.ConversationObserver;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotAddTextMessageException;
+import no.stonedstonar.chatapplication.model.message.MessageObserver;
+import no.stonedstonar.chatapplication.model.message.PersonalMessageLog;
+import no.stonedstonar.chatapplication.model.message.TextMessage;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
-import no.stonedstonar.chatapplication.ui.windows.NewConversationWindow;
+import no.stonedstonar.chatapplication.ui.controllers.Controller;
+import no.stonedstonar.chatapplication.ui.windows.frontend.LoginWindow;
+import no.stonedstonar.chatapplication.ui.windows.frontend.NewConversationWindow;
 
 import java.io.IOException;
-import java.net.SocketException;
 import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
@@ -57,7 +59,7 @@ public class ChatController implements Controller, ConversationObserver, Message
     private Button newContactButton;
 
     @FXML
-    private Button testButton;
+    private Button logOutButton;
 
     private long activeMessageLog;
 
@@ -89,7 +91,7 @@ public class ChatController implements Controller, ConversationObserver, Message
                 textMessageField.textProperty().set("");
                 alert.show();
             }
-            });
+        });
 
         newContactButton.setOnAction(event -> {
             try {
@@ -103,10 +105,39 @@ public class ChatController implements Controller, ConversationObserver, Message
                 try {
                     ChatApplicationClient.getChatApplication().stop();
                 }catch (Exception exception1){
-
+                    AlertTemplates.makeAndShowCriticalErrorAlert(exception1);
                 }
             }
         });
+
+        logOutButton.setOnAction(event -> {
+            try {
+                PersonalMessageLog personalMessageLog = chatClient.getMessageLogByLongNumber(activeMessageLog);
+                personalMessageLog.removeObserver(this);
+                Thread thread = new Thread(() -> {
+                    chatClient.logOutOfUser();
+                });
+                thread.start();
+                ChatApplicationClient.getChatApplication().setNewScene(LoginWindow.getLoginWindow());
+            } catch (Exception e) {
+                AlertTemplates.makeAndShowCriticalErrorAlert(e);
+            }
+        });
+    }
+
+    /**
+     * Sets all the fields to empty.
+     */
+    public void setAllFieldsEmpty(){
+        textMessageField.textProperty().set("");
+    }
+
+    /**
+     * Sets all the valid fields and disables buttons.
+     */
+    private void setAllValidFieldsToFalseAndDisableButtons(){
+        validFields.put(textMessageField, false);
+        sendButton.setDisable(true);
     }
 
     /**
@@ -114,43 +145,22 @@ public class ChatController implements Controller, ConversationObserver, Message
      * @param messageContents the message's contents.
      * @param chatClient the chat client of the application
      */
-    private void sendNewMessage(String messageContents, ChatClient chatClient){
+    private void sendNewMessage(String messageContents, ChatClient chatClient) {
         try {
             PersonalMessageLog personalMessageLog= chatClient.getMessageLogByLongNumber(activeMessageLog);
             chatClient.sendMessage(messageContents, personalMessageLog);
             textMessageField.textProperty().set("");
         }catch (IllegalArgumentException  exception){
-            //Todo: Gjør noe annet her.
-            System.out.println("Could not send the message." + exception.getMessage());
-            exception.printStackTrace();
+            AlertTemplates.makeAndShowInvalidInputAlert();
         } catch (CouldNotAddTextMessageException exception) {
-            //Todo: Fix all the fucking exceptions here.
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("");
-        } catch (SocketException e) {
-            e.printStackTrace();
+            AlertTemplates.makeAndShowCriticalErrorAlert(exception);
         } catch (CouldNotGetMessageLogException exception) {
-            exception.printStackTrace();
+            AlertTemplates.makeAndShowCouldNotGetMessageLogExceptionAlert();
         } catch (IOException exception) {
-            exception.printStackTrace();
+            AlertTemplates.makeAndShowCouldNotConnectToServerAlert();
         } catch (InvalidResponseException e) {
-            e.printStackTrace();
+            AlertTemplates.makeAndShowInvalidResponseFromTheServer();
         }
-    }
-
-    /**
-     * Makes an alert and shows the input.
-     * @param alertType the alert type this alert should be.
-     * @param title the title of the alert.
-     * @param headerTitle the header title of the alert.
-     * @param contentText the main text of the alert.
-     */
-    private void makeAlertAndShow(Alert.AlertType alertType, String title, String headerTitle, String contentText){
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setHeaderText(headerTitle);
-        alert.setContentText(contentText);
-        alert.show();
     }
 
     /**
@@ -158,7 +168,7 @@ public class ChatController implements Controller, ConversationObserver, Message
      */
     private void addListeners(){
         validFields.put(textMessageField, false);
-        sendButton.setDisable(true);
+
         textMessageField.textProperty().addListener((obs, oldVal, newVal) -> {
             if (!newVal.isEmpty()){
                 validFields.put(textMessageField, true);
@@ -182,10 +192,7 @@ public class ChatController implements Controller, ConversationObserver, Message
             messageLogList.forEach(this::addNewConversation);
             PersonalMessageLog firstPersonalMessageLog = messageLogList.get(0);
             showMessagesFromMessageLog(firstPersonalMessageLog);
-        }
-        if (!messageLogList.isEmpty()){
-
-        }else {
+        } else {
             VBox vBox = new VBox();
             vBox.setMinWidth(Long.MAX_VALUE);
             Text text = new Text("You have none conversations. \nPlease add one.");
@@ -228,12 +235,24 @@ public class ChatController implements Controller, ConversationObserver, Message
         pane.setOnMouseClicked(mouseEvent -> {
             try {
                 handleConversationSwitch(messageLogNumber);
+                pane.setDisable(true);
+                removeAllBordersOnPanes();
+                pane.setBorder(new Border(new BorderStroke(Color.BLACK,
+                        BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(0,0,0,3))));
             }catch (CouldNotGetMessageLogException exception){
-                Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle("Could not change the conversation.");
-                alert.setHeaderText("Could not change conversation.");
-                alert.setContentText("A error occurred while trying to switch conversation. \n Please try again or restart the program if the problem persists.");
+                AlertTemplates.makeAndShowCouldNotGetMessageLogExceptionAlert();
             }
+        });
+    }
+
+    /**
+     * Removes the border around all panes.
+     */
+    private void removeAllBordersOnPanes(){
+        contactsBox.getChildren().stream().filter(node -> node instanceof Pane).forEach(pane -> {
+            Pane pane1 = (Pane) pane;
+            pane1.setBorder(Border.EMPTY);
+            pane1.setDisable(false);
         });
     }
 
@@ -242,13 +261,15 @@ public class ChatController implements Controller, ConversationObserver, Message
      * @param messageLogNumber the message log number this conversation has.
      */
     private void handleConversationSwitch(long messageLogNumber) throws CouldNotGetMessageLogException {
-        ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
-        PersonalMessageLog lastPersonalMessageLog = chatClient.getMessageLogByLongNumber(this.activeMessageLog);
-        if (lastPersonalMessageLog.checkIfObjectIsObserver(this)){
-            lastPersonalMessageLog.removeObserver(this);
+        if ((messageLogNumber != this.activeMessageLog)){
+            ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
+            PersonalMessageLog lastPersonalMessageLog = chatClient.getMessageLogByLongNumber(this.activeMessageLog);
+            if (lastPersonalMessageLog.checkIfObjectIsObserver(this)){
+                lastPersonalMessageLog.removeObserver(this);
+            }
+            PersonalMessageLog messageLog = chatClient.getMessageLogByLongNumber(messageLogNumber);
+            showMessagesFromMessageLog(messageLog);
         }
-        PersonalMessageLog messageLog = chatClient.getMessageLogByLongNumber(messageLogNumber);
-        showMessagesFromMessageLog(messageLog);
     }
 
     /**
@@ -314,28 +335,13 @@ public class ChatController implements Controller, ConversationObserver, Message
         return stringBuilder.toString();
     }
 
-    /**
-     * Gets the contents of a FXML file and makes it usable.
-     * @param fxmlFileName the name of the FXML file's name without the ".fxml" part.
-     * @return a pane that can be used.
-     * @throws IOException gets thrown if something goes wrong in loading the file.
-     */
-    private Pane getPaneFromFXMLFile(String fxmlFileName) throws IOException {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlFileName + ".fxml"));
-        Scene scene = new Scene(loader.load());
-        if (scene.getRoot() instanceof Pane){
-            Pane pane = (Pane) scene.getRoot();
-            return pane;
-        }else {
-            throw new IllegalArgumentException("The contents of this FXML file is not a pane and cannot be loaded.");
-        }
-    }
-
     @Override
     public void updateContent() {
         String string = loggedInLabel.textProperty().get();
         string += " " + ChatApplicationClient.getChatApplication().getChatClient().getUsername();
         loggedInLabel.textProperty().set(string);
+        setAllFieldsEmpty();
+        setAllValidFieldsToFalseAndDisableButtons();
         setButtonFunctions();
         addListeners();
         try {
@@ -357,32 +363,11 @@ public class ChatController implements Controller, ConversationObserver, Message
         }
     }
 
-    /**
-     * Checks if a string is of a valid format or not.
-     * @param stringToCheck the string you want to check.
-     * @param errorPrefix the error the exception should have if the string is invalid.
-     */
-    private void checkString(String stringToCheck, String errorPrefix){
-        checkIfObjectIsNull(stringToCheck, errorPrefix);
-        if (stringToCheck.isEmpty()){
-            throw new IllegalArgumentException("The " + errorPrefix + " cannot be empty.");
-        }
-    }
-
-    /**
-     * Checks if an object is null.
-     * @param object the object you want to check.
-     * @param error the error message the exception should have.
-     */
-    private void checkIfObjectIsNull(Object object, String error){
-        if (object == null){
-            throw new IllegalArgumentException("The " + error + " cannot be null.");
-        }
-    }
-
     @Override
-    public void updateMessageLog(MessageLog messageLog, boolean removed) {
-
+    public void updateMessageLog(PersonalMessageLog messageLog, boolean removed) {
+        Platform.runLater(()->{
+            addNewConversation(messageLog);
+        });
     }
 
     @Override

@@ -1,14 +1,13 @@
-package no.stonedstonar.chatapplication.ui.controllers;
+package no.stonedstonar.chatapplication.ui.controllers.frontend;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import no.stonedstonar.chatapplication.frontend.ChatClient;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
-import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
-import no.stonedstonar.chatapplication.ui.windows.ChatWindow;
-import no.stonedstonar.chatapplication.ui.windows.NewUserWindow;
+import no.stonedstonar.chatapplication.ui.controllers.Controller;
+import no.stonedstonar.chatapplication.ui.windows.frontend.ChatWindow;
+import no.stonedstonar.chatapplication.ui.windows.frontend.NewUserWindow;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -19,7 +18,7 @@ import java.util.Map;
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
-public class LoginController implements Controller{
+public class LoginController implements Controller {
 
     @FXML
     private Label loginLabel;
@@ -53,7 +52,24 @@ public class LoginController implements Controller{
       * Makes an instance of the LoginController class.
       */
     public LoginController(){
+        fields = new HashMap<>();
+    }
 
+    /**
+     * Sets all the fields to empty.
+     */
+    public void setAllFieldsEmpty(){
+        usernameField.textProperty().set("");
+        passwordField.textProperty().set("");
+    }
+
+    /**
+     * Sets all the valid fields and disables buttons.
+     */
+    private void setAllValidFieldsToFalseAndDisableButtons(){
+        fields.put(usernameField, false);
+        fields.put(passwordField, false);
+        loginButton.setDisable(true);
     }
 
     /**
@@ -69,16 +85,11 @@ public class LoginController implements Controller{
             }catch (IOException exception){
                 //Todo: Sett inn error melding
             }catch (IllegalArgumentException exception){
-                Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle("Error logging in.");
-                alert.setHeaderText("Error logging in.");
-                alert.setContentText("The username or password does not match a user. \nPlease try again.");
-                alert.show();
+                AlertTemplates.makeAndShowInvalidInputAlert();
             } catch (CouldNotLoginToUserException exception) {
-                //Todo: Fiks alle exceptionsene her.
-                exception.printStackTrace();
+                AlertTemplates.makeAndShowCouldNotLoginAlert();
             }  catch (InvalidResponseException e) {
-                e.printStackTrace();
+                AlertTemplates.makeAndShowInvalidResponseFromTheServer();
             }
         });
         cancelButton.setOnAction(actionEvent -> {
@@ -89,19 +100,19 @@ public class LoginController implements Controller{
             try {
                 ChatApplicationClient.getChatApplication().setNewScene(NewUserWindow.getNewUserWindow());
             } catch (IOException e) {
-                //Todo: Sett inn en exception response.
+                AlertTemplates.makeAndShowCriticalErrorAlert(e);
             }
         });
     }
 
+    /**
+     * Makes the listeners needed for fields.
+     */
     private void makeListeners(){
         String username3Letters = "The username must be more than 3 letters long.";
         String password3Letters = "The password must be more than 3 letters long.";
-        loginButton.setDisable(true);
         usernameText.textProperty().set(username3Letters);
         passwordText.textProperty().set(password3Letters);
-        fields.put(usernameField, false);
-        fields.put(passwordField, false);
         usernameField.textProperty().addListener((obs, oldVal, newVal) -> {
             try {
                 Long.parseLong(newVal);
@@ -142,33 +153,11 @@ public class LoginController implements Controller{
             loginButton.setDisable(true);
         }
     }
-    
-    /**
-     * Checks if a string is of a valid format or not.
-     * @param stringToCheck the string you want to check.
-     * @param errorPrefix the error the exception should have if the string is invalid.
-     */
-    private void checkString(String stringToCheck, String errorPrefix){
-        checkIfObjectIsNull(stringToCheck, errorPrefix);
-        if (stringToCheck.isEmpty()){
-            throw new IllegalArgumentException("The " + errorPrefix + " cannot be empty.");
-        }
-    }
-    
-    /**
-     * Checks if an object is null.
-     * @param object the object you want to check.
-     * @param error the error message the exception should have.
-     */
-    private void checkIfObjectIsNull(Object object, String error){
-       if (object == null){
-           throw new IllegalArgumentException("The " + error + " cannot be null.");
-       }
-    }
 
     @Override
     public void updateContent() {
-        fields = new HashMap<>();
+        setAllFieldsEmpty();
+        setAllValidFieldsToFalseAndDisableButtons();
         setButtonFunctions();
         makeListeners();
     }

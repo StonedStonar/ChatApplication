@@ -1,10 +1,8 @@
 package no.stonedstonar.chatappliation.model;
 
-import no.stonedstonar.chatapplication.model.MessageLog;
-import no.stonedstonar.chatapplication.model.TextMessage;
+import no.stonedstonar.chatapplication.model.message.TextMessage;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.w3c.dom.Text;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;

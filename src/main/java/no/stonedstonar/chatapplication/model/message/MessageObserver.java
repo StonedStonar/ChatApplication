@@ -1,4 +1,4 @@
-package no.stonedstonar.chatapplication.model;
+package no.stonedstonar.chatapplication.model.message;
 
 
 /**

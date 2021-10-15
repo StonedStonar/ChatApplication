@@ -1,6 +1,5 @@
 package no.stonedstonar.chatapplication.model.networktransport.builder;
 
-import no.stonedstonar.chatapplication.model.MessageLog;
 import no.stonedstonar.chatapplication.model.networktransport.MessageLogRequest;
 
 import java.util.ArrayList;
@@ -25,7 +24,7 @@ public class MessageLogRequestBuilder {
 
     private long messageLogNumber;
 
-    private long listSize;
+    private int listSize;
 
     private boolean checkForMessages;
 
@@ -170,7 +169,7 @@ public class MessageLogRequestBuilder {
      * @param listSize the list size of the message log.
      * @return this builder object.
      */
-    public MessageLogRequestBuilder addListSize(long listSize){
+    public MessageLogRequestBuilder addListSize(int listSize){
         checkIfLongIsAboveZero(listSize, "list size", true);
         this.listSize = listSize;
         return this;
@@ -190,7 +189,7 @@ public class MessageLogRequestBuilder {
      * Gets the size of the message log that you want to check.
      * @return the size of the message log.
      */
-    public long getListSize(){
+    public int getListSize(){
         return listSize;
     }
 

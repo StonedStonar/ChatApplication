@@ -4,6 +4,7 @@ import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserExcep
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotGetUserException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotRemoveUserException;
+import no.stonedstonar.chatapplication.model.User;
 
 import java.util.ArrayList;
 import java.util.List;
