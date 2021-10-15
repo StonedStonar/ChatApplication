@@ -18,6 +18,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -121,7 +124,7 @@ public class Server {
      * Handles the connection of a client.
      * @param socket the socket that this connection is about.
      * @throws IOException gets thrown if the socket closes or cannot finish its task.
-     * @throws ClassNotFoundException gets thrown if the class cannot be found.
+     * @throws InvalidResponseException gets thrown if the class cannot be found.
      */
     private void handleConnection(Socket socket) throws IOException, InvalidResponseException {
         do{

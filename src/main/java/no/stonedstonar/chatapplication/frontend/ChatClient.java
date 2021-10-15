@@ -1,5 +1,6 @@
 package no.stonedstonar.chatapplication.frontend;
 
+import javafx.application.Platform;
 import no.stonedstonar.chatapplication.model.*;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
@@ -17,8 +18,7 @@ import no.stonedstonar.chatapplication.model.networktransport.builder.MessageLog
 import no.stonedstonar.chatapplication.model.networktransport.builder.UserRequestBuilder;
 
 import java.io.*;
-import java.net.Socket;
-import java.net.SocketException;
+import java.net.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -46,13 +46,12 @@ public class ChatClient {
 
     private Thread checkForMessagesThread;
 
-    private boolean run;
-
     /**
       * Makes an instance of the ChatClient class.
       */
     public ChatClient(){
         logger = Logger.getLogger(getClass().toString());
+        //"46.212.111.100"
         localHost = "localhost";
         portNumber = 1380;
         messageLogFocus = 0;
@@ -64,9 +63,11 @@ public class ChatClient {
      */
     public void setMessageLogFocus(long messageLogNumber){
         System.out.println("Setting log number.");
-        //Todo: Make a check for the log number.
-        if (run){
-            stopThread();
+        stopThread();
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
         messageLogFocus = messageLogNumber;
         try {
@@ -84,8 +85,7 @@ public class ChatClient {
      * Sets the run boolean to false and interrupts the thread.
      */
     public void stopThread(){
-        run = false;
-        checkForMessagesThread.interrupt();
+        run
     }
 
     /**
@@ -94,8 +94,7 @@ public class ChatClient {
      */
     public void checkCurrentMessageLogForUpdates(PersonalMessageLog personalMessageLog){
         //Todo: sette opp slik at hvis tiden går så og så mye skal alle loggene sjekkes etter oppdateringer.
-        run = true;
-        while((run) && (!checkForMessagesThread.isInterrupted())){
+        do {
             try {
                 Thread.sleep(5000);
             } catch (InterruptedException e) {
@@ -107,7 +106,7 @@ public class ChatClient {
                 logWaringError(exception);
                 stopThread();
             }
-        }
+        } while(!checkForMessagesThread.isInterrupted());
     }
 
     /**
