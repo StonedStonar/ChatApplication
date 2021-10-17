@@ -28,6 +28,8 @@ public class MessageLogRequestBuilder {
 
     private boolean checkForMessages;
 
+    private String messageLogName;
+
     /**
      * Makes an instance of the MessageLogRequest class.
      */
@@ -40,6 +42,7 @@ public class MessageLogRequestBuilder {
         usernames = new ArrayList<>();
         messageLogNumber = 0;
         listSize = 0;
+        messageLogName = "";
     }
 
     /**
@@ -175,6 +178,17 @@ public class MessageLogRequestBuilder {
         return this;
     }
 
+    /**
+     * Adds a message log name to the request.
+     * @param messageLogName the message log name.
+     * @return this builder object.
+     */
+    public MessageLogRequestBuilder addMessageLogName(String messageLogName){
+        checkString(messageLogName, "message log name");
+        this.messageLogName = messageLogName;
+        return this;
+    }
+
 
     /**
      * Says true if the request is a check for new messages.
@@ -243,6 +257,14 @@ public class MessageLogRequestBuilder {
      */
     public long getMessageLogNumber() {
         return messageLogNumber;
+    }
+
+    /**
+     * Gets the name of the message log.
+     * @return the name of the message log.
+     */
+    public String getNameOfMessageLog() {
+        return messageLogName;
     }
 
     /**

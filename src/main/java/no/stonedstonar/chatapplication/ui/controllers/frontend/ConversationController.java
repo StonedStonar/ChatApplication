@@ -93,7 +93,7 @@ public class ConversationController implements Controller {
             try {
                 ChatApplicationClient.getChatApplication().setNewScene(ChatWindow.getChatWindow());
             } catch (IOException e) {
-                //Todo: Sett inn respons if it goes wrong.
+                AlertTemplates.makeAndShowCouldNotConnectToServerAlert();
             }
         });
 
@@ -113,10 +113,9 @@ public class ConversationController implements Controller {
                     alert.show();
                 }
             } catch (IOException e) {
-                //Todo: Fix all these exceptions
-                e.printStackTrace();
+                AlertTemplates.makeAndShowCouldNotConnectToServerAlert();
             } catch (InvalidResponseException e) {
-                e.printStackTrace();
+                AlertTemplates.makeAndShowInvalidResponseFromTheServer();
             }
             checkIfRequiredFieldsAreOk();
             checkIfUsernameCanBeAdded();
@@ -141,7 +140,9 @@ public class ConversationController implements Controller {
 
         makeConversationButton.setOnAction(event -> {
             try {
-                chatClient.makeNewConversation(usernames);
+                String nameOfConversation = conversationField.textProperty().get();
+                chatClient.makeNewConversation(usernames, nameOfConversation);
+                usernames.clear();
                 ChatApplicationClient.getChatApplication().setNewScene(ChatWindow.getChatWindow());
             } catch (CouldNotAddMessageLogException exception) {
                 AlertTemplates.makeAndShowCouldNotGetMessageLogExceptionAlert();

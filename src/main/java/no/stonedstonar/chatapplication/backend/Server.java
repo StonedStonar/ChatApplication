@@ -90,8 +90,8 @@ public class Server implements ObservableServer{
             threeMembers.add(user.getUsername());
             threeMembers.add(user1.getUsername());
             threeMembers.add(user3.getUsername());
-            conversationRegister.addNewMessageLogWithUsernames(threeMembers);
-            conversationRegister.addNewMessageLogWithUsernames(twoMembers);
+            conversationRegister.addNewMessageLogWithUsernames(threeMembers, "");
+            conversationRegister.addNewMessageLogWithUsernames(twoMembers, "");
             List<MessageLog> messageLogs = conversationRegister.getAllMessageLogsOfUsername("bjarne22");
             messageLogs.get(0).addMessage(new TextMessage("Haha", "bjarne22"));
             messageLogs.get(0).addMessage(new TextMessage("Nope", "fjell"));
@@ -255,7 +255,8 @@ public class Server implements ObservableServer{
      */
     private void makeNewMessageLog(MessageLogRequest messageLogRequest, Socket socket) throws IOException, CouldNotAddMessageLogException, CouldNotAddMemberException {
         List<String> usernames = messageLogRequest.getUsernames();
-        MessageLog messageLog = conversationRegister.addNewMessageLogWithUsernames(usernames);
+        String nameOfMessageLog = messageLogRequest.getNameOfMessageLog();
+        MessageLog messageLog = conversationRegister.addNewMessageLogWithUsernames(usernames, nameOfMessageLog);
         sendObject(messageLog, socket);
     }
 

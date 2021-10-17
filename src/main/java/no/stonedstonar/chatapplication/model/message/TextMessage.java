@@ -1,5 +1,7 @@
 package no.stonedstonar.chatapplication.model.message;
 
+import javafx.scene.text.Text;
+
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -11,9 +13,11 @@ import java.time.LocalTime;
  */
 public class TextMessage implements Serializable {
 
-    private String message;
+    private final String message;
 
-    private String fromUsername;
+    private final String fromUsername;
+
+    private long messageNumber;
 
     private LocalDate date;
 
@@ -32,6 +36,30 @@ public class TextMessage implements Serializable {
         this.fromUsername = fromUsername;
         date = LocalDate.now();
         time = LocalTime.now();
+        messageNumber = -1;
+    }
+
+    /**
+     * Sets the message number and puts a date on the message.
+     * @param messageNumber the number this message is in the log.
+     */
+    public void setMessageNumber(long messageNumber){
+        if (this.messageNumber == -1){
+            checkIfLongIsAboveZero(messageNumber, "message number");
+            this.messageNumber = messageNumber;
+            date = LocalDate.now();
+            time = LocalTime.now();
+        }else {
+            throw new IllegalArgumentException("Cannot set the message number since its already set.");
+        }
+    }
+
+    /**
+     * Gets the message's long number.
+     * @return number this message is.
+     */
+    public long getMessageNumber(){
+        return messageNumber;
     }
 
     /**
@@ -86,6 +114,17 @@ public class TextMessage implements Serializable {
     private void checkIfObjectIsNull(Object object, String error){
         if (object == null){
             throw new IllegalArgumentException("The " + error + " cannot be null.");
+        }
+    }
+
+    /**
+     * Checks if the long is above zero.
+     * @param number the number you want to check.
+     * @param prefix the error message the exception should have.
+     */
+    private void checkIfLongIsAboveZero(long number, String prefix){
+        if (number <= 0){
+            throw new IllegalArgumentException("The " + prefix + " must be larger than zero.");
         }
     }
 }

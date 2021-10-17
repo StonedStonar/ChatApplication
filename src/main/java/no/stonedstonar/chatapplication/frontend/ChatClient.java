@@ -22,6 +22,7 @@ import java.net.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -49,6 +50,8 @@ public class ChatClient {
     private boolean runThread;
 
     private boolean threadStopped;
+
+    private Executors executors;
 
     /**
       * Makes an instance of the ChatClient class.
@@ -154,7 +157,6 @@ public class ChatClient {
      * @return the personal message log of the user.
      */
     public List<PersonalMessageLog> getMessageLogs(){
-        System.out.println(personalConversationRegister.getMessageLogList().size());
         return personalConversationRegister.getMessageLogList();
     }
 
@@ -182,16 +184,22 @@ public class ChatClient {
     /**
      * Makes a new conversation.
      * @param usernames the names of all the members of the new conversation.
+     * @param nameOfConversation the name that the conversation should have.
      * @return the message log that this conversation is now.
      * @throws CouldNotAddMessageLogException gets thrown if the message log could not be added.
      * @throws CouldNotAddMemberException gets thrown if the members could not be added.
      * @throws IOException gets thrown if something goes wrong with the socket.
      * @throws InvalidResponseException gets thrown if the class could not be found for that object or the response is a different object than expected.
      */
-    public void makeNewConversation(List<String> usernames) throws CouldNotAddMessageLogException, CouldNotAddMemberException, IOException, InvalidResponseException {
+    public void makeNewConversation(List<String> usernames, String nameOfConversation) throws CouldNotAddMessageLogException, CouldNotAddMemberException, IOException, InvalidResponseException {
         checkIfListIsEmptyOrNull(usernames, "usernames");
+        checkIfObjectIsNull(nameOfConversation, "name of conversation");
         try (Socket socket = new Socket("localhost", 1380)){
-            MessageLogRequest messageLogRequest = new MessageLogRequestBuilder().setNewMessageLog(true).addUsernames(usernames).build();
+            MessageLogRequestBuilder messageLogRequestBuilder = new MessageLogRequestBuilder().setNewMessageLog(true).addUsernames(usernames);
+            if (!nameOfConversation.isEmpty()){
+                messageLogRequestBuilder.addMessageLogName(nameOfConversation);
+            }
+            MessageLogRequest messageLogRequest = messageLogRequestBuilder.build();
             sendObject(messageLogRequest, socket);
             Object object = getObject(socket);
             if (object instanceof MessageLog messageLog){
@@ -293,7 +301,7 @@ public class ChatClient {
     //Todo: Finn en berdre måte å synkronisere meldinger på. De kan sende meldinger likt og da burde man kanskje ta basis i den siste meldingen som ble sendt fra lista?
     // Det som kan funke er å ha en liste for hver person i samtalen. Så de er separate.
     // Da er det dermed umulig at to meldinger kommer likt og ingen av dem får oppdateringen. 
-    public void checkForNewMessages() throws CouldNotAddTextMessageException, IOException, InvalidResponseException, CouldNotGetMessageLogException {
+    private void checkForNewMessages() throws CouldNotAddTextMessageException, IOException, InvalidResponseException, CouldNotGetMessageLogException {
         try (Socket socket = new Socket(localHost, portNumber)){
             socket.setKeepAlive(true);
             SetKeepAliveRequest setKeepAliveRequest = new SetKeepAliveRequest(true);
@@ -303,11 +311,9 @@ public class ChatClient {
             while(it.hasNext()) {
                 PersonalMessageLog log = it.next();
                 checkMessageLogForNewMessages(log, socket);
-                System.out.println("While");
             }
             SetKeepAliveRequest notKeepAlive = new SetKeepAliveRequest(false);
             sendObject(notKeepAlive, socket);
-            System.out.println("Closing socket");
         } catch (IOException | InvalidResponseException | CouldNotAddTextMessageException | CouldNotGetMessageLogException exception) {
             logWaringError(exception);
             throw exception;
@@ -323,12 +329,12 @@ public class ChatClient {
      * @throws CouldNotAddTextMessageException gets thrown if the text message could not be added to the local message log.
      * @throws CouldNotGetMessageLogException gets thrown if the server cant find the message log.
      */
-    public synchronized void checkMessageLogForNewMessages(PersonalMessageLog log, Socket socket) throws IOException, CouldNotAddTextMessageException, CouldNotGetMessageLogException, InvalidResponseException {
+    private synchronized void checkMessageLogForNewMessages(PersonalMessageLog log, Socket socket) throws IOException, CouldNotAddTextMessageException, CouldNotGetMessageLogException, InvalidResponseException {
         try {
+            logger.log(Level.INFO, "Syncing message log " + log.getMessageLogNumber());
             int size = log.getMessageList().size();
             long messageLogNumber = log.getMessageLogNumber();
             MessageLogRequest messageLogRequest = new MessageLogRequestBuilder().setCheckForMessages(true).addListSize(size).addMessageLogNumber(messageLogNumber).build();
-            System.out.println(messageLogNumber);
             sendObject(messageLogRequest, socket);
             Object object = getObject(socket);
             if(object instanceof MessageTransport messageTransport){

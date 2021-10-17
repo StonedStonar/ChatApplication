@@ -30,7 +30,7 @@ public interface ObservableMessageLog {
      * Checks if the object is a observer.
      * @param messageObserver the message observer you want to check.
      * @return <code>true</code> if the object is an observer.
-     *         <code>false</code> if the object is not a observer.
+     *         <code>false</code> if the object is not an observer.
      */
     boolean checkIfObjectIsObserver(MessageObserver messageObserver);
 }

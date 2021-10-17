@@ -45,11 +45,16 @@ public class ConversationRegister {
      * @throws CouldNotAddMessageLogException gets thrown if the message log is already in the register.
      * @throws CouldNotAddMemberException gets thrown if a member could not be added.
      */
-    public MessageLog addNewMessageLogWithUsernames(List<String> usernames) throws CouldNotAddMessageLogException, CouldNotAddMemberException {
+    public MessageLog addNewMessageLogWithUsernames(List<String> usernames, String nameOfMessageLog) throws CouldNotAddMessageLogException, CouldNotAddMemberException {
         checkIfObjectIsNull(usernames, "usernames");
+        checkIfObjectIsNull(nameOfMessageLog, "name of messagelog");
         if (!usernames.isEmpty()){
             MessageLog messageLog = new MessageLog(makeNewMessageLogNumber());
             messageLog.getMembersOfConversation().addAllMembers(usernames);
+            if (!nameOfMessageLog.isEmpty()){
+                System.out.println(nameOfMessageLog);
+                messageLog.setNameOfMessageLog(nameOfMessageLog);
+            }
             addMessageLog(messageLog);
             return messageLog;
         }else {

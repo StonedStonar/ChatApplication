@@ -23,9 +23,11 @@ public class MessageLog implements Serializable {
 
     private MembersRegister membersRegister;
 
-    private long messageLogNumber;
+    private final long messageLogNumber;
 
     private String nameOfMessageLog;
+
+    private long lastMessageNumber;
 
     /**
       * Makes an instance of the MessageLog class.
@@ -36,6 +38,25 @@ public class MessageLog implements Serializable {
         textMessageList = new ArrayList<>();
         membersRegister = new MembersRegister();
         this.messageLogNumber = messageLogNumber;
+        lastMessageNumber = 0;
+        nameOfMessageLog = "";
+    }
+
+    /**
+     * Sets the name of the message log.
+     * @param nameOfMessageLog the name the message log should have.
+     */
+    public void setNameOfMessageLog(String nameOfMessageLog) {
+        checkIfObjectIsNull(nameOfMessageLog, "name of message log");
+        this.nameOfMessageLog = nameOfMessageLog;
+    }
+
+    /**
+     * Gets the name of the message log.
+     * @return the name of the message log. Its empty if the message log does not have a name.
+     */
+    public String getNameOfMessageLog() {
+        return nameOfMessageLog;
     }
 
     /**
@@ -67,15 +88,31 @@ public class MessageLog implements Serializable {
     /**
      * Adds a message to the list.
      * @param textMessage the message you want to add.
-     * @throws CouldNotAddTextMessageException gets thrown if the text message could not be added.
+     * @throws CouldNotAddTextMessageException gets thrown if the text message is already in the message log or the message already has a message number.
      */
     public void addMessage(TextMessage textMessage) throws CouldNotAddTextMessageException {
         checkIfObjectIsNull(textMessage, "message");
-        if (!textMessageList.contains(textMessage)){
+        if (!checkIfMessageIsInMessageLog(textMessage)){
+            lastMessageNumber += 1;
+            try {
+                textMessage.setMessageNumber(lastMessageNumber);
+            }catch (IllegalArgumentException exception){
+                throw new CouldNotAddTextMessageException("The message has already gotten a message number and cannot be added.");
+            }
             textMessageList.add(textMessage);
         }else {
-            throw new CouldNotAddTextMessageException("The message is already in the register.");
+            throw new CouldNotAddTextMessageException("The message " + textMessage + " is already in the system.");
         }
+    }
+
+    /**
+     * Checks if the message is in the message log already.
+     * @param textMessage the text message you want to check.
+     * @return <code>true</code> if the message matches a message on time, date, contents and from username.
+     *         <code>false</code> if the message does not match any messages in the log.
+     */
+    private boolean checkIfMessageIsInMessageLog(TextMessage textMessage){
+        return textMessageList.stream().anyMatch(message -> message.getTime().equals(textMessage.getTime()) && message.getDate().equals(textMessage.getDate()) && message.getMessage().equals(textMessage.getMessage()) && message.getFromUsername().equals(textMessage.getFromUsername()));
     }
 
     /**
@@ -88,7 +125,7 @@ public class MessageLog implements Serializable {
         if (!checkIfAllMessagesAreNewMessages(textMessages)){
             textMessageList.addAll(textMessages);
         }else {
-            throw new CouldNotAddTextMessageException("Could not add the new messages since one of them are already in the reigster.");
+            throw new CouldNotAddTextMessageException("Could not add the new messages since one of them are already in the register.");
         }
     }
 
@@ -120,9 +157,7 @@ public class MessageLog implements Serializable {
      *         <code>false</code> if none of the input messages are in the message log.
      */
     protected boolean checkIfAllMessagesAreNewMessages(List<TextMessage> textMessages){
-        return textMessages.stream().anyMatch(message -> {
-            return textMessageList.contains(message);
-        });
+        return textMessages.stream().anyMatch(this::checkIfMessageIsInMessageLog);
     }
 
     /**

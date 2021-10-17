@@ -22,6 +22,8 @@ public class MessageLogRequest implements Serializable {
 
     private boolean checkForMessages;
 
+    private String nameOfMessageLog;
+
     private List<String> usernames;
 
     private int listSize;
@@ -40,6 +42,7 @@ public class MessageLogRequest implements Serializable {
         messageLogNumber = messageLogRequestBuilder.getMessageLogNumber();
         checkForMessages = messageLogRequestBuilder.isCheckForMessages();
         listSize = messageLogRequestBuilder.getListSize();
+        nameOfMessageLog = messageLogRequestBuilder.getNameOfMessageLog();
     }
 
     /**
@@ -109,6 +112,14 @@ public class MessageLogRequest implements Serializable {
      */
     public long getMessageLogNumber() {
         return messageLogNumber;
+    }
+
+    /**
+     * Gets the name of the message log.
+     * @return the name of the message log.
+     */
+    public String getNameOfMessageLog() {
+        return nameOfMessageLog;
     }
 
     /**

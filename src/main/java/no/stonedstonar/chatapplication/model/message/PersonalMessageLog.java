@@ -24,12 +24,14 @@ public class PersonalMessageLog extends MessageLog implements ObservableMessageL
 
     private volatile boolean removed;
 
+
     /**
       * Makes an instance of the PersonalMessageLog class.
       * @param messageLog the message log this Personal message log is going to take over.
       */
     public PersonalMessageLog(MessageLog messageLog){
         super(messageLog.getMessageLogNumber());
+        setNameOfMessageLog(messageLog.getNameOfMessageLog());
         messageObservers = new ArrayList<>();
         List<TextMessage> textMessages = getMessageList();
         textMessages.addAll(messageLog.getMessageList());
@@ -82,7 +84,7 @@ public class PersonalMessageLog extends MessageLog implements ObservableMessageL
     @Override
     public void removeObserver(MessageObserver messageObserver) {
         checkIfObjectIsNull(messageObserver, "message observer");
-        if (messageObservers.contains(messageObserver)){
+        if (checkIfObjectIsObserver(messageObserver)){
             messageObservers.remove(messageObserver);
         }else {
             throw new IllegalArgumentException("The message observer " + messageObserver + " is not a part of this message log.");
@@ -99,6 +101,6 @@ public class PersonalMessageLog extends MessageLog implements ObservableMessageL
     @Override
     public boolean checkIfObjectIsObserver(MessageObserver messageObserver) {
         checkIfObjectIsNull(messageObserver, "message observer");
-        return messageObservers.stream().anyMatch(obs -> obs.equals(messageObserver));
+        return messageObservers.contains(messageObserver);
     }
 }

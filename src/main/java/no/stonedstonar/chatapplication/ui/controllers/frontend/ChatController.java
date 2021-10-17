@@ -95,6 +95,10 @@ public class ChatController implements Controller, ConversationObserver, Message
 
         newContactButton.setOnAction(event -> {
             try {
+                PersonalMessageLog personalMessageLog = chatClient.getMessageLogByLongNumber(activeMessageLog);
+                if (personalMessageLog.checkIfObjectIsObserver(this)){
+                    personalMessageLog.removeObserver(this);
+                }
                 ChatApplicationClient.getChatApplication().setNewScene(NewConversationWindow.getNewUserWindow());
             }catch (IOException exception){
                 Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -107,13 +111,17 @@ public class ChatController implements Controller, ConversationObserver, Message
                 }catch (Exception exception1){
                     AlertTemplates.makeAndShowCriticalErrorAlert(exception1);
                 }
+            }catch (CouldNotGetMessageLogException exception){
+                AlertTemplates.makeAndShowCouldNotGetMessageLogExceptionAlert();
             }
         });
 
         logOutButton.setOnAction(event -> {
             try {
                 PersonalMessageLog personalMessageLog = chatClient.getMessageLogByLongNumber(activeMessageLog);
-                personalMessageLog.removeObserver(this);
+                if (personalMessageLog.checkIfObjectIsObserver(this)){
+                    personalMessageLog.removeObserver(this);
+                }
                 Thread thread = new Thread(() -> {
                     chatClient.logOutOfUser();
                 });
@@ -208,10 +216,19 @@ public class ChatController implements Controller, ConversationObserver, Message
     private void addNewConversation(PersonalMessageLog personalMessageLog){
         VBox vBox = new VBox();
         vBox.setMinWidth(Long.MAX_VALUE);
-        String nameOfConversation = personalMessageLog.getMembersOfConversation().getAllMembersExceptUsernameAsString(ChatApplicationClient.getChatApplication().getChatClient().getUsername());
-        Text text = new Text(nameOfConversation);
+        String nameOfConversation = personalMessageLog.getNameOfMessageLog();
+        String membersOfConversation = personalMessageLog.getMembersOfConversation().getAllMembersExceptUsernameAsString(ChatApplicationClient.getChatApplication().getChatClient().getUsername());
+        Label membersLabel = new Label(membersOfConversation);
+        membersLabel.setFont(Font.font(membersLabel.getFont().getName(), FontWeight.NORMAL, FontPosture.REGULAR, 14));
         long messageLogNumber = personalMessageLog.getMessageLogNumber();
-        vBox.getChildren().add(text);
+        if (!nameOfConversation.isEmpty()){
+            Label textName = new Label(nameOfConversation);
+            vBox.getChildren().add(textName);
+            membersLabel.setTextFill(Color.valueOf("#666666"));
+            textName.setFont(Font.font(textName.getFont().getName(), FontWeight.NORMAL, FontPosture.REGULAR, 14));
+            membersLabel.setFont(Font.font(textName.getFont().getName(), FontWeight.NORMAL, FontPosture.REGULAR, 12));
+        }
+        vBox.getChildren().add(membersLabel);
         vBox.setPadding(new Insets(3,3,3,3));
         VBox.setMargin(vBox, new Insets(5,5,5,5));
         addInteractionToPane(vBox, messageLogNumber);
@@ -265,6 +282,7 @@ public class ChatController implements Controller, ConversationObserver, Message
             ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
             PersonalMessageLog lastPersonalMessageLog = chatClient.getMessageLogByLongNumber(this.activeMessageLog);
             if (lastPersonalMessageLog.checkIfObjectIsObserver(this)){
+                System.out.println("The chat controller is " + lastPersonalMessageLog.checkIfObjectIsObserver(this));
                 lastPersonalMessageLog.removeObserver(this);
             }
             PersonalMessageLog messageLog = chatClient.getMessageLogByLongNumber(messageLogNumber);
