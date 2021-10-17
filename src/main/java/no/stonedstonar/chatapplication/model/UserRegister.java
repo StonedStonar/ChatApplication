@@ -17,7 +17,7 @@ import java.util.Optional;
  */
 public class UserRegister {
 
-    private List<User> userList;
+    private final List<User> userList;
 
     /**
       * Makes an instance of the UserRegister class.

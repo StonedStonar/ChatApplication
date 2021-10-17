@@ -1,10 +1,11 @@
 package no.stonedstonar.chatapplication.model.conversation;
 
+import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
+import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
-import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotRemoveMessageLogException;
-import no.stonedstonar.chatapplication.model.message.MessageLog;
+import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotRemoveConversationException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,51 +13,54 @@ import java.util.Optional;
 
 /**
  * A class that holds messages from one user to other people.
- * @version 0.1
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public class ConversationRegister {
 
-    private List<MessageLog> messageLogList;
+    private List<Conversation> conversationList;
+
+    private long lastConversationNumber;
 
     /**
       * Makes an instance of the MessageRegister class.
       */
     public ConversationRegister(){
-        messageLogList = new ArrayList<>();
+        conversationList = new ArrayList<>();
     }
 
     /**
-     * Gets the message logs that matches this username.
-     * @param username the username that the message log is for.
-     * @return the message logs that belongs to this username in a list.
+     * Gets the conversations the username is a part of.
+     * @param username the username that wants its conversations.
+     * @return the conversations that belongs to this username in a list.
      */
-    public List<MessageLog> getAllMessageLogsOfUsername(String username){
+    public List<Conversation> getAllConversationsOfUsername(String username){
         checkString(username, "username");
-        return getMessageLogList().stream().filter(messageLog -> {
-            return messageLog.getMembersOfConversation().checkIfUsernameIsMember(username);
+        return conversationList.stream().filter(conversation -> {
+            return conversation.getConversationMembers().checkIfUsernameIsMember(username);
         }).toList();
     }
 
     /**
-     * Adds a new message log based on a list of names that are in it.
-     * @param usernames a list with all the usernames that are part of this message log.
-     * @return the message log that was just added to the system.
-     * @throws CouldNotAddMessageLogException gets thrown if the message log is already in the register.
+     * Adds a new conversation based on a list of names that are in it.
+     * @param usernames list with all the usernames that wants to be in the conversation.
+     * @param nameOfConversation the name the conversation should have.
+     * @return the conversation that was just added to the register.
+     * @throws CouldNotAddMessageLogException gets thrown if the conversation is already in the register.
      * @throws CouldNotAddMemberException gets thrown if a member could not be added.
      */
-    public MessageLog addNewMessageLogWithUsernames(List<String> usernames, String nameOfMessageLog) throws CouldNotAddMessageLogException, CouldNotAddMemberException {
+    public Conversation addNewConversationWithUsernames(List<String> usernames, String nameOfConversation) throws CouldNotAddMemberException, CouldNotAddConversationException {
         checkIfObjectIsNull(usernames, "usernames");
-        checkIfObjectIsNull(nameOfMessageLog, "name of messagelog");
+        checkIfObjectIsNull(nameOfConversation, "name of messagelog");
         if (!usernames.isEmpty()){
-            MessageLog messageLog = new MessageLog(makeNewMessageLogNumber());
-            messageLog.getMembersOfConversation().addAllMembers(usernames);
-            if (!nameOfMessageLog.isEmpty()){
-                System.out.println(nameOfMessageLog);
-                messageLog.setNameOfMessageLog(nameOfMessageLog);
+            Conversation conversation = new NormalConversation(makeNewMessageLogNumber(), usernames);
+            conversation.getConversationMembers().addAllMembers(usernames);
+            if (!nameOfConversation.isEmpty()){
+                System.out.println(nameOfConversation);
+                conversation.setConversationName(nameOfConversation);
             }
-            addMessageLog(messageLog);
-            return messageLog;
+            addConversation(conversation);
+            return conversation;
         }else {
             throw new IllegalArgumentException("The size of the usernames must be larger than 0.");
         }
@@ -67,73 +71,69 @@ public class ConversationRegister {
      * @return the number that the new message log can have.
      */
     private long makeNewMessageLogNumber(){
-        long number = 1;
-        List<MessageLog> messageLogList = getMessageLogList();
-        if (messageLogList.size() > 0){
-            number = (messageLogList.get(messageLogList.size() - 1).getMessageLogNumber() + 1);
-        }
-        return number;
+        lastConversationNumber = lastConversationNumber + 1;
+        return lastConversationNumber;
     }
 
     /**
-     * Gets the message log that matches the message log number.
-     * @param messageLogNumber the number that the message log has.
-     * @return the message log that matches this number.
-     * @throws CouldNotGetMessageLogException gets thrown if the message log could not be found.
+     * Gets the conversation that matches the conversation number.
+     * @param messageLogNumber the number that the conversation has.
+     * @return the conversation that matches this number.
+     * @throws CouldNotGetMessageLogException gets thrown if the conversation could not be found.
      */
-    public MessageLog getMessageLogByLogNumber(long messageLogNumber) throws CouldNotGetMessageLogException {
-        checkIfLongIsAboveZero(messageLogNumber, "message log number");
-        Optional<MessageLog> optionalMessageLog = messageLogList.stream().filter(log -> log.getMessageLogNumber() == messageLogNumber).findFirst();
+    public Conversation getConversationByNumber(long messageLogNumber) throws CouldNotGetConversationException {
+        checkIfLongIsAboveZero(messageLogNumber, "conversation number");
+        Optional<Conversation> optionalMessageLog = conversationList.stream().filter(log -> log.getConversationNumber() == messageLogNumber).findFirst();
         if (optionalMessageLog.isPresent()){
             return optionalMessageLog.get();
         }else {
-            throw new CouldNotGetMessageLogException("The message log with the log number " + messageLogNumber + " is not a part of this register.");
+            throw new CouldNotGetConversationException("The conversation with the log number " + messageLogNumber + " is not a part of this register.");
         }
     }
 
     /**
-     * Adds a message log to the list.
-     * @param messageLog the message log that's going to be added.
-     * @throws CouldNotAddMessageLogException gets thrown if the message log is already in the register.
+     * Adds a conversation to the register.
+     * @param conversation the conversation to be added.
+     * @throws CouldNotAddConversationException gets thrown if the conversation is already in the register.
      */
-    protected void addMessageLog(MessageLog messageLog) throws CouldNotAddMessageLogException {
-        if (!checkIfMessageLogIsInList(messageLog)){
-            messageLogList.add(messageLog);
+    private void addConversation(Conversation conversation) throws CouldNotAddConversationException {
+        if (!checkIfMessageLogIsInList(conversation)){
+            conversationList.add(conversation);
         }else {
-            throw new CouldNotAddMessageLogException("The message log is already in the register.");
+            throw new CouldNotAddConversationException("The conversation is already in the register.");
         }
     }
 
     /**
-     * Gets all the message logs that are in this conversation.
-     * @return a list with all the message logs.
+     * Gets all the conversations that are in this conversation.
+     * @return a list with all the conversations.
      */
-    protected List<MessageLog> getMessageLogList(){
-        return messageLogList;
+    protected List<Conversation> getConversationList(){
+        return conversationList;
     }
 
     /**
-     * Removes a message log from the list.
-     * @param messageLog the message log you want to remove.
-     * @throws CouldNotRemoveMessageLogException gets thrown if the message log could not be removed.
+     * Removes a conversation from the list.
+     * @param conversation the conversation you want to remove.
+     * @throws CouldNotRemoveConversationException gets thrown if the conversation could not be removed.
      */
-    public void removeMessageLog(MessageLog messageLog) throws CouldNotRemoveMessageLogException {
-        if (checkIfMessageLogIsInList(messageLog)){
-            messageLogList.remove(messageLog);
+    public void removeMessageLog(Conversation conversation) throws CouldNotRemoveConversationException {
+        if (checkIfMessageLogIsInList(conversation)){
+            conversationList.remove(conversation);
         }else {
-            throw new CouldNotRemoveMessageLogException("The message log is not in the system.");
+            throw new CouldNotRemoveConversationException("The conversation is not in the system.");
         }
     }
 
     /**
-     * Checks if the message log is in the system.
-     * @param messageLog the message log you want to check.
-     * @return <code>true</code> if the message log is in the system.
-     *         <code>false</code> if the message log is not in the system.
+     * Checks if the conversation is in the system.
+     * @param conversation the conversation you want to check.
+     * @return <code>true</code> if the conversation is in the register.
+     *         <code>false</code> if the conversation is not in the register.
      */
-    private boolean checkIfMessageLogIsInList(MessageLog messageLog){
-        checkIfObjectIsNull(messageLog, "messagelog");
-        return messageLogList.contains(messageLog);
+    private boolean checkIfMessageLogIsInList(Conversation conversation){
+        checkIfObjectIsNull(conversation, "conversation");
+        return conversationList.contains(conversation);
     }
 
     /**

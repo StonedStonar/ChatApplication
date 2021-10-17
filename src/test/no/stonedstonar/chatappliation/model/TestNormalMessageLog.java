@@ -1,11 +1,12 @@
 package no.stonedstonar.chatappliation.model;
 
-import no.stonedstonar.chatapplication.model.message.MessageLog;
+import no.stonedstonar.chatapplication.model.message.Message;
+import no.stonedstonar.chatapplication.model.messagelog.NormalMessageLog;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
-import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotAddTextMessageException;
-import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotGetTextMessageException;
-import no.stonedstonar.chatapplication.model.exception.textmessage.CouldNotRemoveTextMessageException;
+import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
+import no.stonedstonar.chatapplication.model.exception.message.CouldNotGetMessageException;
+import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMessageException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,9 +22,9 @@ import static org.junit.jupiter.api.Assertions.fail;
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
-public class TestMessageLog {
+public class TestNormalMessageLog {
 
-    private MessageLog messageLog;
+    private NormalMessageLog normalMessageLog;
 
     /**
      * Makes a test message log that can be used for testing.
@@ -31,14 +32,14 @@ public class TestMessageLog {
     @BeforeEach
     private void makeTestMessageLog(){
         try {
-            messageLog = new MessageLog(301L);
-            messageLog.getMembersOfConversation().addMember("bjarne21");
-            messageLog.getMembersOfConversation().addMember("lordVader");
-            messageLog.addMessage(new TextMessage("Hello its me", "bjarne21"));
-            messageLog.addMessage(new TextMessage("Hey bjarne21 its time to join the darkside.", "lordVader"));
+            normalMessageLog = new NormalMessageLog(301L);
+            normalMessageLog.getMembersOfConversation().addMember("bjarne21");
+            normalMessageLog.getMembersOfConversation().addMember("lordVader");
+            normalMessageLog.addMessage(new TextMessage("Hello its me", "bjarne21"));
+            normalMessageLog.addMessage(new TextMessage("Hey bjarne21 its time to join the darkside.", "lordVader"));
         }catch (IllegalArgumentException exception){
             fail("Expected the test message log to be made since all the input is valid.");
-        }catch (CouldNotAddTextMessageException exception){
+        }catch (CouldNotAddMessageException exception){
             fail("Expected all the text messages for the test message log to be added since they are valid.");
         }catch (CouldNotAddMemberException exception){
             fail("Expected all the members for the test message log to be added since the format is valid.");
@@ -52,10 +53,10 @@ public class TestMessageLog {
     private TextMessage addTextMessageTextAndReturnIt(){
         TextMessage textMessage = new TextMessage("Hello", "bjarne22");
         try {
-            messageLog.addMessage(textMessage);
+            normalMessageLog.addMessage(textMessage);
         }catch (IllegalArgumentException exception){
             fail("Expected the test message log to be made since all the input is valid.");
-        }catch (CouldNotAddTextMessageException exception){
+        }catch (CouldNotAddMessageException exception){
             fail("Expected all the text messages for the test message log to be added since its valid.");
         }
         return textMessage;
@@ -68,7 +69,7 @@ public class TestMessageLog {
     @DisplayName("Tests if the constructor works with a negative input.")
     public void testIfConstructorWorksWithNegativeInput(){
         try {
-            MessageLog messageLog = new MessageLog(-1L);
+            NormalMessageLog normalMessageLog = new NormalMessageLog(-1L);
             fail("Expected to get a exception since the input is negative.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -82,7 +83,7 @@ public class TestMessageLog {
     @DisplayName("Tests if the constructor works as intended with valid input.")
     public void testIfConstructorWorksWithValidInput(){
         try {
-            MessageLog messageLog = new MessageLog(1L);
+            NormalMessageLog normalMessageLog = new NormalMessageLog(1L);
             assertTrue(true);
         }catch (IllegalArgumentException exception){
             fail("Expected to make a messagelog since the input is valid.");
@@ -96,11 +97,11 @@ public class TestMessageLog {
     @DisplayName("Tests if addMessage works as intended with invalid input.")
     public void testIfAddMessageWorksWithInvalidInput(){
         try {
-            messageLog.addMessage(null);
+            normalMessageLog.addMessage(null);
             fail("Expected to get a exception since the input is invalid.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
-        }catch (CouldNotAddTextMessageException exception){
+        }catch (CouldNotAddMessageException exception){
             fail("Expected to get a IllegalArgumentException since the input format is invalid.");
         }
     }
@@ -113,12 +114,12 @@ public class TestMessageLog {
     public void testIfAddMessageWorksWithDuplicateMessages(){
         try {
             TextMessage textMessage = new TextMessage("Testing", "bjarne21");
-            messageLog.addMessage(textMessage);
-            messageLog.addMessage(textMessage);
+            normalMessageLog.addMessage(textMessage);
+            normalMessageLog.addMessage(textMessage);
             fail("Expected to get a exception since the input is duplicated.");
         }catch (IllegalArgumentException exception){
             fail("Expected to get a CouldNotAddTextMessageException since the format is valid.");
-        }catch (CouldNotAddTextMessageException exception){
+        }catch (CouldNotAddMessageException exception){
             assertTrue(true);
         }
     }
@@ -130,11 +131,11 @@ public class TestMessageLog {
     @DisplayName("Tests if removeMessage works with invalid text message.")
     public void testIfRemoveMessageWorksWithInvalidMessage(){
         try {
-            messageLog.removeMessage(null);
+            normalMessageLog.removeMessage(null);
             fail("Expected to get a exception since the input is null.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
-        }catch (CouldNotRemoveTextMessageException exception){
+        }catch (CouldNotRemoveMessageException exception){
             fail("Expected to get a IllegalArgumentException since the format is invalid.");
         }
     }
@@ -147,11 +148,11 @@ public class TestMessageLog {
     public void testIfRemoveMessageWorksWithValidInput(){
         try {
             TextMessage textMessage = addTextMessageTextAndReturnIt();
-            messageLog.removeMessage(textMessage);
+            normalMessageLog.removeMessage(textMessage);
             assertTrue(true);
         }catch (IllegalArgumentException exception){
             fail("Expected the message to be removed since the input format is valid.");
-        }catch (CouldNotRemoveTextMessageException exception) {
+        }catch (CouldNotRemoveMessageException exception) {
             fail("Expected the message to be removed since the input is valid.");
         }
     }
@@ -164,11 +165,11 @@ public class TestMessageLog {
     public void testIfRemoveMessageWorksWithMessageNotInLog(){
         try {
             TextMessage message = new TextMessage("Hello vader", "bjarne21");
-            messageLog.removeMessage(message);
+            normalMessageLog.removeMessage(message);
             fail("Expected to get a exception since the message is not a part of the message log.");
         }catch (IllegalArgumentException exception){
             fail("Expected to get a CouldNotRemoveTextMessageException since the format is valid.");
-        }catch (CouldNotRemoveTextMessageException exception){
+        }catch (CouldNotRemoveMessageException exception){
             assertTrue(true);
         }
     }
@@ -180,11 +181,11 @@ public class TestMessageLog {
     @DisplayName("Tests if getMessage works with invalid input.")
     public void testIfGetMessageWorksWithInvalidFromUsername(){
         try {
-            messageLog.getMessage(null, LocalTime.now(), LocalDate.now());
+            normalMessageLog.getMessage(null, LocalTime.now(), LocalDate.now());
             fail("Expected to get a exception since the input is null.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
-        }catch (CouldNotGetTextMessageException exception){
+        }catch (CouldNotGetMessageException exception){
             fail("Expected to get a IllegalArgumentException since the format is invalid.");
         }
     }
@@ -196,11 +197,11 @@ public class TestMessageLog {
     @DisplayName("Tests if getMessage works with invalid date.")
     public void testIfGetMessageWorksWithInvalidDate(){
         try {
-            messageLog.getMessage("bjarne22", LocalTime.now(), null);
+            normalMessageLog.getMessage("bjarne22", LocalTime.now(), null);
             fail("Expected to get a exception since the input is null.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
-        }catch (CouldNotGetTextMessageException exception){
+        }catch (CouldNotGetMessageException exception){
             fail("Expected to get a IllegalArgumentException since the format is invalid.");
         }
     }
@@ -212,11 +213,11 @@ public class TestMessageLog {
     @DisplayName("Tests if getMessage works with invalid time.")
     public void testIfGetMessageWorksWithInvalidTime(){
         try {
-            messageLog.getMessage("bjarne22", null, LocalDate.now());
+            normalMessageLog.getMessage("bjarne22", null, LocalDate.now());
             fail("Expected to get a exception since the time is null.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
-        }catch (CouldNotGetTextMessageException exception){
+        }catch (CouldNotGetMessageException exception){
             fail("Expected to get a IllegalArgumentException since the format is invalid.");
         }
     }
@@ -229,7 +230,7 @@ public class TestMessageLog {
     public void testIfGetMessageWorksWithValidInput(){
         try {
             TextMessage testMessage = addTextMessageTextAndReturnIt();
-            TextMessage textMessage = messageLog.getMessage(testMessage.getFromUsername(), testMessage.getTime(), testMessage.getDate());
+            Message textMessage = normalMessageLog.getMessage(testMessage.getFromUsername(), testMessage.getTime(), testMessage.getDate());
             if (textMessage != null){
                 assertTrue(true);
             }else {
@@ -237,7 +238,7 @@ public class TestMessageLog {
             }
         }catch (IllegalArgumentException exception){
             fail("Expected to get a message since the input format is valid.");
-        }catch (CouldNotGetTextMessageException exception){
+        }catch (CouldNotGetMessageException exception){
             fail("Expected to get the message since the input is valid and the message is in the log.");
         }
     }
@@ -250,11 +251,11 @@ public class TestMessageLog {
     public void testIfGetMessageWorksWithMessageNotInLog(){
         try {
             TextMessage testMessage = new TextMessage("Jadda", "bjarne22");
-            TextMessage textMessage = messageLog.getMessage(testMessage.getFromUsername(), testMessage.getTime(), testMessage.getDate());
+            Message textMessage = normalMessageLog.getMessage(testMessage.getFromUsername(), testMessage.getTime(), testMessage.getDate());
             fail("Expected to get a exception since the message is not in the log.");
         }catch (IllegalArgumentException exception){
             fail("Expected to get a CouldNotGetTextMessageException since the format is valid.");
-        }catch (CouldNotGetTextMessageException exception){
+        }catch (CouldNotGetMessageException exception){
             assertTrue(true);
         }
     }

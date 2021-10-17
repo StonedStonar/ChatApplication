@@ -1,6 +1,6 @@
 package no.stonedstonar.chatapplication.model.networktransport;
 
-import no.stonedstonar.chatapplication.model.message.MessageLog;
+import no.stonedstonar.chatapplication.model.messagelog.NormalMessageLog;
 import no.stonedstonar.chatapplication.model.User;
 
 import java.io.Serializable;
@@ -16,16 +16,16 @@ public class LoginTransport implements Serializable {
 
     private User user;
 
-    private List<MessageLog> messageLogList;
+    private List<NormalMessageLog> normalMessageLogList;
 
     /**
       * Makes an instance of the LoginTransport class.
       */
-    public LoginTransport(User user, List<MessageLog> messageLogList){
+    public LoginTransport(User user, List<NormalMessageLog> normalMessageLogList){
         checkIfObjectIsNull(user, "user");
-        checkIfObjectIsNull(messageLogList, "message log list");
+        checkIfObjectIsNull(normalMessageLogList, "message log list");
         this.user = user;
-        this.messageLogList = messageLogList;
+        this.normalMessageLogList = normalMessageLogList;
     }
 
     /**
@@ -40,8 +40,8 @@ public class LoginTransport implements Serializable {
      * Gets the list with all the message logs.
      * @return list with all the message logs.
      */
-    public List<MessageLog> getMessageLogList(){
-        return messageLogList;
+    public List<NormalMessageLog> getMessageLogList(){
+        return normalMessageLogList;
     }
 
     /**

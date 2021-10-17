@@ -18,4 +18,6 @@ module no.stonedstonar.chatapplication {
   exports no.stonedstonar.chatapplication.ui.controllers;
   opens no.stonedstonar.chatapplication.model.message to javafx.fxml, javafx.graphics;
   opens no.stonedstonar.chatapplication.model.conversation to javafx.fxml, javafx.graphics;
+  exports no.stonedstonar.chatapplication.model.messagelog;
+  opens no.stonedstonar.chatapplication.model.messagelog to javafx.fxml, javafx.graphics;
 }

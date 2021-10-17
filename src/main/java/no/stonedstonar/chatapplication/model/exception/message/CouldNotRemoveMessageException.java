@@ -1,4 +1,4 @@
-package no.stonedstonar.chatapplication.model.exception.textmessage;
+package no.stonedstonar.chatapplication.model.exception.message;
 
 import java.io.Serializable;
 
@@ -7,13 +7,13 @@ import java.io.Serializable;
  * @author Steinar Hjelle Midthus
  * @version 0.1
  */
-public class CouldNotRemoveTextMessageException extends Exception implements Serializable {
+public class CouldNotRemoveMessageException extends Exception implements Serializable {
 
     /**
-     * Makes an instance of the CouldNotRemoveTextMessageException class.
+     * Makes an instance of the CouldNotRemoveMessageException class.
      * @param message the error message.
      */
-    public CouldNotRemoveTextMessageException(String message) {
+    public CouldNotRemoveMessageException(String message) {
         super(message);
     }
 }

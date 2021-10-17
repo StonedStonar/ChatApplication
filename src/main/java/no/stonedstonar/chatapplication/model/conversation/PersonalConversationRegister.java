@@ -1,9 +1,9 @@
 package no.stonedstonar.chatapplication.model.conversation;
 
-import no.stonedstonar.chatapplication.model.message.PersonalMessageLog;
+import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
+import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
-import no.stonedstonar.chatapplication.model.message.MessageLog;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -12,75 +12,72 @@ import java.util.Optional;
 
 /**
  * Represents a personal conversation that is used on the client side.
- * @version 0.1
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public class PersonalConversationRegister implements ObservableConversation, Serializable {
 
-    private List<ConversationObserver> conversationObservers;
+    private final List<ConversationObserver> conversationObservers;
 
-    private PersonalMessageLog personalMessageLog;
+    private final List<PersonalConversation> personalConversations;
 
-    private volatile List<PersonalMessageLog> personalMessageLogs;
+    private PersonalConversation newlyAddedPersonalConversation;
 
     private boolean removed;
 
     /**
       * Makes an instance of the PersonalConversationRegister class.
+      * @param normalMessageLogList the list of all the conversations of a user.
       */
-    public PersonalConversationRegister(List<MessageLog> messageLogList){
-        checkIfObjectIsNull(messageLogList, "message log list");
+    public PersonalConversationRegister(List<Conversation> normalMessageLogList){
+        checkIfObjectIsNull(normalMessageLogList, "message log list");
         conversationObservers = new ArrayList<>();
-        personalMessageLogs = new ArrayList<>();
-        messageLogList.forEach(log -> {
-            PersonalMessageLog personalMessageLog = new PersonalMessageLog(log);
-            personalMessageLogs.add(personalMessageLog);
+        personalConversations = new ArrayList<>();
+        normalMessageLogList.forEach(log -> {
+            PersonalConversation personalMessageLog = new PersonalConversation(log);
+            personalConversations.add(personalMessageLog);
         });
-        System.out.println("Done");
     }
 
     /**
-     * Gets all the message logs.
-     * @return a list with all the message logs.
+     * Gets all the conversations.
+     * @return a list with all the conversations.
      */
-    public List<PersonalMessageLog> getMessageLogList() {
-        return personalMessageLogs;
+    public List<PersonalConversation> getMessageLogList() {
+        return personalConversations;
     }
 
     /**
-     * Adds a message log to the personal conversation.
-     * @param messageLog the new message log.
-     * @throws CouldNotAddMessageLogException gets thrown if a message log is already in the register.
+     * Adds a conversation to the personal conversation.
+     * @param conversation the new conversation.
+     * @throws CouldNotAddConversationException gets thrown if a conversation is already in the register.
      */
-    public void addMessageLog(MessageLog messageLog) throws CouldNotAddMessageLogException {
-        PersonalMessageLog personalMessageLog = new PersonalMessageLog(messageLog);
-        if (!personalMessageLogs.stream().anyMatch(log -> log.getMessageLogNumber() == messageLog.getMessageLogNumber())){
-            personalMessageLogs.add(personalMessageLog);
-            this.personalMessageLog = personalMessageLog;
+    public void addConversation(Conversation conversation) throws CouldNotAddConversationException {
+        PersonalConversation personalMessageLog = new PersonalConversation(conversation);
+        if (!personalConversations.stream().anyMatch(log -> log.getConversationNumber() == conversation.getConversationNumber())){
+            personalConversations.add(personalMessageLog);
+            this.newlyAddedPersonalConversation = personalMessageLog;
             removed = false;
             notifyObservers();
         }else {
-            throw new CouldNotAddMessageLogException("The message log is already in the register.");
+            throw new CouldNotAddConversationException("The conversation is already in the register.");
         }
     }
 
-
-
     /**
-     * Gets the personal message log that matches the message log number.
-     * @param messageLogNumber the number that the message log has.
-     * @return the message log that matches this number.
-     * @throws CouldNotGetMessageLogException gets thrown if the message log could not be found.
+     * Gets the personal conversation that matches the conversation number.
+     * @param conversationNumber the number that the conversation has.
+     * @return the conversation that matches this number.
+     * @throws CouldNotGetConversationException gets thrown if the conversation could not be found.
      */
-    public PersonalMessageLog getPersonalMessageLogByNumber(long messageLogNumber) throws CouldNotGetMessageLogException {
-        checkIfLongIsAboveZero(messageLogNumber, "message log number");
-        Optional<PersonalMessageLog> optionalPersonalMessageLog = personalMessageLogs.stream().filter(log -> log.getMessageLogNumber() == messageLogNumber).findFirst();
+    public PersonalConversation getPersonalConversation(long conversationNumber) throws CouldNotGetConversationException {
+        checkIfLongIsAboveZero(conversationNumber, "conversation number");
+        Optional<PersonalConversation> optionalPersonalMessageLog = personalConversations.stream().filter(log -> log.getConversationNumber() == conversationNumber).findFirst();
         if (optionalPersonalMessageLog.isPresent()){
             return optionalPersonalMessageLog.get();
         }else {
-            throw new CouldNotGetMessageLogException("The message log with the log number " + messageLogNumber + " is not a part of this register.");
+            throw new CouldNotGetConversationException("The conversation with the log number " + conversationNumber + " is not a part of this register.");
         }
-
     }
 
     @Override
@@ -105,7 +102,7 @@ public class PersonalConversationRegister implements ObservableConversation, Ser
 
     @Override
     public void notifyObservers() {
-        conversationObservers.forEach(obs -> obs.updateMessageLog(personalMessageLog, removed));
+        conversationObservers.forEach(obs -> obs.updateMessageLog(newlyAddedPersonalConversation, removed));
     }
 
     @Override

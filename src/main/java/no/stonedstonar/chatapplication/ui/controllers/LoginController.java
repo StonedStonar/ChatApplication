@@ -5,6 +5,7 @@ import javafx.scene.control.*;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
+import no.stonedstonar.chatapplication.ui.windows.AlertTemplates;
 import no.stonedstonar.chatapplication.ui.windows.ChatWindow;
 import no.stonedstonar.chatapplication.ui.windows.NewUserWindow;
 

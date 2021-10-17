@@ -1,27 +1,23 @@
 package no.stonedstonar.chatapplication.model.message;
 
-import javafx.scene.text.Text;
-
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
 /**
- *
- * @version 0.1
+ * Represents a message that holds text.
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class TextMessage implements Serializable {
+public class TextMessage implements Serializable, Message{
 
     private final String message;
 
     private final String fromUsername;
 
-    private long messageNumber;
+    private final LocalDate date;
 
-    private LocalDate date;
-
-    private LocalTime time;
+    private final LocalTime time;
 
 
     /**
@@ -36,46 +32,21 @@ public class TextMessage implements Serializable {
         this.fromUsername = fromUsername;
         date = LocalDate.now();
         time = LocalTime.now();
-        messageNumber = -1;
     }
 
-    /**
-     * Sets the message number and puts a date on the message.
-     * @param messageNumber the number this message is in the log.
-     */
-    public void setMessageNumber(long messageNumber){
-        if (this.messageNumber == -1){
-            checkIfLongIsAboveZero(messageNumber, "message number");
-            this.messageNumber = messageNumber;
-            date = LocalDate.now();
-            time = LocalTime.now();
-        }else {
-            throw new IllegalArgumentException("Cannot set the message number since its already set.");
-        }
-    }
-
-    /**
-     * Gets the message's long number.
-     * @return number this message is.
-     */
-    public long getMessageNumber(){
-        return messageNumber;
-    }
-
-    /**
-     * Gets the time that this message was sent.
-     * @return the time object that holds the time.
-     */
+    @Override
     public LocalTime getTime(){
         return time;
     }
 
-    /**
-     * Gets the date this message was sent.
-     * @return the local date object that holds the date.
-     */
+    @Override
     public LocalDate getDate(){
         return date;
+    }
+
+    @Override
+    public String getFromUsername() {
+        return fromUsername;
     }
 
     /**
@@ -84,14 +55,6 @@ public class TextMessage implements Serializable {
      */
     public String getMessage() {
         return message;
-    }
-
-    /**
-     * Gets the username that this message is from.
-     * @return the username of the person who sent the message.
-     */
-    public String getFromUsername() {
-        return fromUsername;
     }
 
     /**

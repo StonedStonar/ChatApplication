@@ -1,12 +1,14 @@
-package no.stonedstonar.chatapplication.model.message;
+package no.stonedstonar.chatapplication.model.messagelog;
 
+
+import no.stonedstonar.chatapplication.model.message.TextMessage;
 
 /**
  * An interface that represents an observer that waits for new messages to arrive.
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
-public interface MessageObserver {
+public interface ConversationObserver {
 
     /**
      * Tells the observer that there is a new message.
