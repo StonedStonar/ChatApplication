@@ -1,13 +1,12 @@
-package no.stonedstonar.chatapplication.ui.controllers.frontend;
+package no.stonedstonar.chatapplication.ui.controllers;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
-import no.stonedstonar.chatapplication.ui.controllers.Controller;
-import no.stonedstonar.chatapplication.ui.windows.frontend.ChatWindow;
-import no.stonedstonar.chatapplication.ui.windows.frontend.NewUserWindow;
+import no.stonedstonar.chatapplication.ui.windows.ChatWindow;
+import no.stonedstonar.chatapplication.ui.windows.NewUserWindow;
 
 import java.io.IOException;
 import java.util.HashMap;

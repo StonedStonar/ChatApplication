@@ -1,9 +1,8 @@
-package no.stonedstonar.chatapplication.ui.windows.frontend;
+package no.stonedstonar.chatapplication.ui.windows;
 
 import javafx.scene.Scene;
 import no.stonedstonar.chatapplication.ui.controllers.Controller;
-import no.stonedstonar.chatapplication.ui.controllers.frontend.NewUserController;
-import no.stonedstonar.chatapplication.ui.windows.Window;
+import no.stonedstonar.chatapplication.ui.controllers.NewUserController;
 
 /**
  * Represents the new user window.

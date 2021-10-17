@@ -30,7 +30,7 @@ import java.util.logging.Logger;
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
-public class Server implements ObservableServer{
+public class Server{
 
     private ServerSocket welcomeSocket;
 
@@ -41,12 +41,6 @@ public class Server implements ObservableServer{
     private volatile Logger logger;
 
     private boolean run;
-
-    private List<ServerObserver> serverObservers;
-
-    private volatile String message;
-
-    private volatile Level level;
 
     private ExecutorService executors;
 
@@ -63,7 +57,6 @@ public class Server implements ObservableServer{
         userRegister = new UserRegister();
         conversationRegister = new ConversationRegister();
         run = true;
-        serverObservers = new ArrayList<>();
         executors = Executors.newFixedThreadPool(8);
         try {
             welcomeSocket = new ServerSocket(1380);
@@ -320,9 +313,6 @@ public class Server implements ObservableServer{
      */
     private synchronized void logEvent(Level level, String message ){
         logger.log(level, message);
-        this.level = level;
-        this.message = message;
-        notifyObservers();
     }
 
     /**
@@ -334,38 +324,5 @@ public class Server implements ObservableServer{
         if (object == null){
             throw new IllegalArgumentException("The " + error + " cannot be null.");
         }
-    }
-
-    @Override
-    public void registerObserver(ServerObserver serverObserver) {
-        checkIfObjectIsNull(serverObserver, "server observer");
-        if (!serverObservers.contains(serverObserver)){
-            serverObservers.add(serverObserver);
-        }else {
-            throw new IllegalArgumentException("The server observer is already a observer of this server.");
-        }
-    }
-
-    @Override
-    public void removeObserver(ServerObserver serverObserver) {
-        checkIfObjectIsNull(serverObserver, "server observer");
-        if (serverObservers.contains(serverObserver)){
-            serverObservers.remove(serverObserver);
-        }else {
-            throw new IllegalArgumentException("The server observer is not a observer of this server.");
-        }
-    }
-
-    @Override
-    public void notifyObservers() {
-        for (ServerObserver serverObserver : serverObservers) {
-            serverObserver.updateMessage(message, level);
-        }
-    }
-
-    @Override
-    public boolean checkIfObjectIsObserver(ServerObserver serverObserver) {
-        checkIfObjectIsNull(serverObserver, "server observer");
-        return serverObservers.stream().anyMatch(obs -> obs.equals(serverObserver));
     }
 }

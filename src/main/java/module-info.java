@@ -16,10 +16,6 @@ module no.stonedstonar.chatapplication {
   exports no.stonedstonar.chatapplication.ui;
   exports no.stonedstonar.chatapplication.ui.windows;
   exports no.stonedstonar.chatapplication.ui.controllers;
-  opens no.stonedstonar.chatapplication.ui.controllers.frontend to javafx.fxml, javafx.graphics;
-  exports no.stonedstonar.chatapplication.ui.windows.frontend;
-  opens no.stonedstonar.chatapplication.ui.windows.frontend to javafx.fxml, javafx.graphics;
   opens no.stonedstonar.chatapplication.model.message to javafx.fxml, javafx.graphics;
   opens no.stonedstonar.chatapplication.model.conversation to javafx.fxml, javafx.graphics;
-  exports no.stonedstonar.chatapplication.ui.windows.backend;
 }

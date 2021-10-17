@@ -1,4 +1,4 @@
-package no.stonedstonar.chatapplication.ui.controllers.frontend;
+package no.stonedstonar.chatapplication.ui.controllers;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -23,9 +23,8 @@ import no.stonedstonar.chatapplication.model.message.MessageObserver;
 import no.stonedstonar.chatapplication.model.message.PersonalMessageLog;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
-import no.stonedstonar.chatapplication.ui.controllers.Controller;
-import no.stonedstonar.chatapplication.ui.windows.frontend.LoginWindow;
-import no.stonedstonar.chatapplication.ui.windows.frontend.NewConversationWindow;
+import no.stonedstonar.chatapplication.ui.windows.LoginWindow;
+import no.stonedstonar.chatapplication.ui.windows.NewConversationWindow;
 
 import java.io.IOException;
 import java.time.LocalTime;

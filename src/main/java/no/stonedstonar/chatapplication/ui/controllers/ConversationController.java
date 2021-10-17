@@ -1,4 +1,4 @@
-package no.stonedstonar.chatapplication.ui.controllers.frontend;
+package no.stonedstonar.chatapplication.ui.controllers;
 
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
@@ -14,8 +14,7 @@ import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
-import no.stonedstonar.chatapplication.ui.controllers.Controller;
-import no.stonedstonar.chatapplication.ui.windows.frontend.ChatWindow;
+import no.stonedstonar.chatapplication.ui.windows.ChatWindow;
 
 import java.io.IOException;
 import java.util.ArrayList;

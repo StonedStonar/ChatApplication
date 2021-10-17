@@ -1,4 +1,4 @@
-package no.stonedstonar.chatapplication.ui.controllers.frontend;
+package no.stonedstonar.chatapplication.ui.controllers;
 
 import javafx.scene.control.Alert;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
