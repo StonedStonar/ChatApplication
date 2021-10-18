@@ -270,6 +270,8 @@ public class Server{
      */
     private void checkForNewMessagesInMessageLog(ConversationRequest conversationRequest, Socket socket) throws IOException, CouldNotGetConversationException {
         Conversation conversation = normalConversationRegister.getConversationByNumber(conversationRequest.getMessageLogNumber());
+        //Todo: Change the rest of the server and client and try out the tests before testing the server and chat.
+        // also alter the conversation request.
         List<TextMessage> textMessageList = conversation.checkForNewMessagesOnDate(conversationRequest.getListSize());
         MessageTransport messageTransport = new MessageTransport(textMessageList, conversation);
         sendObject(messageTransport, socket);
