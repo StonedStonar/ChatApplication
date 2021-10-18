@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 /**
  * A request that says if the socket is going to be kept alive or not.
- * @version 0.1
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public class SetKeepAliveRequest implements Serializable {

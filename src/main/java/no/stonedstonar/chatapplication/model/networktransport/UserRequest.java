@@ -6,7 +6,7 @@ import java.io.Serializable;
 
 /**
  * This is an object that contains a request the user wants to make to the server.
- * @version 0.1
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public class UserRequest implements Serializable {

@@ -1,14 +1,13 @@
 package no.stonedstonar.chatapplication.model.conversation;
 
-import no.stonedstonar.chatapplication.model.Members;
+import javafx.beans.Observable;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
+import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMessageException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.message.Message;
-import no.stonedstonar.chatapplication.model.messagelog.ConversationObserver;
 import no.stonedstonar.chatapplication.model.messagelog.MessageLog;
 
 import java.io.Serializable;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,85 +16,77 @@ import java.util.List;
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class PersonalConversation implements ObservableConversation, Serializable {
+public class PersonalConversation extends NormalConversation implements ObservableConversation, Serializable {
 
-    private List<MessageLog> messageLogList;
-
-    private String conversationName;
-
-    private LocalDate dateMade;
-
-    private long conversationNumber;
-
-    private Members members;
-
-    private volatile List<no.stonedstonar.chatapplication.model.messagelog.ConversationObserver> conversationObservers;
+    private final List<ConversationObserver> conversationObservers;
 
     private volatile Message newlyAddedMessage;
 
     private volatile boolean removed;
 
 
+    //Todo: Vurder å ikke ta imot hele samtalen men at dette objektet må spørre etter deler av den.
+    // Finish this tomorrow and start on the testing part.
     /**
      * Makes an instance of the PersonalNormalConversation class.
      * @param conversation the conversation this personal conversation is going to imitate.
      */
     public PersonalConversation(Conversation conversation) {
-        checkIfObjectIsNull(conversation, "conversation");
-        this.conversationName = conversation.getConversationName();
-        this.conversationNumber = conversation.getConversationNumber();
-        this.dateMade = conversation.getDateMade();
-        this.members = conversation.getConversationMembers();
-        //Todo: Vurder å ikke ta imot hele samtalen men at dette objektet må spørre etter deler av den.
-        messageLogList = new ArrayList<>();
+        super(conversation.getConversationNumber(), conversation.getConversationMembers(), conversation.getDateMade(), conversation.getConversationName());
+        conversationObservers = new ArrayList<>();
+        if (conversation instanceof NormalConversation normalConversation){
+            List<MessageLog> messageLogList = normalConversation.getMessageLogList();
+            messageLogList.forEach(messageLog -> {
+                getMessageLogList().add(messageLog);
+            });
+        }
     }
 
-    /**
-     * Adds a new message to the conversation.
-     * @param message the new message you want to add.
-     * @throws CouldNotAddMessageException gets thrown if the message could not be added.
-     * @throws CouldNotGetMessageLogException gets thrown if the message log could not be located.
-     */
-    public void addMessage(Message message) throws CouldNotAddMessageException, CouldNotGetMessageLogException {
-        conversation.addNewMessage(message);
+    @Override
+    public void addNewMessage(Message message) throws CouldNotAddMessageException, CouldNotGetMessageLogException {
+        super.addNewMessage(message);
         newlyAddedMessage = message;
         removed = false;
         notifyObservers();
     }
 
-    /**
-     * Gets the conversation number.
-     * @return the conversation number.
-     */
-    public long getConversationNumber() {
-        return conversationNumber;
+    @Override
+    public void removeMessage(Message message) throws CouldNotGetMessageLogException, CouldNotRemoveMessageException{
+        super.removeMessage(message);
+        newlyAddedMessage = message;
+        removed = true;
+        notifyObservers();
+    }
+
+
+    @Override
+    public void registerObserver(ConversationObserver conversationObserver) {
+        if (!checkIfObjectIsObserver(conversationObserver)){
+            conversationObservers.add(conversationObserver);
+        }else {
+            throw new IllegalArgumentException("The observer " + conversationObserver + " is already a observer of this object " + this);
+        }
     }
 
     @Override
-    public void registerObserver(no.stonedstonar.chatapplication.model.conversation.ConversationObserver conversationObserver) {
-
-    }
-
-    @Override
-    public void removeObserver(no.stonedstonar.chatapplication.model.conversation.ConversationObserver conversationObserver) {
-
+    public void removeObserver(ConversationObserver conversationObserver) {
+        if (checkIfObjectIsObserver(conversationObserver)){
+            conversationObservers.remove(conversationObserver);
+        }else {
+            throw new IllegalArgumentException("The observer " + conversationObserver + " is not a observer of this conversation " + this);
+        }
     }
 
     @Override
     public void notifyObservers() {
-
-    }
-
-    @Override
-    public boolean checkIfObjectIsObserver(no.stonedstonar.chatapplication.model.conversation.ConversationObserver conversationObserver) {
-        return false;
+        conversationObservers.forEach(obs -> obs.updateConversationMessage(newlyAddedMessage, removed));
     }
 
     @Override
     public boolean checkIfObjectIsObserver(ConversationObserver conversationObserver) {
-        return false;
+        checkIfObjectIsNull(conversationObserver, "conversation observer");
+        return conversationObservers.stream().anyMatch(obs -> obs.equals(conversationObserver));
     }
-
 
     /**
      * Checks if a list is of a valid format.

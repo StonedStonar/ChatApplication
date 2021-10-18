@@ -14,8 +14,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
- * @version 0.1
+ * Represents the controller for the login window.
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public class LoginController implements Controller {

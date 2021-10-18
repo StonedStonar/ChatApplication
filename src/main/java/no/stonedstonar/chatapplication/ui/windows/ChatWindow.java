@@ -6,7 +6,7 @@ import no.stonedstonar.chatapplication.ui.controllers.Controller;
 
 /**
  * Represents the chat window.
- * @version 0.1
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public class ChatWindow implements Window {

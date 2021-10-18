@@ -12,8 +12,8 @@ import no.stonedstonar.chatapplication.ui.windows.Window;
 import java.io.IOException;
 
 /**
- *
- * @version 0.1
+ * Represents the backbone of the application. Loads windows and manages loading of the scenes.
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public class ChatApplicationClient extends Application {

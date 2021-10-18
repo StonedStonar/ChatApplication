@@ -3,15 +3,14 @@ package no.stonedstonar.chatapplication.model.messagelog;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMessageException;
 import no.stonedstonar.chatapplication.model.message.Message;
-import no.stonedstonar.chatapplication.model.message.TextMessage;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
 /**
- *
- * @version 0.1
+ * Represents the basic methods a message log should have.
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public interface MessageLog {
@@ -55,4 +54,11 @@ public interface MessageLog {
      *         <code>false</code> if none of the input messages are in the message log.
      */
     boolean checkIfAllMessagesAreNewMessages(List<Message> messageList);
+
+    /**
+     * Gets the newest messages from the message log.
+     * @param lastMessageNumber the last message the other log has gotten.
+     * @return a list with the new messages.
+     */
+    Map<Long, Message> checkForNewMessages(long lastMessageNumber);
 }

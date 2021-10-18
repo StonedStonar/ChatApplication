@@ -1,10 +1,8 @@
 package no.stonedstonar.chatapplication.model.conversation;
 
-import no.stonedstonar.chatapplication.model.conversation.ConversationObserver;
-
 /**
  *
- * @version 0.1
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public interface ObservableConversation {

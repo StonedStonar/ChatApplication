@@ -1,9 +1,11 @@
-package no.stonedstonar.chatapplication.model.conversation;
+package no.stonedstonar.chatapplication.model.conversation.register;
 
+import no.stonedstonar.chatapplication.model.conversation.Conversation;
+import no.stonedstonar.chatapplication.model.conversation.PersonalConversation;
+import no.stonedstonar.chatapplication.model.conversation.register.ConversationRegisterObserver;
+import no.stonedstonar.chatapplication.model.conversation.register.ObservableConversationRegister;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
-import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
-import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -15,9 +17,9 @@ import java.util.Optional;
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class PersonalConversationRegister implements ObservableConversation, Serializable {
+public class PersonalConversationRegister implements ObservableConversationRegister, Serializable {
 
-    private final List<ConversationObserver> conversationObservers;
+    private final List<ConversationRegisterObserver> conversationRegisterObservers;
 
     private final List<PersonalConversation> personalConversations;
 
@@ -31,7 +33,7 @@ public class PersonalConversationRegister implements ObservableConversation, Ser
       */
     public PersonalConversationRegister(List<Conversation> normalMessageLogList){
         checkIfObjectIsNull(normalMessageLogList, "message log list");
-        conversationObservers = new ArrayList<>();
+        conversationRegisterObservers = new ArrayList<>();
         personalConversations = new ArrayList<>();
         normalMessageLogList.forEach(log -> {
             PersonalConversation personalMessageLog = new PersonalConversation(log);
@@ -54,7 +56,7 @@ public class PersonalConversationRegister implements ObservableConversation, Ser
      */
     public void addConversation(Conversation conversation) throws CouldNotAddConversationException {
         PersonalConversation personalMessageLog = new PersonalConversation(conversation);
-        if (!personalConversations.stream().anyMatch(log -> log.getConversationNumber() == conversation.getConversationNumber())){
+        if (!checkIfConversationIsInRegister(conversation)){
             personalConversations.add(personalMessageLog);
             this.newlyAddedPersonalConversation = personalMessageLog;
             removed = false;
@@ -62,6 +64,16 @@ public class PersonalConversationRegister implements ObservableConversation, Ser
         }else {
             throw new CouldNotAddConversationException("The conversation is already in the register.");
         }
+    }
+
+    /**
+     * Checks if a conversation is already in the register.
+     * @param conversation the conversation you want to check.
+     * @return <code>true</code> if the conversation is in the register.
+     *         <code>false</code> if the conversation is not in this register.
+     */
+    private boolean checkIfConversationIsInRegister(Conversation conversation){
+        return personalConversations.stream().anyMatch(log -> log.getConversationNumber() == conversation.getConversationNumber());
     }
 
     /**
@@ -81,47 +93,34 @@ public class PersonalConversationRegister implements ObservableConversation, Ser
     }
 
     @Override
-    public void registerObserver(ConversationObserver conversationObserver) {
-        checkIfObjectIsNull(conversationObserver, "conversation observer");
-        if (!conversationObservers.contains(conversationObserver)){
-            conversationObservers.add(conversationObserver);
+    public void registerObserver(ConversationRegisterObserver conversationRegisterObserver) {
+        checkIfObjectIsNull(conversationRegisterObserver, "conversation observer");
+        if (!conversationRegisterObservers.contains(conversationRegisterObserver)){
+            conversationRegisterObservers.add(conversationRegisterObserver);
         }else {
-            throw new IllegalArgumentException("The conversation observer " + conversationObserver + " is not a part of this message log.");
+            throw new IllegalArgumentException("The conversation observer " + conversationRegisterObserver + " is not a part of this message log.");
         }
     }
 
     @Override
-    public void removeObserver(ConversationObserver conversationObserver) {
-        checkIfObjectIsNull(conversationObserver, "conversation observer");
-        if (!conversationObservers.contains(conversationObserver)){
-            conversationObservers.remove(conversationObserver);
+    public void removeObserver(ConversationRegisterObserver conversationRegisterObserver) {
+        checkIfObjectIsNull(conversationRegisterObserver, "conversation observer");
+        if (!conversationRegisterObservers.contains(conversationRegisterObserver)){
+            conversationRegisterObservers.remove(conversationRegisterObserver);
         }else {
-            throw new IllegalArgumentException("The conversation observer " + conversationObserver + " is not a part of this message log.");
+            throw new IllegalArgumentException("The conversation observer " + conversationRegisterObserver + " is not a part of this message log.");
         }
     }
 
     @Override
     public void notifyObservers() {
-        conversationObservers.forEach(obs -> obs.updateMessageLog(newlyAddedPersonalConversation, removed));
+        conversationRegisterObservers.forEach(obs -> obs.updateConversation(newlyAddedPersonalConversation, removed));
     }
 
     @Override
-    public boolean checkIfObjectIsObserver(ConversationObserver conversationObserver) {
-        checkIfObjectIsNull(conversationObserver, "conversation observer");
-        return conversationObservers.stream().anyMatch(obs -> obs.equals(conversationObserver));
-    }
-
-
-    /**
-     * Checks if a string is of a valid format or not.
-     * @param stringToCheck the string you want to check.
-     * @param errorPrefix the error the exception should have if the string is invalid.
-     */
-    private void checkString(String stringToCheck, String errorPrefix){
-        checkIfObjectIsNull(stringToCheck, errorPrefix);
-        if (stringToCheck.isEmpty()){
-            throw new IllegalArgumentException("The " + errorPrefix + " cannot be empty.");
-        }
+    public boolean checkIfObjectIsObserver(ConversationRegisterObserver conversationRegisterObserver) {
+        checkIfObjectIsNull(conversationRegisterObserver, "conversation observer");
+        return conversationRegisterObservers.stream().anyMatch(obs -> obs.equals(conversationRegisterObserver));
     }
 
     /**

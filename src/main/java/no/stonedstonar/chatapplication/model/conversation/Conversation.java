@@ -5,11 +5,12 @@ import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessag
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMessageException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.message.Message;
-import no.stonedstonar.chatapplication.model.message.TextMessage;
 import no.stonedstonar.chatapplication.model.messagelog.MessageLog;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A conversation is a dialog between one or more people over a period.
@@ -68,7 +69,7 @@ public interface Conversation {
 
     /**
      * Adds a new message to the current date.
-     * Adds the message log too if it cant be found.
+     * Adds the message log too if it can't be found.
      * @param message the new message to add.
      * @throws CouldNotAddMessageException gets thrown if the message could not be added.
      * @throws CouldNotGetMessageLogException gets thrown if the message log with the same date as the message could not be found.
@@ -91,5 +92,13 @@ public interface Conversation {
      */
     void addAllMessagesWithSameDate(List<Message> newMessageList) throws CouldNotAddMessageException, CouldNotGetMessageLogException;
 
-
+    /**
+     * Checks for new messages on a specified date.
+     * If there is no message log for that date (the date must be current day) it is made, but then last message must be zero.
+     * @param localDate the date you want to check for new messages for.
+     * @param lastMessage the number of the last message in the other register.
+     * @throws CouldNotGetMessageLogException If the last message is larger than zero or the date is not today an exception is thrown.
+     *                                        If the date is before today a new message log is not made.
+     */
+    Map<Long, Message> checkForNewMessagesOnDate(LocalDate localDate, long lastMessage) throws CouldNotGetMessageLogException;
 }

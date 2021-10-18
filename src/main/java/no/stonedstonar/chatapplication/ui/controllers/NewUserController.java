@@ -15,8 +15,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
- * @version 0.1
+ * Represents the controller for new user window.
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public class NewUserController implements Controller {

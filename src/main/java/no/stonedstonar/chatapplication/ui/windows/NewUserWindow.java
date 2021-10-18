@@ -6,7 +6,7 @@ import no.stonedstonar.chatapplication.ui.controllers.NewUserController;
 
 /**
  * Represents the new user window.
- * @version 0.1
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public class NewUserWindow implements Window {

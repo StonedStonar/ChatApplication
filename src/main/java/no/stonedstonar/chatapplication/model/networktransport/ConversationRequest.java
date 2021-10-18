@@ -3,14 +3,15 @@ package no.stonedstonar.chatapplication.model.networktransport;
 import no.stonedstonar.chatapplication.model.networktransport.builder.MessageLogRequestBuilder;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Represents a message log request that can do different operations based on the input values.
- * @version 0.1
+ * Represents a conversation request that can do different operations based on the input values.
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class MessageLogRequest implements Serializable {
+public class ConversationRequest implements Serializable {
 
     private boolean deleteMessageLog;
 
@@ -27,13 +28,15 @@ public class MessageLogRequest implements Serializable {
     private List<String> usernames;
 
     private int listSize;
+    
+    private LocalDate dateMade;
 
     private long messageLogNumber;
 
     /**
       * Makes an instance of the MessageLogRequest class.
       */
-    public MessageLogRequest(MessageLogRequestBuilder messageLogRequestBuilder){
+    public ConversationRequest(MessageLogRequestBuilder messageLogRequestBuilder){
         deleteMessageLog = messageLogRequestBuilder.isDeleteMessageLog();
         removeMembers = messageLogRequestBuilder.isRemoveMembers();
         addMembers = messageLogRequestBuilder.isAddMembers();

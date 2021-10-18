@@ -6,7 +6,7 @@ import no.stonedstonar.chatapplication.ui.controllers.ConversationController;
 
 /**
  * Represents the conversation window.
- * @version 0.1
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public class NewConversationWindow implements Window {

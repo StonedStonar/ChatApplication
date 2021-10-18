@@ -4,8 +4,8 @@ import javafx.scene.control.Alert;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
 
 /**
- *
- * @version 0.1
+ * A basic class that holds methods to make often used alerts.
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public class AlertTemplates {

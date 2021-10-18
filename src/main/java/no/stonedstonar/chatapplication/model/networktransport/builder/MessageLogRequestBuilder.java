@@ -1,6 +1,6 @@
 package no.stonedstonar.chatapplication.model.networktransport.builder;
 
-import no.stonedstonar.chatapplication.model.networktransport.MessageLogRequest;
+import no.stonedstonar.chatapplication.model.networktransport.ConversationRequest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -271,9 +271,9 @@ public class MessageLogRequestBuilder {
      * Makes the message log request.
      * @return a request that matches the set values in this builder.
      */
-    public MessageLogRequest build(){
-        MessageLogRequest messageLogRequest = new MessageLogRequest(this);
-        return messageLogRequest;
+    public ConversationRequest build(){
+        ConversationRequest conversationRequest = new ConversationRequest(this);
+        return conversationRequest;
     }
 
     /**

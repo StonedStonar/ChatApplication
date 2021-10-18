@@ -1,6 +1,7 @@
 package no.stonedstonar.chatapplication.model.conversation;
 
 import no.stonedstonar.chatapplication.model.Members;
+import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMessageException;
@@ -10,9 +11,7 @@ import no.stonedstonar.chatapplication.model.messagelog.MessageLog;
 import no.stonedstonar.chatapplication.model.messagelog.NormalMessageLog;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Represents a normal conversation that uses objects and lists to store its contents.
@@ -39,13 +38,31 @@ public class NormalConversation implements Conversation {
       * @throws CouldNotAddMemberException gets thrown if the same username is written twice in the list.
       */
     public NormalConversation(long conversationNumber, List<String> usernames) throws CouldNotAddMemberException {
-        checkString(conversationName, "conversation name");
+        checkIfObjectIsNull(conversationName, "conversation name");
         checkIfLongIsNegative(conversationNumber, "conversation number");
         checkIfListIsValid(usernames, "usernames");
         conversationDateMade = LocalDate.now();
         messageLogList = new ArrayList<>();
         members = new Members();
         members.addAllMembers(usernames);
+    }
+
+    /**
+     * Makes an instance of the conversation class.
+     * @param conversationNumber the conversation number this class is going to have.
+     * @param members the members of the class.
+     * @param dateMade the date this class was made.
+     * @param conversationName the name of the conversation.
+     */
+    protected NormalConversation(long conversationNumber, Members members, LocalDate dateMade, String conversationName){
+        checkIfLongIsNegative(conversationNumber, "conversation number");
+        checkIfObjectIsNull(members, "members");
+        checkIfDateIsValid(dateMade);
+        checkString(conversationName, "conversation name");
+        this.conversationName = conversationName;
+        this.conversationNumber = conversationNumber;
+        this.members = members;
+        this.conversationDateMade = dateMade;
     }
 
     /**
@@ -109,7 +126,7 @@ public class NormalConversation implements Conversation {
     public void addNewMessage(Message message) throws CouldNotGetMessageLogException, CouldNotAddMessageException {
         checkIfObjectIsNull(message, "message");
         checkIfDateIsValid(message.getDate());
-        MessageLog messageLog = getMessageLogByTheDate(message.getDate());
+        MessageLog messageLog = getMessageLogForDate(message.getDate());
         addMessageToMessageLog(message, messageLog);
     }
 
@@ -147,7 +164,24 @@ public class NormalConversation implements Conversation {
                 throw new CouldNotAddMessageException("One of the messages in the list is already in the message log. " + messageLog.getDateMade() + " and the conversation is "  + conversationNumber);
             }
         }else {
-            throw new IllegalArgumentException("The dates all of the messages are not the same.");
+            throw new CouldNotAddMessageException("The dates all of the messages are not the same.");
+        }
+    }
+
+    @Override
+    public Map<Long, Message> checkForNewMessagesOnDate(LocalDate localDate, long lastMessage) throws CouldNotGetMessageLogException {
+        checkIfDateIsValid(localDate);
+        checkIfLongIsNegative(lastMessage, "last message");
+        try {
+            MessageLog messageLog = getMessageLogByTheDate(localDate);
+            return messageLog.checkForNewMessages(lastMessage);
+        }catch (CouldNotGetMessageLogException exception){
+            if ((lastMessage == 0) && localDate.isEqual(LocalDate.now())){
+                MessageLog messageLog = getMessageLogForDate(localDate);
+                return messageLog.checkForNewMessages(lastMessage);
+            }else {
+                throw new CouldNotGetMessageLogException("There is no message log for the date " + localDate.toString() + " and the last message is not zero.");
+            }
         }
     }
 
@@ -176,6 +210,14 @@ public class NormalConversation implements Conversation {
     }
 
     /**
+     * Gets the message log list.
+     * @return a list with all the message logs for each day.
+     */
+    public List<MessageLog> getMessageLogList(){
+        return messageLogList;
+    }
+
+    /**
      * Checks if the date is valid. That it is before current date or the current date.
      * @param localDate the local date to be checked.
      */
@@ -186,6 +228,7 @@ public class NormalConversation implements Conversation {
             throw new IllegalArgumentException("The input date must be before or at this current date.");
         }
     }
+
     /**
      * Checks if a long is negative or equal to zero.
      * @param number the number to check.

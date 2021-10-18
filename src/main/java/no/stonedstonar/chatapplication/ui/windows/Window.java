@@ -5,7 +5,7 @@ import no.stonedstonar.chatapplication.ui.controllers.Controller;
 
 /**
  * Represents the basic methods a window should have.
- * @version 0.1
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public interface Window {

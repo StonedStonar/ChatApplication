@@ -24,8 +24,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
- * @version 0.1
+ * Represents the controller of the conversation window.
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public class ConversationController implements Controller {

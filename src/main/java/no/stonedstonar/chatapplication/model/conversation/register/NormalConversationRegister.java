@@ -1,11 +1,11 @@
-package no.stonedstonar.chatapplication.model.conversation;
+package no.stonedstonar.chatapplication.model.conversation.register;
 
+import no.stonedstonar.chatapplication.model.conversation.Conversation;
+import no.stonedstonar.chatapplication.model.conversation.NormalConversation;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
+import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotRemoveConversationException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
-import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
-import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
-import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotRemoveConversationException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.Optional;
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class ConversationRegister {
+public class NormalConversationRegister implements ConversationRegister {
 
     private List<Conversation> conversationList;
 
@@ -25,15 +25,11 @@ public class ConversationRegister {
     /**
       * Makes an instance of the MessageRegister class.
       */
-    public ConversationRegister(){
+    public NormalConversationRegister(){
         conversationList = new ArrayList<>();
     }
 
-    /**
-     * Gets the conversations the username is a part of.
-     * @param username the username that wants its conversations.
-     * @return the conversations that belongs to this username in a list.
-     */
+    @Override
     public List<Conversation> getAllConversationsOfUsername(String username){
         checkString(username, "username");
         return conversationList.stream().filter(conversation -> {
@@ -41,19 +37,12 @@ public class ConversationRegister {
         }).toList();
     }
 
-    /**
-     * Adds a new conversation based on a list of names that are in it.
-     * @param usernames list with all the usernames that wants to be in the conversation.
-     * @param nameOfConversation the name the conversation should have.
-     * @return the conversation that was just added to the register.
-     * @throws CouldNotAddMessageLogException gets thrown if the conversation is already in the register.
-     * @throws CouldNotAddMemberException gets thrown if a member could not be added.
-     */
+    @Override
     public Conversation addNewConversationWithUsernames(List<String> usernames, String nameOfConversation) throws CouldNotAddMemberException, CouldNotAddConversationException {
         checkIfObjectIsNull(usernames, "usernames");
         checkIfObjectIsNull(nameOfConversation, "name of messagelog");
         if (!usernames.isEmpty()){
-            Conversation conversation = new NormalConversation(makeNewMessageLogNumber(), usernames);
+            Conversation conversation = new NormalConversation(makeNewConversationNumber(), usernames);
             conversation.getConversationMembers().addAllMembers(usernames);
             if (!nameOfConversation.isEmpty()){
                 System.out.println(nameOfConversation);
@@ -70,17 +59,12 @@ public class ConversationRegister {
      * Makes a new log number for each log that is in the list.
      * @return the number that the new message log can have.
      */
-    private long makeNewMessageLogNumber(){
+    private long makeNewConversationNumber(){
         lastConversationNumber = lastConversationNumber + 1;
         return lastConversationNumber;
     }
 
-    /**
-     * Gets the conversation that matches the conversation number.
-     * @param messageLogNumber the number that the conversation has.
-     * @return the conversation that matches this number.
-     * @throws CouldNotGetMessageLogException gets thrown if the conversation could not be found.
-     */
+    @Override
     public Conversation getConversationByNumber(long messageLogNumber) throws CouldNotGetConversationException {
         checkIfLongIsAboveZero(messageLogNumber, "conversation number");
         Optional<Conversation> optionalMessageLog = conversationList.stream().filter(log -> log.getConversationNumber() == messageLogNumber).findFirst();
@@ -97,7 +81,7 @@ public class ConversationRegister {
      * @throws CouldNotAddConversationException gets thrown if the conversation is already in the register.
      */
     private void addConversation(Conversation conversation) throws CouldNotAddConversationException {
-        if (!checkIfMessageLogIsInList(conversation)){
+        if (!checkIfConversationIsInRegister(conversation)){
             conversationList.add(conversation);
         }else {
             throw new CouldNotAddConversationException("The conversation is already in the register.");
@@ -112,13 +96,14 @@ public class ConversationRegister {
         return conversationList;
     }
 
+    //Todo: Endre denne slik at samtalen blir slettet om den er tom forlenge.
     /**
      * Removes a conversation from the list.
      * @param conversation the conversation you want to remove.
      * @throws CouldNotRemoveConversationException gets thrown if the conversation could not be removed.
      */
-    public void removeMessageLog(Conversation conversation) throws CouldNotRemoveConversationException {
-        if (checkIfMessageLogIsInList(conversation)){
+    public void removeConversation(Conversation conversation) throws CouldNotRemoveConversationException {
+        if (checkIfConversationIsInRegister(conversation)){
             conversationList.remove(conversation);
         }else {
             throw new CouldNotRemoveConversationException("The conversation is not in the system.");
@@ -126,14 +111,14 @@ public class ConversationRegister {
     }
 
     /**
-     * Checks if the conversation is in the system.
+     * Checks if the conversation matches one in the list.
      * @param conversation the conversation you want to check.
      * @return <code>true</code> if the conversation is in the register.
      *         <code>false</code> if the conversation is not in the register.
      */
-    private boolean checkIfMessageLogIsInList(Conversation conversation){
+    private boolean checkIfConversationIsInRegister(Conversation conversation){
         checkIfObjectIsNull(conversation, "conversation");
-        return conversationList.contains(conversation);
+        return conversationList.stream().anyMatch(con -> con.equals(conversation));
     }
 
     /**

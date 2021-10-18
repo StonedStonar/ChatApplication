@@ -2,7 +2,7 @@ package no.stonedstonar.chatapplication.ui.controllers;
 
 /**
  * Represents a general controller that is used in the loading and acting in a scene.
- * @version 0.1
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public interface Controller {

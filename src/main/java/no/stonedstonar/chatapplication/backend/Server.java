@@ -1,14 +1,18 @@
 package no.stonedstonar.chatapplication.backend;
 
 import javafx.application.Platform;
-import no.stonedstonar.chatapplication.model.conversation.ConversationRegister;
+import no.stonedstonar.chatapplication.model.conversation.Conversation;
+import no.stonedstonar.chatapplication.model.conversation.register.NormalConversationRegister;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
+import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
+import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
+import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.messagelog.NormalMessageLog;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
 import no.stonedstonar.chatapplication.model.networktransport.*;
@@ -27,7 +31,7 @@ import java.util.logging.Logger;
 
 /**
  * A class that represents the logic that the server class should hold.
- * @version 0.1
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public class Server{
@@ -36,7 +40,7 @@ public class Server{
 
     private volatile UserRegister userRegister;
 
-    private volatile ConversationRegister conversationRegister;
+    private volatile NormalConversationRegister normalConversationRegister;
 
     private volatile Logger logger;
 
@@ -55,7 +59,7 @@ public class Server{
     public Server(){
         logger = Logger.getLogger(getClass().toString());
         userRegister = new UserRegister();
-        conversationRegister = new ConversationRegister();
+        normalConversationRegister = new NormalConversationRegister();
         run = true;
         executors = Executors.newFixedThreadPool(8);
         try {
@@ -83,12 +87,12 @@ public class Server{
             threeMembers.add(user.getUsername());
             threeMembers.add(user1.getUsername());
             threeMembers.add(user3.getUsername());
-            conversationRegister.addNewConversationWithUsernames(threeMembers, "");
-            conversationRegister.addNewConversationWithUsernames(twoMembers, "");
-            List<NormalMessageLog> normalMessageLogs = conversationRegister.getAllConversationsOfUsername("bjarne22");
-            normalMessageLogs.get(0).addMessage(new TextMessage("Haha", "bjarne22"));
-            normalMessageLogs.get(0).addMessage(new TextMessage("Nope", "fjell"));
-            normalMessageLogs.get(0).addMessage(new TextMessage("So funny bjarne", "bass"));
+            normalConversationRegister.addNewConversationWithUsernames(threeMembers, "");
+            normalConversationRegister.addNewConversationWithUsernames(twoMembers, "");
+            List<Conversation> normalMessageLogs = normalConversationRegister.getAllConversationsOfUsername("bjarne22");
+            normalMessageLogs.get(0).addNewMessage(new TextMessage("Haha", "bjarne22"));
+            normalMessageLogs.get(0).addNewMessage(new TextMessage("Nope", "fjell"));
+            normalMessageLogs.get(0).addNewMessage(new TextMessage("So funny bjarne", "bass"));
         }catch (Exception exception){
             String message = "The test data could not be added " + exception.getClass() + " exception message: " + exception.getMessage();
             logEvent(Level.SEVERE, message);
@@ -156,8 +160,8 @@ public class Server{
                 handleIncomingMessage(messageTransport, socket);
             }else if (object instanceof UserRequest userRequest){
                 handleUserInteraction(userRequest, socket);
-            }else if (object instanceof MessageLogRequest messageLogRequest){
-                handleMessageLogInteraction(messageLogRequest, socket);
+            }else if (object instanceof ConversationRequest conversationRequest){
+                handleMessageLogInteraction(conversationRequest, socket);
             }else if (object instanceof SetKeepAliveRequest setKeepAliveRequest) {
                 socket.setKeepAlive(setKeepAliveRequest.isKeepAlive());
             }else {
@@ -175,12 +179,12 @@ public class Server{
     private void handleIncomingMessage(MessageTransport messageTransport, Socket socket) throws IOException {
         System.out.println("New message to add to a message log");
         try {
-            NormalMessageLog normalMessageLog = conversationRegister.getConversationByNumber(messageTransport.getMessageLogNumber());
-            List<TextMessage> newMessages = messageTransport.getMessages();
-            normalMessageLog.addAllMessages(newMessages);
-            System.out.println("The message log is now " + normalMessageLog.getMessageList().size() + " messages long.");
+            Conversation conversations = normalConversationRegister.getConversationByNumber(messageTransport.getConversationNumber());
+            List<Message> newMessages = messageTransport.getMessages();
+            conversations.addAllMessagesWithSameDate(newMessages);
+            System.out.println("The message log is now added.");
             sendObject(messageTransport, socket);
-        }catch (CouldNotAddMessageException | CouldNotGetMessageLogException exception){
+        }catch (CouldNotAddMessageException | CouldNotGetMessageLogException | CouldNotGetConversationException exception){
             String message = "Something went wrong in adding " + messageTransport.getMessages().size() + " with the exception " + exception.getMessage() + " and class " + exception.getClass();
             logEvent(Level.WARNING, message);
             sendObject(exception, socket);
@@ -197,8 +201,8 @@ public class Server{
         try {
             if (userRequest.isLogin()){
                 User user = userRegister.login(userRequest.getUsername(), userRequest.getPassword());
-                List<NormalMessageLog> normalMessageLogs = conversationRegister.getAllConversationsOfUsername(user.getUsername());
-                LoginTransport loginTransport = new LoginTransport(user, normalMessageLogs);
+                List<Conversation> conversations = normalConversationRegister.getAllConversationsOfUsername(user.getUsername());
+                LoginTransport loginTransport = new LoginTransport(user, conversations);
                 sendObject(loginTransport, socket);
             }else if (userRequest.isNewUser()){
                 User user = new User(userRequest.getUsername(), userRequest.getPassword());
@@ -216,58 +220,58 @@ public class Server{
 
     /**
      * Handles the message log request objects.
-     * @param messageLogRequest the message log request to handle.
+     * @param conversationRequest the message log request to handle.
      * @param socket the socket the communication is happening over.
      * @throws IOException gets thrown if the socket closes or cannot finish its task.
      */
-    private void handleMessageLogInteraction(MessageLogRequest messageLogRequest, Socket socket) throws IOException {
+    private void handleMessageLogInteraction(ConversationRequest conversationRequest, Socket socket) throws IOException {
         try {
-            if (messageLogRequest.isNewMessageLog()){
-                makeNewMessageLog(messageLogRequest, socket);
-            }else if (messageLogRequest.isCheckForMessages()){
-                checkForNewMessagesInMessageLog(messageLogRequest, socket);
-            }else if (messageLogRequest.isAddMembers()){
-                addNewMembersToMessageLog(messageLogRequest, socket);
-            }else if (messageLogRequest.isRemoveMembers()){
+            if (conversationRequest.isNewMessageLog()){
+                makeNewMessageLog(conversationRequest, socket);
+            }else if (conversationRequest.isCheckForMessages()){
+                checkForNewMessagesInMessageLog(conversationRequest, socket);
+            }else if (conversationRequest.isAddMembers()){
+                addNewMembersToMessageLog(conversationRequest, socket);
+            }else if (conversationRequest.isRemoveMembers()){
                 
             }
-        }catch (CouldNotAddMessageLogException | CouldNotAddMemberException | CouldNotGetMessageLogException exception) {
-            String message = "Something went wrong in the " + messageLogRequest + " with the exception " + exception.getMessage() + " and class " + exception.getClass();
+        }catch (CouldNotAddMemberException | CouldNotGetMessageLogException | CouldNotAddConversationException exception) {
+            String message = "Something went wrong in the " + conversationRequest + " with the exception " + exception.getMessage() + " and class " + exception.getClass();
             logEvent(Level.WARNING, message);
             sendObject(exception, socket);
         }
     }
 
     /**
-     * Makes a new message log based on the request.
-     * @param messageLogRequest the request for making a new message log.
+     * Makes a new conversation based on the request.
+     * @param conversationRequest the request for making a new message log.
      * @param socket the socket this message log is being made over.
      * @throws IOException gets thrown if the socket closes or cannot finish its task.
-     * @throws CouldNotAddMessageLogException gets thrown if the message log could not be added.
+     * @throws CouldNotAddConversationException gets thrown if the conversation could not be added.
      * @throws CouldNotAddMemberException gets thrown if a member could not be added.
      */
-    private void makeNewMessageLog(MessageLogRequest messageLogRequest, Socket socket) throws IOException, CouldNotAddMessageLogException, CouldNotAddMemberException {
-        List<String> usernames = messageLogRequest.getUsernames();
-        String nameOfMessageLog = messageLogRequest.getNameOfMessageLog();
-        NormalMessageLog normalMessageLog = conversationRegister.addNewConversationWithUsernames(usernames, nameOfMessageLog);
-        sendObject(normalMessageLog, socket);
+    private void makeNewMessageLog(ConversationRequest conversationRequest, Socket socket) throws IOException, CouldNotAddMemberException, CouldNotAddConversationException {
+        List<String> usernames = conversationRequest.getUsernames();
+        String nameOfMessageLog = conversationRequest.getNameOfMessageLog();
+        Conversation conversation = normalConversationRegister.addNewConversationWithUsernames(usernames, nameOfMessageLog);
+        sendObject(conversation, socket);
     }
 
-    private void addNewMembersToMessageLog(MessageLogRequest messageLogRequest, Socket socket){
+    private void addNewMembersToMessageLog(ConversationRequest conversationRequest, Socket socket){
 
     }
 
     /**
      * Checks if a message log has new messages compared to the messagelog request.
-     * @param messageLogRequest the request that wants messages for a message log.
+     * @param conversationRequest the request that wants messages for a message log.
      * @param socket socket that the communication is happening over.
      * @throws CouldNotGetMessageLogException gets thrown if the message log could not be found.
      * @throws IOException gets thrown if something goes wrong with the communication.
      */
-    private void checkForNewMessagesInMessageLog(MessageLogRequest messageLogRequest, Socket socket) throws CouldNotGetMessageLogException, IOException {
-        NormalMessageLog normalMessageLog = conversationRegister.getConversationByNumber(messageLogRequest.getMessageLogNumber());
-        List<TextMessage> textMessageList = normalMessageLog.checkForNewMessages(messageLogRequest.getListSize());
-        MessageTransport messageTransport = new MessageTransport(textMessageList, normalMessageLog);
+    private void checkForNewMessagesInMessageLog(ConversationRequest conversationRequest, Socket socket) throws IOException, CouldNotGetConversationException {
+        Conversation conversation = normalConversationRegister.getConversationByNumber(conversationRequest.getMessageLogNumber());
+        List<TextMessage> textMessageList = conversation.checkForNewMessagesOnDate(conversationRequest.getListSize());
+        MessageTransport messageTransport = new MessageTransport(textMessageList, conversation);
         sendObject(messageTransport, socket);
     }
 

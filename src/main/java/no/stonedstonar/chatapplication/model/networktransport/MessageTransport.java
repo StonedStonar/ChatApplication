@@ -1,5 +1,7 @@
 package no.stonedstonar.chatapplication.model.networktransport;
 
+import no.stonedstonar.chatapplication.model.conversation.Conversation;
+import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
 import no.stonedstonar.chatapplication.model.messagelog.NormalMessageLog;
 
@@ -8,40 +10,40 @@ import java.util.List;
 
 /**
  * Represents a class that transports the message to the right messagelog.
- * @version 0.1
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public class MessageTransport implements Serializable {
 
-    private List<TextMessage> textMessageList;
+    private List<Message> messageList;
 
     private long messageLogNumber;
 
     /**
       * Makes an instance of the MessageTransport class
-      * @param textMessageList the message you want to transport.
-      * @param normalMessageLog the message log that this message is a part of.
+      * @param messageList the message you want to transport.
+      * @param conversation the conversation that this message is a part of.
       */
-    public MessageTransport(List<TextMessage> textMessageList, NormalMessageLog normalMessageLog){
-        checkIfObjectIsNull(textMessageList, "message");
-        checkIfLongIsAboveZero(normalMessageLog.getMessageLogNumber(), "message log number");
-        this.messageLogNumber = normalMessageLog.getMessageLogNumber();
-        this.textMessageList = textMessageList;
+    public MessageTransport(List<Message> messageList, Conversation conversation){
+        checkIfObjectIsNull(messageList, "message");
+        checkIfLongIsAboveZero(conversation.getConversationNumber(), "message log number");
+        this.messageLogNumber = conversation.getConversationNumber();
+        this.messageList = messageList;
     }
 
     /**
      * Gets the message.
      * @return the message the user wanted to send.
      */
-    public List<TextMessage> getMessages(){
-        return textMessageList;
+    public List<Message> getMessages(){
+        return messageList;
     }
 
     /**
      * Gets the message log number this message is a part of.
      * @return the message log number.
      */
-    public long getMessageLogNumber(){
+    public long getConversationNumber(){
         return messageLogNumber;
     }
 

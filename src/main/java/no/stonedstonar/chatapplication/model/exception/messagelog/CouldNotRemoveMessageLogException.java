@@ -7,13 +7,13 @@ import java.io.Serializable;
  * @author Steinar Hjelle Midthus
  * @version 0.1
  */
-public class CouldNotRemoveConversationException extends Exception implements Serializable {
+public class CouldNotRemoveMessageLogException extends Exception implements Serializable {
 
     /**
      * Makes an instance of the CouldNotRemoveMessageLogException class.
      * @param message the error message.
      */
-    public CouldNotRemoveConversationException(String message) {
+    public CouldNotRemoveMessageLogException(String message) {
         super(message);
 
     }

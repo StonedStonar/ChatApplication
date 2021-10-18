@@ -1,6 +1,6 @@
 package no.stonedstonar.chatapplication.frontend;
 
-import no.stonedstonar.chatapplication.model.conversation.PersonalConversationRegister;
+import no.stonedstonar.chatapplication.model.conversation.register.PersonalConversationRegister;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
@@ -28,7 +28,7 @@ import java.util.logging.Logger;
 
 /**
  * A class that represents the logic that the chat client should hold.
- * @version 0.1
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public class ChatClient {
@@ -199,8 +199,8 @@ public class ChatClient {
             if (!nameOfConversation.isEmpty()){
                 messageLogRequestBuilder.addMessageLogName(nameOfConversation);
             }
-            MessageLogRequest messageLogRequest = messageLogRequestBuilder.build();
-            sendObject(messageLogRequest, socket);
+            ConversationRequest conversationRequest = messageLogRequestBuilder.build();
+            sendObject(conversationRequest, socket);
             Object object = getObject(socket);
             if (object instanceof NormalMessageLog normalMessageLog){
                 personalConversationRegister.addConversation(normalMessageLog);
@@ -334,8 +334,8 @@ public class ChatClient {
             logger.log(Level.INFO, "Syncing message log " + log.getMessageLogNumber());
             int size = log.getMessageList().size();
             long messageLogNumber = log.getMessageLogNumber();
-            MessageLogRequest messageLogRequest = new MessageLogRequestBuilder().setCheckForMessages(true).addListSize(size).addMessageLogNumber(messageLogNumber).build();
-            sendObject(messageLogRequest, socket);
+            ConversationRequest conversationRequest = new MessageLogRequestBuilder().setCheckForMessages(true).addListSize(size).addMessageLogNumber(messageLogNumber).build();
+            sendObject(conversationRequest, socket);
             Object object = getObject(socket);
             if(object instanceof MessageTransport messageTransport){
                 List<TextMessage> textMessageList = messageTransport.getMessages();

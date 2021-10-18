@@ -1,13 +1,11 @@
 package no.stonedstonar.chatapplication.model.messagelog;
 
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
-import no.stonedstonar.chatapplication.model.exception.message.CouldNotGetMessageException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMessageException;
 import no.stonedstonar.chatapplication.model.message.Message;
 
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.*;
 
 /**
@@ -55,11 +53,7 @@ public class NormalMessageLog implements Serializable, MessageLog {
         return messageMap.values().stream().anyMatch(mess -> mess.equals(message));
     }
 
-    /**
-     * Gets the newest messages from the message log.
-     * @param lastMessageNumber the last message the other log has gotten.
-     * @return a list with the new messages.
-     */
+    @Override
     public Map<Long, Message> checkForNewMessages(long lastMessageNumber){
         checkIfLongIsNegative(lastMessageNumber, "last message number");
         Map<Long, Message> newMessageMap = new HashMap<>();
@@ -75,25 +69,26 @@ public class NormalMessageLog implements Serializable, MessageLog {
         return newMessageMap;
     }
 
-    /**
-     * Gets the message that matches the message contents.
-     * @param fromUsername the username this message is from.
-     * @param localDate the local date object this message has.
-     * @param localTime the local time object this message has.
-     * @return the message that matches the input message.
-     * @throws CouldNotGetMessageException gets thrown when a message could not be found.
-     */
-    public Message getMessage(String fromUsername, LocalTime localTime, LocalDate localDate) throws CouldNotGetMessageException {
-        checkString(fromUsername, "from username");
-        checkIfObjectIsNull(localDate, "local date");
-        checkIfObjectIsNull(localTime, "local time");
-        Optional<Message> optionalMessage = messageMap.values().stream().filter(mess -> mess.getTime().equals(localTime)).filter(message -> message.getDate().equals(localDate)).filter(message -> message.getFromUsername().equals(fromUsername)).findFirst();
-        if (optionalMessage.isPresent()){
-            return optionalMessage.get();
-        }else {
-            throw new CouldNotGetMessageException("The message that has the date and time \"" + localDate + " " + localTime+ "\" is not a part of this messages.");
-        }
-    }
+    //Todo: Vurder om denne metoden trengs.
+    ///**
+     //* Gets the message that matches the message contents.
+     //* @param fromUsername the username this message is from.
+     //* @param localDate the local date object this message has.
+     //* @param localTime the local time object this message has.
+     //* @return the message that matches the input message.
+     //* @throws CouldNotGetMessageException gets thrown when a message could not be found.
+     //*/
+//    public Message getMessage(String fromUsername, LocalTime localTime, LocalDate localDate) throws CouldNotGetMessageException {
+//        checkString(fromUsername, "from username");
+//        checkIfObjectIsNull(localDate, "local date");
+//        checkIfObjectIsNull(localTime, "local time");
+//        Optional<Message> optionalMessage = messageMap.values().stream().filter(mess -> mess.getTime().equals(localTime)).filter(message -> message.getDate().equals(localDate)).filter(message -> message.getFromUsername().equals(fromUsername)).findFirst();
+//        if (optionalMessage.isPresent()){
+//            return optionalMessage.get();
+//        }else {
+//            throw new CouldNotGetMessageException("The message that has the date and time \"" + localDate + " " + localTime+ "\" is not a part of this messages.");
+//        }
+//    }
     
     /**
      * Checks if a string is of a valid format or not.

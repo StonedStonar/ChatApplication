@@ -4,9 +4,8 @@ import java.io.Serializable;
 
 /**
  * CouldNotGetConversationException represents an exception that gets thrown when
- *
  * @author Steinar Hjelle Midthus
- * @version 0.1
+ * @version 0.2
  */
 public class CouldNotGetConversationException extends Exception implements Serializable {
 

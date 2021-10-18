@@ -18,7 +18,7 @@ import no.stonedstonar.chatapplication.frontend.ChatClient;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
-import no.stonedstonar.chatapplication.model.messagelog.ConversationObserver;
+import no.stonedstonar.chatapplication.model.conversation.register.ConversationRegisterObserver;
 import no.stonedstonar.chatapplication.model.conversation.PersonalConversation;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
@@ -33,11 +33,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
- * @version 0.1
+ * Represents the controller of the chat window.
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class ChatController implements Controller, no.stonedstonar.chatapplication.model.conversation.ConversationObserver, ConversationObserver {
+public class ChatController implements Controller, no.stonedstonar.chatapplication.model.conversation.ConversationObserver, ConversationRegisterObserver {
 
     @FXML
     private Label loggedInLabel;

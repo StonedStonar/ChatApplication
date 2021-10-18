@@ -34,6 +34,22 @@ public class TextMessage implements Serializable, Message{
         time = LocalTime.now();
     }
 
+    /**
+     * Makes an instance of the Message class.
+     * @param message the message this object should contain.
+     * @param fromUsername the username this message was sent form.
+     * @param localDate the date this message was made.
+     */
+    public TextMessage(String message, String fromUsername, LocalDate localDate){
+        checkString(message, "Message");
+        checkString(fromUsername, "From username");
+        checkIfObjectIsNull(localDate, "local date");
+        this.message = message;
+        this.fromUsername = fromUsername;
+        date = localDate;
+        time = LocalTime.now();
+    }
+
     @Override
     public LocalTime getTime(){
         return time;
@@ -77,17 +93,6 @@ public class TextMessage implements Serializable, Message{
     private void checkIfObjectIsNull(Object object, String error){
         if (object == null){
             throw new IllegalArgumentException("The " + error + " cannot be null.");
-        }
-    }
-
-    /**
-     * Checks if the long is above zero.
-     * @param number the number you want to check.
-     * @param prefix the error message the exception should have.
-     */
-    private void checkIfLongIsAboveZero(long number, String prefix){
-        if (number <= 0){
-            throw new IllegalArgumentException("The " + prefix + " must be larger than zero.");
         }
     }
 }

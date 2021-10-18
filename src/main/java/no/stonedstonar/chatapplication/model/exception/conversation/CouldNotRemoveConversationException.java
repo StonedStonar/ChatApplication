@@ -15,6 +15,5 @@ public class CouldNotRemoveConversationException extends Exception implements Se
      */
     public CouldNotRemoveConversationException(String message) {
         super(message);
-
     }
 }
