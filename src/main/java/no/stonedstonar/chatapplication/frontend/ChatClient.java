@@ -16,9 +16,9 @@ import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserExcep
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
-import no.stonedstonar.chatapplication.model.networktransport.*;
-import no.stonedstonar.chatapplication.model.networktransport.builder.ConversationRequestBuilder;
-import no.stonedstonar.chatapplication.model.networktransport.builder.UserRequestBuilder;
+import no.stonedstonar.chatapplication.backend.networktransport.*;
+import no.stonedstonar.chatapplication.backend.networktransport.builder.ConversationRequestBuilder;
+import no.stonedstonar.chatapplication.backend.networktransport.builder.UserRequestBuilder;
 import no.stonedstonar.chatapplication.model.User;
 
 import java.io.*;
@@ -239,7 +239,7 @@ public class ChatClient {
             TextMessage textMessage = new TextMessage(messageContents, user.getUsername());
             ArrayList<Message> textMessageList = new ArrayList<>();
             textMessageList.add(textMessage);
-            MessageTransport messageTransport = new MessageTransport(textMessageList, conversation);
+            MessageTransport messageTransport = new MessageTransport(textMessageList, conversation, LocalDate.now());
             sendObject(messageTransport, socket);
             Object object = getObject(socket);
             if (object instanceof  MessageTransport){
@@ -339,13 +339,16 @@ public class ChatClient {
     private synchronized void checkMessageLogForNewMessages(PersonalConversation personalConversation, Socket socket) throws IOException, CouldNotAddMessageException, CouldNotGetMessageLogException, InvalidResponseException {
         try {
             logger.log(Level.INFO, "Syncing message log " + personalConversation.getConversationNumber());
-            long size = personalConversation.getMessageLogForDate(LocalDate.now()).getLastMessageNumber();
+            LocalDate localDate = LocalDate.now();
+            long lastMessageNumber = personalConversation.getMessageLogForDate(localDate).getLastMessageNumber();
+            System.out.println(lastMessageNumber);
             long messageLogNumber = personalConversation.getConversationNumber();
-            ConversationRequest conversationRequest = new ConversationRequestBuilder().setCheckForMessages(true).addLastMessageNumber(size).addConversationNumber(messageLogNumber).build();
+            ConversationRequest conversationRequest = new ConversationRequestBuilder().setCheckForMessages(true).addLastMessageNumber(lastMessageNumber).addConversationNumber(messageLogNumber).addDate(LocalDate.now()).build();
             sendObject(conversationRequest, socket);
             Object object = getObject(socket);
             if(object instanceof MessageTransport messageTransport){
                 List<Message> textMessageList = messageTransport.getMessages();
+                System.out.println("List size:  " + messageTransport.getMessages().size());
                 if (!textMessageList.isEmpty()){
                     //Todo: Se om denne kan endres slik at flere meldinger kan legges til fra forksjellig dato.
                     personalConversation.addAllMessagesWithSameDate(textMessageList);

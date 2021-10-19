@@ -15,13 +15,14 @@ import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserExcep
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
-import no.stonedstonar.chatapplication.model.networktransport.*;
+import no.stonedstonar.chatapplication.backend.networktransport.*;
 import no.stonedstonar.chatapplication.model.User;
 import no.stonedstonar.chatapplication.model.UserRegister;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -271,8 +272,9 @@ public class Server{
      */
     private void checkForNewMessagesInMessageLog(ConversationRequest conversationRequest, Socket socket) throws IOException, CouldNotGetConversationException, CouldNotGetMessageLogException {
         ServerConversation conversation = normalConversationRegister.getConversationByNumber(conversationRequest.getConversationNumber());
-        List<Message> newMessages = conversation.checkForNewMessagesOnDate(conversation.getDateMade(),conversationRequest.getLastMessage());
-        MessageTransport messageTransport = new MessageTransport(newMessages, conversation);
+        System.out.println("Last message " + conversationRequest.getLastMessage());
+        List<Message> newMessages = conversation.checkForNewMessagesOnDate(conversationRequest.getDate(),conversationRequest.getLastMessage());
+        MessageTransport messageTransport = new MessageTransport(newMessages, conversation, LocalDate.now());
         sendObject(messageTransport, socket);
     }
 

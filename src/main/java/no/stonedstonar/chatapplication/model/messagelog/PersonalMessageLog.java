@@ -7,6 +7,7 @@ import no.stonedstonar.chatapplication.model.message.TextMessage;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -30,6 +31,17 @@ public class PersonalMessageLog implements MessageLog, Serializable {
         messageList = serverMessageLog.getMessages();
         dateMade = serverMessageLog.getDateMade();
         lastMessageNumber = serverMessageLog.getLastMessageNumber();
+    }
+
+    /**
+     * Makes an instance of the PersonalMessageLog class.
+     * @param dateMade the date the personal message log was made.
+     */
+    public PersonalMessageLog(LocalDate dateMade){
+        checkIfObjectIsNull(dateMade, "date made");
+        messageList = new ArrayList<>();
+        this.dateMade = dateMade;
+        lastMessageNumber = 0;
     }
     
     /**

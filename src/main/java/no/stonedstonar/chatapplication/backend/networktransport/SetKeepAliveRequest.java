@@ -1,4 +1,4 @@
-package no.stonedstonar.chatapplication.model.networktransport;
+package no.stonedstonar.chatapplication.backend.networktransport;
 
 import java.io.Serializable;
 

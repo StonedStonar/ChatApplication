@@ -7,6 +7,7 @@ import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMes
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.messagelog.MessageLog;
+import no.stonedstonar.chatapplication.model.messagelog.NormalServerMessageLog;
 import no.stonedstonar.chatapplication.model.messagelog.PersonalMessageLog;
 import no.stonedstonar.chatapplication.model.messagelog.ServerMessageLog;
 
@@ -231,7 +232,13 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
 
     @Override
     public PersonalMessageLog getMessageLogForDate(LocalDate localDate) throws CouldNotGetMessageLogException {
-        return null;
+        if (checkForMessageLogByDate(localDate)){
+            return getMessageLogByTheDate(localDate);
+        }else {
+            PersonalMessageLog messageLog = new PersonalMessageLog(LocalDate.now());
+            personalMessageLogs.add(messageLog);
+            return messageLog;
+        }
     }
 
     @Override

@@ -1,9 +1,10 @@
-package no.stonedstonar.chatapplication.model.networktransport;
+package no.stonedstonar.chatapplication.backend.networktransport;
 
 import no.stonedstonar.chatapplication.model.conversation.Conversation;
 import no.stonedstonar.chatapplication.model.message.Message;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -15,18 +16,23 @@ public class MessageTransport implements Serializable {
 
     private List<Message> messageList;
 
-    private long messageLogNumber;
+    private long conversationNumber;
+
+    private LocalDate dateForMessage;
 
     /**
       * Makes an instance of the MessageTransport class
       * @param messageList the message(s) you want to transport.
       * @param conversation the conversation that this message is a part of.
+      * @param dateSent the date this message was sent.
       */
-    public MessageTransport(List<Message> messageList, Conversation conversation){
+    public MessageTransport(List<Message> messageList, Conversation conversation, LocalDate dateSent){
         checkIfObjectIsNull(messageList, "message");
+        checkIfObjectIsNull(dateSent, "date sent");
         checkIfLongIsAboveZero(conversation.getConversationNumber(), "message log number");
-        this.messageLogNumber = conversation.getConversationNumber();
+        this.conversationNumber = conversation.getConversationNumber();
         this.messageList = messageList;
+        this.dateForMessage = dateSent;
     }
 
     /**
@@ -42,7 +48,15 @@ public class MessageTransport implements Serializable {
      * @return the message log number.
      */
     public long getConversationNumber(){
-        return messageLogNumber;
+        return conversationNumber;
+    }
+
+    /**
+     * Gets the date for the message.
+     * @return the date for the message.
+     */
+    public LocalDate getDateForMessage(){
+        return dateForMessage;
     }
 
     /**

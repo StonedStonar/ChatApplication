@@ -1,6 +1,6 @@
-package no.stonedstonar.chatapplication.model.networktransport;
+package no.stonedstonar.chatapplication.backend.networktransport;
 
-import no.stonedstonar.chatapplication.model.networktransport.builder.ConversationRequestBuilder;
+import no.stonedstonar.chatapplication.backend.networktransport.builder.ConversationRequestBuilder;
 
 import java.io.Serializable;
 import java.time.LocalDate;
