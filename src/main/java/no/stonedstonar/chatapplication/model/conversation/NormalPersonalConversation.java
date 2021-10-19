@@ -14,6 +14,7 @@ import no.stonedstonar.chatapplication.model.messagelog.ServerMessageLog;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
@@ -199,8 +200,10 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
         boolean validDate = newMessageList.stream().allMatch(message -> message.getDate().isEqual(testDateFromOneMessage));
         if (validDate){
             PersonalMessageLog messageLog = getMessageLogByTheDate(testDateFromOneMessage);
-            if (messageLog.checkIfAllMessagesAreNewMessages(newMessageList)){
-                for (Message message : newMessageList) {
+            if (!messageLog.checkIfAllMessagesAreNewMessages(newMessageList)){
+                Iterator<Message> it = newMessageList.iterator();
+                while (it.hasNext()){
+                    Message message = it.next();
                     addMessageToMessageLog(message, messageLog);
                     this.newlyAddedMessage = message;
                     this.removed = false;

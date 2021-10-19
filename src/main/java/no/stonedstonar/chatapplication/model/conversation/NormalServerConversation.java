@@ -168,7 +168,9 @@ public class NormalServerConversation implements ServerConversation {
         if (validDate){
             ServerMessageLog messageLog = getMessageLogByTheDate(testDateFromOneMessage);
             if (!messageLog.checkIfAllMessagesAreNewMessages(newMessageList)){
-                for (Message message : newMessageList) {
+                Iterator<Message> it = newMessageList.iterator();
+                while (it.hasNext()){
+                    Message message = it.next();
                     addMessageToMessageLog(message, messageLog);
                 }
             }else {

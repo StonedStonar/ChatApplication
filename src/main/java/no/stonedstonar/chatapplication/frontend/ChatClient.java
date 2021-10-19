@@ -226,24 +226,24 @@ public class ChatClient {
     /**
      * Sends a message to a person if this client is logged in.
      * @param messageContents the contents of the message.
-     * @param conversation the conversation that holds the conversation number.
+     * @param personalConversation the conversation that holds the conversation number.
      * @throws CouldNotGetMessageException gets thrown if the server could not add the message.
      * @throws CouldNotGetMessageLogException gets thrown if the server could not get the message log.
      * @throws IOException gets thrown if something fails in the socket.
      * @throws InvalidResponseException gets thrown if the class could not be found for that object or the response is a different object than expected.
      */
-    public void sendMessage(String messageContents, Conversation conversation) throws IOException, CouldNotAddMessageException, CouldNotGetMessageLogException, InvalidResponseException {
+    public void sendMessage(String messageContents, PersonalConversation personalConversation) throws IOException, CouldNotAddMessageException, CouldNotGetMessageLogException, InvalidResponseException {
         checkString(messageContents, "message");
-        checkIfObjectIsNull(conversation, "message log");
+        checkIfObjectIsNull(personalConversation, "message log");
         try (Socket socket = new Socket(localHost, portNumber)){
             TextMessage textMessage = new TextMessage(messageContents, user.getUsername());
             ArrayList<Message> textMessageList = new ArrayList<>();
             textMessageList.add(textMessage);
-            MessageTransport messageTransport = new MessageTransport(textMessageList, conversation, LocalDate.now());
+            MessageTransport messageTransport = new MessageTransport(textMessageList, personalConversation, LocalDate.now());
             sendObject(messageTransport, socket);
             Object object = getObject(socket);
-            if (object instanceof  MessageTransport){
-                conversation.addNewMessage(textMessage);
+            if (object instanceof  MessageTransport transport){
+
             }else if (object instanceof CouldNotAddMessageException exception){
                 throw exception;
             }else if (object instanceof CouldNotGetMessageLogException exception){
@@ -341,7 +341,6 @@ public class ChatClient {
             logger.log(Level.INFO, "Syncing message log " + personalConversation.getConversationNumber());
             LocalDate localDate = LocalDate.now();
             long lastMessageNumber = personalConversation.getMessageLogForDate(localDate).getLastMessageNumber();
-            System.out.println(lastMessageNumber);
             long messageLogNumber = personalConversation.getConversationNumber();
             ConversationRequest conversationRequest = new ConversationRequestBuilder().setCheckForMessages(true).addLastMessageNumber(lastMessageNumber).addConversationNumber(messageLogNumber).addDate(LocalDate.now()).build();
             sendObject(conversationRequest, socket);
