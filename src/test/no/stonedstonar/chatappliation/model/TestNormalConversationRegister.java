@@ -1,9 +1,9 @@
 package no.stonedstonar.chatappliation.model;
 
 import no.stonedstonar.chatapplication.model.conversation.Conversation;
-import no.stonedstonar.chatapplication.model.conversation.NormalConversation;
-import no.stonedstonar.chatapplication.model.conversation.register.ConversationRegister;
-import no.stonedstonar.chatapplication.model.conversation.register.NormalConversationRegister;
+import no.stonedstonar.chatapplication.model.conversation.NormalServerConversation;
+import no.stonedstonar.chatapplication.model.conversationregister.NormalConversationRegister;
+import no.stonedstonar.chatapplication.model.conversationregister.ServerConversationRegister;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotRemoveConversationException;
@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  */
 public class TestNormalConversationRegister {
 
-    private ConversationRegister conversationRegister;
+    private ServerConversationRegister conversationRegister;
 
     private String username;
 
@@ -138,7 +138,7 @@ public class TestNormalConversationRegister {
     @DisplayName("Tests if getConversationByNumber works with valid input.")
     public void testIfGetConversationByNumberWorksWithValidInput(){
         try {
-            conversationRegister.getConversationByNumber(1);
+            conversationRegister.getConversationByNumber(1L);
             assertTrue(true);
         }catch (IllegalArgumentException exception){
             fail("Expected to get a conversation back since the input format is valid.");
@@ -209,7 +209,7 @@ public class TestNormalConversationRegister {
             List<String> usernames = new ArrayList<>();
             usernames.add("fjar");
             usernames.add("blair");
-            Conversation conversation = new NormalConversation(4L, usernames);
+            Conversation conversation = new NormalServerConversation(4L, usernames);
             normalConversationRegister.removeConversation(conversation);
         } catch (CouldNotAddMemberException exception) {
             fail("Expected the test conversation to be made without problems since there is no duplicate usernames.");

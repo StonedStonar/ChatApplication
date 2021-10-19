@@ -1,7 +1,6 @@
-package no.stonedstonar.chatapplication.model.conversation.register;
+package no.stonedstonar.chatapplication.model.conversationregister;
 
-import no.stonedstonar.chatapplication.model.conversation.Conversation;
-import no.stonedstonar.chatapplication.model.conversation.NormalConversation;
+import no.stonedstonar.chatapplication.model.conversation.*;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotRemoveConversationException;
@@ -16,9 +15,9 @@ import java.util.Optional;
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class NormalConversationRegister implements ConversationRegister {
+public class NormalConversationRegister implements ServerConversationRegister {
 
-    private List<Conversation> conversationList;
+    private List<ServerConversation> conversationList;
 
     private long lastConversationNumber;
 
@@ -30,22 +29,25 @@ public class NormalConversationRegister implements ConversationRegister {
     }
 
     @Override
-    public List<Conversation> getAllConversationsOfUsername(String username){
+    public List<ServerConversation> getAllConversationsOfUsername(String username){
         checkString(username, "username");
-        return conversationList.stream().filter(conversation -> {
-            return conversation.getConversationMembers().checkIfUsernameIsMember(username);
-        }).toList();
+        return conversationList.stream().filter(con -> con.getConversationMembers().checkIfUsernameIsMember(username)).toList();
     }
+
+    @Override
+    public NormalPersonalConversationRegister getAllConversationsUserHasAndMakePersonalRegister(String username){
+        List<ServerConversation> conversations = getAllConversationsOfUsername(username);
+        return new NormalPersonalConversationRegister(conversations, username);
+    };
 
     @Override
     public Conversation addNewConversationWithUsernames(List<String> usernames, String nameOfConversation) throws CouldNotAddMemberException, CouldNotAddConversationException {
         checkIfObjectIsNull(usernames, "usernames");
         checkIfObjectIsNull(nameOfConversation, "name of messagelog");
         if (!usernames.isEmpty()){
-            Conversation conversation = new NormalConversation(makeNewConversationNumber(), usernames);
-            conversation.getConversationMembers().addAllMembers(usernames);
+            makeNewConversationNumber();
+            ServerConversation conversation = new NormalServerConversation(lastConversationNumber, usernames);
             if (!nameOfConversation.isEmpty()){
-                System.out.println(nameOfConversation);
                 conversation.setConversationName(nameOfConversation);
             }
             addConversation(conversation);
@@ -59,41 +61,32 @@ public class NormalConversationRegister implements ConversationRegister {
      * Makes a new log number for each log that is in the list.
      * @return the number that the new message log can have.
      */
-    private long makeNewConversationNumber(){
-        lastConversationNumber = lastConversationNumber + 1;
-        return lastConversationNumber;
+    private void makeNewConversationNumber(){
+        lastConversationNumber += 1;
     }
 
     @Override
-    public Conversation getConversationByNumber(long messageLogNumber) throws CouldNotGetConversationException {
-        checkIfLongIsAboveZero(messageLogNumber, "conversation number");
-        Optional<Conversation> optionalMessageLog = conversationList.stream().filter(log -> log.getConversationNumber() == messageLogNumber).findFirst();
+    public ServerConversation getConversationByNumber(long conversationNumber) throws CouldNotGetConversationException {
+        checkIfLongIsAboveZero(conversationNumber, "conversation number");
+        Optional<ServerConversation> optionalMessageLog = conversationList.stream().filter(log -> log.getConversationNumber() == conversationNumber).findFirst();
         if (optionalMessageLog.isPresent()){
             return optionalMessageLog.get();
         }else {
-            throw new CouldNotGetConversationException("The conversation with the log number " + messageLogNumber + " is not a part of this register.");
+            throw new CouldNotGetConversationException("The conversation with the log number " + conversationNumber + " is not a part of this register.");
         }
     }
 
     /**
      * Adds a conversation to the register.
-     * @param conversation the conversation to be added.
+     * @param serverConversation the conversation to be added.
      * @throws CouldNotAddConversationException gets thrown if the conversation is already in the register.
      */
-    private void addConversation(Conversation conversation) throws CouldNotAddConversationException {
-        if (!checkIfConversationIsInRegister(conversation)){
-            conversationList.add(conversation);
+    private void addConversation(ServerConversation serverConversation) throws CouldNotAddConversationException {
+        if (!checkIfConversationIsInRegister(serverConversation)){
+            conversationList.add(serverConversation);
         }else {
             throw new CouldNotAddConversationException("The conversation is already in the register.");
         }
-    }
-
-    /**
-     * Gets all the conversations that are in this conversation.
-     * @return a list with all the conversations.
-     */
-    protected List<Conversation> getConversationList(){
-        return conversationList;
     }
 
     //Todo: Endre denne slik at samtalen blir slettet om den er tom forlenge.

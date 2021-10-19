@@ -1,9 +1,10 @@
-package no.stonedstonar.chatapplication.model.conversation.register;
+package no.stonedstonar.chatapplication.model.conversationregister;
 
+import no.stonedstonar.chatapplication.model.User;
 import no.stonedstonar.chatapplication.model.conversation.Conversation;
+import no.stonedstonar.chatapplication.model.conversation.NormalPersonalConversation;
 import no.stonedstonar.chatapplication.model.conversation.PersonalConversation;
-import no.stonedstonar.chatapplication.model.conversation.register.ConversationRegisterObserver;
-import no.stonedstonar.chatapplication.model.conversation.register.ObservableConversationRegister;
+import no.stonedstonar.chatapplication.model.conversation.ServerConversation;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
 
@@ -17,26 +18,27 @@ import java.util.Optional;
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class PersonalConversationRegister implements ObservableConversationRegister, Serializable {
+public class NormalPersonalConversationRegister implements PersonalConversationRegister {
 
     private final List<ConversationRegisterObserver> conversationRegisterObservers;
 
     private final List<PersonalConversation> personalConversations;
 
-    private PersonalConversation newlyAddedPersonalConversation;
+    private PersonalConversation newlyAddedNormalPersonalConversation;
 
     private boolean removed;
 
     /**
       * Makes an instance of the PersonalConversationRegister class.
       * @param normalMessageLogList the list of all the conversations of a user.
+     *  @param username the username of the user that is making the personal conversation register.
       */
-    public PersonalConversationRegister(List<Conversation> normalMessageLogList){
+    public NormalPersonalConversationRegister(List<ServerConversation> normalMessageLogList, String username){
         checkIfObjectIsNull(normalMessageLogList, "message log list");
         conversationRegisterObservers = new ArrayList<>();
         personalConversations = new ArrayList<>();
         normalMessageLogList.forEach(log -> {
-            PersonalConversation personalMessageLog = new PersonalConversation(log);
+            NormalPersonalConversation personalMessageLog = new NormalPersonalConversation(log, username);
             personalConversations.add(personalMessageLog);
         });
     }
@@ -51,14 +53,15 @@ public class PersonalConversationRegister implements ObservableConversationRegis
 
     /**
      * Adds a conversation to the personal conversation.
+     * @param username the name of the user.
      * @param conversation the new conversation.
      * @throws CouldNotAddConversationException gets thrown if a conversation is already in the register.
      */
-    public void addConversation(Conversation conversation) throws CouldNotAddConversationException {
-        PersonalConversation personalMessageLog = new PersonalConversation(conversation);
+    public void addConversation(ServerConversation conversation, String username) throws CouldNotAddConversationException {
+        NormalPersonalConversation personalMessageLog = new NormalPersonalConversation(conversation, username);
         if (!checkIfConversationIsInRegister(conversation)){
             personalConversations.add(personalMessageLog);
-            this.newlyAddedPersonalConversation = personalMessageLog;
+            this.newlyAddedNormalPersonalConversation = personalMessageLog;
             removed = false;
             notifyObservers();
         }else {
@@ -67,29 +70,13 @@ public class PersonalConversationRegister implements ObservableConversationRegis
     }
 
     /**
-     * Checks if a conversation is already in the register.
-     * @param conversation the conversation you want to check.
+     * Checks if the conversation is in the register.
+     * @param conversation the conversation to check for.
      * @return <code>true</code> if the conversation is in the register.
-     *         <code>false</code> if the conversation is not in this register.
+     *         <code>false</code> if the conversation is not in the register.
      */
     private boolean checkIfConversationIsInRegister(Conversation conversation){
-        return personalConversations.stream().anyMatch(log -> log.getConversationNumber() == conversation.getConversationNumber());
-    }
-
-    /**
-     * Gets the personal conversation that matches the conversation number.
-     * @param conversationNumber the number that the conversation has.
-     * @return the conversation that matches this number.
-     * @throws CouldNotGetConversationException gets thrown if the conversation could not be found.
-     */
-    public PersonalConversation getPersonalConversation(long conversationNumber) throws CouldNotGetConversationException {
-        checkIfLongIsAboveZero(conversationNumber, "conversation number");
-        Optional<PersonalConversation> optionalPersonalMessageLog = personalConversations.stream().filter(log -> log.getConversationNumber() == conversationNumber).findFirst();
-        if (optionalPersonalMessageLog.isPresent()){
-            return optionalPersonalMessageLog.get();
-        }else {
-            throw new CouldNotGetConversationException("The conversation with the log number " + conversationNumber + " is not a part of this register.");
-        }
+        return personalConversations.stream().anyMatch(con -> con.equals(conversation));
     }
 
     @Override
@@ -114,7 +101,7 @@ public class PersonalConversationRegister implements ObservableConversationRegis
 
     @Override
     public void notifyObservers() {
-        conversationRegisterObservers.forEach(obs -> obs.updateConversation(newlyAddedPersonalConversation, removed));
+        conversationRegisterObservers.forEach(obs -> obs.updateConversation(newlyAddedNormalPersonalConversation, removed));
     }
 
     @Override
@@ -142,6 +129,17 @@ public class PersonalConversationRegister implements ObservableConversationRegis
     private void checkIfLongIsAboveZero(long number, String prefix){
         if (number <= 0){
             throw new IllegalArgumentException("The " + prefix + " must be above 0.");
+        }
+    }
+
+    @Override
+    public PersonalConversation getConversationByNumber(long conversationNumber) throws CouldNotGetConversationException {
+        checkIfLongIsAboveZero(conversationNumber, "conversation number");
+        Optional<PersonalConversation> optionalPersonalConversation = personalConversations.stream().filter(conv -> conv.getConversationNumber() == conversationNumber).findFirst();
+        if (optionalPersonalConversation.isPresent()){
+             return optionalPersonalConversation.get();
+        }else {
+            throw new CouldNotGetConversationException("The conversation with the conversation number " + conversationNumber + " is not in this register.");
         }
     }
 }

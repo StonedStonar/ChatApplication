@@ -15,11 +15,13 @@ import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import no.stonedstonar.chatapplication.frontend.ChatClient;
+import no.stonedstonar.chatapplication.model.conversation.PersonalConversation;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
+import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
-import no.stonedstonar.chatapplication.model.conversation.register.ConversationRegisterObserver;
-import no.stonedstonar.chatapplication.model.conversation.PersonalConversation;
+import no.stonedstonar.chatapplication.model.conversationregister.ConversationRegisterObserver;
+import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
 import no.stonedstonar.chatapplication.ui.windows.AlertTemplates;
@@ -94,9 +96,9 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
 
         newContactButton.setOnAction(event -> {
             try {
-                PersonalConversation personalMessageLog = chatClient.getMessageLogByLongNumber(activeMessageLog);
-                if (personalMessageLog.checkIfObjectIsObserver(this)){
-                    personalMessageLog.removeObserver(this);
+                PersonalConversation personalConversation = chatClient.getConversationByNumber(activeMessageLog);
+                if (personalConversation.checkIfObjectIsObserver(this)){
+                    personalConversation.removeObserver(this);
                 }
                 ChatApplicationClient.getChatApplication().setNewScene(NewConversationWindow.getNewUserWindow());
             }catch (IOException exception){
@@ -112,14 +114,16 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
                 }
             }catch (CouldNotGetMessageLogException exception){
                 AlertTemplates.makeAndShowCouldNotGetMessageLogExceptionAlert();
+            } catch (CouldNotGetConversationException exception) {
+                //Todo: Fill me in.
             }
         });
 
         logOutButton.setOnAction(event -> {
             try {
-                PersonalConversation personalMessageLog = chatClient.getMessageLogByLongNumber(activeMessageLog);
-                if (personalMessageLog.checkIfObjectIsObserver(this)){
-                    personalMessageLog.removeObserver(this);
+                PersonalConversation personalConversation = chatClient.getConversationByNumber(activeMessageLog);
+                if (personalConversation.checkIfObjectIsObserver(this)){
+                    personalConversation.removeObserver(this);
                 }
                 Thread thread = new Thread(() -> {
                     chatClient.logOutOfUser();
@@ -154,8 +158,8 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
      */
     private void sendNewMessage(String messageContents, ChatClient chatClient) {
         try {
-            PersonalConversation personalMessageLog= chatClient.getMessageLogByLongNumber(activeMessageLog);
-            chatClient.sendMessage(messageContents, personalMessageLog);
+            PersonalConversation personalConversation= chatClient.getConversationByNumber(activeMessageLog);
+            chatClient.sendMessage(messageContents, personalConversation);
             textMessageField.textProperty().set("");
         }catch (IllegalArgumentException  exception){
             AlertTemplates.makeAndShowInvalidInputAlert();
@@ -167,6 +171,8 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
             AlertTemplates.makeAndShowCouldNotConnectToServerAlert();
         } catch (InvalidResponseException e) {
             AlertTemplates.makeAndShowInvalidResponseFromTheServer();
+        } catch (CouldNotGetConversationException exception) {
+            //Todo: Fix me
         }
     }
 
@@ -197,8 +203,8 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
         List<PersonalConversation> messageLogList = chatClient.getMessageLogs();
         if (!messageLogList.isEmpty()){
             messageLogList.forEach(this::addNewConversation);
-            PersonalConversation firstPersonalMessageLog = messageLogList.get(0);
-            showMessagesFromMessageLog(firstPersonalMessageLog);
+            PersonalConversation personalConversation = messageLogList.get(0);
+            showMessagesFromConversation(personalConversation);
         } else {
             VBox vBox = new VBox();
             vBox.setMinWidth(Long.MAX_VALUE);
@@ -210,16 +216,17 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
 
     /**
      * Makes a new conversation to select on the left side.
-     * @param personalMessageLog the message log this conversation is about.
+     * @param personalConversation the message log this conversation is about.
      */
-    private void addNewConversation(PersonalConversation personalMessageLog){
+    private void addNewConversation(PersonalConversation personalConversation){
+        System.out.println("Making conversation for " + personalConversation.getConversationNumber());
         VBox vBox = new VBox();
         vBox.setMinWidth(Long.MAX_VALUE);
-        String nameOfConversation = personalMessageLog.getNameOfMessageLog();
-        String membersOfConversation = personalMessageLog.getMembersOfConversation().getAllMembersExceptUsernameAsString(ChatApplicationClient.getChatApplication().getChatClient().getUsername());
+        String nameOfConversation = personalConversation.getConversationName();
+        String membersOfConversation = personalConversation.getConversationMembers().getAllMembersExceptUsernameAsString(ChatApplicationClient.getChatApplication().getChatClient().getUsername());
         Label membersLabel = new Label(membersOfConversation);
         membersLabel.setFont(Font.font(membersLabel.getFont().getName(), FontWeight.NORMAL, FontPosture.REGULAR, 14));
-        long messageLogNumber = personalMessageLog.getMessageLogNumber();
+        long messageLogNumber = personalConversation.getConversationNumber();
         if (!nameOfConversation.isEmpty()){
             Label textName = new Label(nameOfConversation);
             vBox.getChildren().add(textName);
@@ -257,6 +264,8 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
                         BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(0,0,0,3))));
             }catch (CouldNotGetMessageLogException exception){
                 AlertTemplates.makeAndShowCouldNotGetMessageLogExceptionAlert();
+            }catch (CouldNotGetConversationException exception){
+                //Todo: Fix this.
             }
         });
     }
@@ -274,37 +283,40 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
 
     /**
      * Handles the switch from one conversation to another.
-     * @param messageLogNumber the message log number this conversation has.
+     * @param conversationNumber the message log number this conversation has.
+     * @throws CouldNotGetConversationException gets thrown if the conversation could not be found.
      */
-    private void handleConversationSwitch(long messageLogNumber) throws CouldNotGetMessageLogException {
-        if ((messageLogNumber != this.activeMessageLog)){
+    private void handleConversationSwitch(long conversationNumber) throws CouldNotGetMessageLogException, CouldNotGetConversationException {
+        if ((conversationNumber != this.activeMessageLog)){
             ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
-            PersonalConversation lastPersonalMessageLog = chatClient.getMessageLogByLongNumber(this.activeMessageLog);
-            if (lastPersonalMessageLog.checkIfObjectIsObserver(this)){
-                System.out.println("The chat controller is " + lastPersonalMessageLog.checkIfObjectIsObserver(this));
-                lastPersonalMessageLog.removeObserver(this);
+            PersonalConversation lastPersonalConversation = chatClient.getConversationByNumber(this.activeMessageLog);
+            if (lastPersonalConversation.checkIfObjectIsObserver(this)){
+                System.out.println("The chat controller is " + lastPersonalConversation.checkIfObjectIsObserver(this));
+                lastPersonalConversation.removeObserver(this);
             }
-            PersonalConversation messageLog = chatClient.getMessageLogByLongNumber(messageLogNumber);
-            showMessagesFromMessageLog(messageLog);
+            PersonalConversation personalConversation = chatClient.getConversationByNumber(conversationNumber);
+            showMessagesFromConversation(personalConversation);
         }
     }
 
     /**
      * Loads the messages of this conversation.
-     * @param personalMessageLog the message log you want to load.
+     * @param personalConversation the message log you want to load.
      */
-    public void showMessagesFromMessageLog(PersonalConversation personalMessageLog){
+    public void showMessagesFromConversation(PersonalConversation personalConversation){
         messageBox.getChildren().clear();
-        personalMessageLog.registerObserver(this);
-        List<TextMessage> messages = personalMessageLog.getMessageList();
-        activeMessageLog = personalMessageLog.getMessageLogNumber();
+        personalConversation.registerObserver(this);
+        List<Message> messages = personalConversation.getAllMessagesOfConversationAsList();
+        activeMessageLog = personalConversation.getConversationNumber();
         Thread thread = new Thread(()-> {
             ChatApplicationClient.getChatApplication().getChatClient().setMessageLogFocus(activeMessageLog);
         });
         thread.start();
         if (!messages.isEmpty()){
-            personalMessageLog.getMessageList().forEach(message -> {
-                addMessage(message);
+            messages.forEach(message -> {
+                if (message instanceof TextMessage textMessage){
+                    addMessage(textMessage);
+                }
             });
         }else {
             Label label = new Label("There is no messages in this conversation yet.");
@@ -380,18 +392,21 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
         }
     }
 
+
     @Override
-    public void updateMessageLog(PersonalConversation messageLog, boolean removed) {
-        Platform.runLater(()->{
-            addNewConversation(messageLog);
+    public void updateConversationMessage(Message message, boolean removed) {
+        Platform.runLater(() ->{
+            System.out.println("New message");
+            if (message instanceof TextMessage textMessage){
+                addMessage(textMessage);
+            }
         });
     }
 
     @Override
-    public void updateMessage(TextMessage textMessage, boolean removed) {
-        Platform.runLater(() ->{
-            System.out.println("New message");
-            addMessage(textMessage);
+    public void updateConversation(PersonalConversation personalConversation, boolean removed) {
+        Platform.runLater(()->{
+            addNewConversation(personalConversation);
         });
     }
 }

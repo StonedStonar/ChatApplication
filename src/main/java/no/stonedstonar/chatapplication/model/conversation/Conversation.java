@@ -6,11 +6,10 @@ import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMes
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.messagelog.MessageLog;
+import no.stonedstonar.chatapplication.model.messagelog.ServerMessageLog;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A conversation is a dialog between one or more people over a period.
@@ -45,12 +44,6 @@ public interface Conversation {
     long getConversationNumber();
 
     /**
-     * Sets the conversation name to a new value.
-     * @param conversationName the new conversation name.
-     */
-    void setConversationName(String conversationName);
-
-    /**
      * Gets the message log that matches the date as long as the date is not before current date.
      * If no message log exists for that date it is made.
      * @param localDate the date to ask for messages.
@@ -58,6 +51,12 @@ public interface Conversation {
      * @throws CouldNotGetMessageLogException gets thrown if the message log could not be found.
      */
     MessageLog getMessageLogForDate(LocalDate localDate) throws CouldNotGetMessageLogException;
+
+    /**
+     * Sets the conversation name to a new value.
+     * @param conversationName the new conversation name.
+     */
+    void setConversationName(String conversationName);
 
     /**
      * Checks if the input date matches a message log's date.
@@ -91,14 +90,4 @@ public interface Conversation {
      * @throws CouldNotGetMessageLogException gets thrown if the message log with the same date as the message could not be found.
      */
     void addAllMessagesWithSameDate(List<Message> newMessageList) throws CouldNotAddMessageException, CouldNotGetMessageLogException;
-
-    /**
-     * Checks for new messages on a specified date.
-     * If there is no message log for that date (the date must be current day) it is made, but then last message must be zero.
-     * @param localDate the date you want to check for new messages for.
-     * @param lastMessage the number of the last message in the other register.
-     * @throws CouldNotGetMessageLogException If the last message is larger than zero or the date is not today an exception is thrown.
-     *                                        If the date is before today a new message log is not made.
-     */
-    Map<Long, Message> checkForNewMessagesOnDate(LocalDate localDate, long lastMessage) throws CouldNotGetMessageLogException;
 }

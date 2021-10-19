@@ -1,10 +1,8 @@
-package no.stonedstonar.chatapplication.model.conversation.register;
-
-import no.stonedstonar.chatapplication.model.conversation.register.ConversationRegisterObserver;
+package no.stonedstonar.chatapplication.model.conversationregister;
 
 /**
- *
- * @version 0.1
+ * Represents a conversation register that can be observed.
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public interface ObservableConversationRegister {

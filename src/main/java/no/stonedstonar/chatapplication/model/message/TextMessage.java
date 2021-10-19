@@ -15,9 +15,15 @@ public class TextMessage implements Serializable, Message{
 
     private final String fromUsername;
 
-    private final LocalDate date;
+    private final LocalDate sentDate;
 
-    private final LocalTime time;
+    private final LocalTime sentTime;
+
+    private LocalTime receivedByServerTime;
+
+    private LocalDate receivedByServerDate;
+
+    private long messageNumber;
 
 
     /**
@@ -30,8 +36,10 @@ public class TextMessage implements Serializable, Message{
         checkString(fromUsername, "From username");
         this.message = message;
         this.fromUsername = fromUsername;
-        date = LocalDate.now();
-        time = LocalTime.now();
+        sentDate = LocalDate.now();
+        sentTime = LocalTime.now();
+        receivedByServerDate = null;
+        receivedByServerTime = null;
     }
 
     /**
@@ -46,18 +54,44 @@ public class TextMessage implements Serializable, Message{
         checkIfObjectIsNull(localDate, "local date");
         this.message = message;
         this.fromUsername = fromUsername;
-        date = localDate;
-        time = LocalTime.now();
+        sentDate = localDate;
+        sentTime = LocalTime.now();
+        messageNumber = -1;
     }
 
     @Override
     public LocalTime getTime(){
-        return time;
+        LocalTime localTime = receivedByServerTime;
+        if (receivedByServerTime == null){
+            localTime = sentTime;
+        }
+        return localTime;
     }
 
     @Override
     public LocalDate getDate(){
-        return date;
+        LocalDate localDate = receivedByServerDate;
+        if (receivedByServerDate == null){
+            localDate = sentDate;
+        }
+        return localDate;
+    }
+
+    @Override
+    public void setMessageNumber(long messageNumber) {
+        checkIfLongIsNegative(messageNumber, "message number");
+        if (this.messageNumber >= 0){
+            this.messageNumber = messageNumber;
+            receivedByServerDate = LocalDate.now();
+            receivedByServerTime = LocalTime.now();
+        }else {
+            throw new IllegalArgumentException("The message number cannot be altered after its set.");
+        }
+    }
+
+    @Override
+    public long getMessageNumber() {
+        return messageNumber;
     }
 
     @Override
@@ -71,6 +105,17 @@ public class TextMessage implements Serializable, Message{
      */
     public String getMessage() {
         return message;
+    }
+
+    /**
+     * Checks if a long is negative or equal to zero.
+     * @param number the number to check.
+     * @param prefix the prefix the error should have.
+     */
+    protected void checkIfLongIsNegative(long number, String prefix){
+        if (number < 0){
+            throw new IllegalArgumentException("Expected the " + prefix + " to be larger than zero.");
+        }
     }
 
     /**
@@ -94,5 +139,19 @@ public class TextMessage implements Serializable, Message{
         if (object == null){
             throw new IllegalArgumentException("The " + error + " cannot be null.");
         }
+    }
+
+    /**
+     * Checks if the date, time and from username.
+     * @param messageToCheck the message you want to compare against.
+     * @return <code>true</code> if the message's time, date, contents and from user matches this messages fields.
+     *         <code>false</code> if the message's time, date, contents and form user does not match this messages fields.
+     */
+    public boolean checkIfMessageContentsAreEqual(Message messageToCheck){
+        boolean valid = false;
+        if (messageToCheck instanceof TextMessage textMessage){
+            valid = (textMessage.getDate().isEqual(sentDate)) && (textMessage.getTime().equals(sentTime)) && (textMessage.getFromUsername().equals(fromUsername)) && textMessage.getMessage().equals(this.message);
+        }
+        return valid;
     }
 }

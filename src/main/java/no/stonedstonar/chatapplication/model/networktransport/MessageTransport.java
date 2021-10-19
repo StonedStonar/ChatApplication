@@ -2,8 +2,6 @@ package no.stonedstonar.chatapplication.model.networktransport;
 
 import no.stonedstonar.chatapplication.model.conversation.Conversation;
 import no.stonedstonar.chatapplication.model.message.Message;
-import no.stonedstonar.chatapplication.model.message.TextMessage;
-import no.stonedstonar.chatapplication.model.messagelog.NormalMessageLog;
 
 import java.io.Serializable;
 import java.util.List;
@@ -21,7 +19,7 @@ public class MessageTransport implements Serializable {
 
     /**
       * Makes an instance of the MessageTransport class
-      * @param messageList the message you want to transport.
+      * @param messageList the message(s) you want to transport.
       * @param conversation the conversation that this message is a part of.
       */
     public MessageTransport(List<Message> messageList, Conversation conversation){
@@ -32,7 +30,7 @@ public class MessageTransport implements Serializable {
     }
 
     /**
-     * Gets the message.
+     * Gets the messages.
      * @return the message the user wanted to send.
      */
     public List<Message> getMessages(){

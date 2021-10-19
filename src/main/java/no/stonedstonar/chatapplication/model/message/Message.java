@@ -5,10 +5,22 @@ import java.time.LocalTime;
 
 /**
  * Represents a message that is sent between two people.
- * @version 0.1
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public interface Message {
+
+    /**
+     * Sets the message's number.
+     * @param messageNumber the message number this message is.
+     */
+    void setMessageNumber(long messageNumber);
+
+    /**
+     * Gets the message number this message is.
+     * @return the message number.
+     */
+    long getMessageNumber();
 
     /**
      * Gets the user that this message is from.
@@ -19,12 +31,14 @@ public interface Message {
 
     /**
      * Gets the time this message was sent.
+     * When the message is received by the server the servers current time is set as time.
      * @return the local time object this message holds.
      */
     LocalTime getTime();
 
     /**
      * Gets the date this message was sent.
+     * When the message is received by the server the servers current date is set as date.
      * @return the date this object was sent.
      */
     LocalDate getDate();

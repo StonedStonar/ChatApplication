@@ -2,65 +2,68 @@ package no.stonedstonar.chatapplication.model.networktransport.builder;
 
 import no.stonedstonar.chatapplication.model.networktransport.ConversationRequest;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
- * @version 0.1
+ * Represents a builder class for a conversation request.
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class MessageLogRequestBuilder {
+public class ConversationRequestBuilder {
 
-    private boolean deleteMessageLog;
+    private boolean deleteConversation;
 
     private boolean removeMembers;
 
     private boolean addMembers;
 
-    private boolean newMessageLog;
+    private boolean newConversation;
 
     private List<String> usernames;
 
-    private long messageLogNumber;
+    private long conversationNumber;
 
-    private int listSize;
+    private long lastMessage;
 
     private boolean checkForMessages;
 
-    private String messageLogName;
+    private String conversationName;
+
+    private LocalDate dateMade;
 
     /**
      * Makes an instance of the MessageLogRequest class.
      */
-    public MessageLogRequestBuilder(){
-        deleteMessageLog = false;
+    public ConversationRequestBuilder(){
+        deleteConversation = false;
         removeMembers = false;
         addMembers = false;
-        newMessageLog = false;
+        newConversation = false;
         checkForMessages = false;
         usernames = new ArrayList<>();
-        messageLogNumber = 0;
-        listSize = 0;
-        messageLogName = "";
+        conversationNumber = 0;
+        lastMessage = 0;
+        conversationName = "";
     }
 
     /**
-     * Says if the request wants to delete a message log.
+     * Says if the request wants to delete a conversation.
      * All the other booleans will be set to false if this is set to true.
-     * @param valid <code>true</code> if the user wants to delete a message log.
-     *              <code>false</code> if the user don't want to delete a messagelog.
+     * @param valid <code>true</code> if the user wants to delete a conversation.
+     *              <code>false</code> if the user don't want to delete a conversation.
      * @return this builder object.
      */
-    public MessageLogRequestBuilder setDeleteMessageLog(boolean valid){
+    public ConversationRequestBuilder setDeleteConversation(boolean valid){
         if (valid){
-            deleteMessageLog = valid;
+            deleteConversation = valid;
             removeMembers = false;
             addMembers = false;
-            newMessageLog = false;
+            newConversation = false;
             checkForMessages = false;
         }else {
-            deleteMessageLog = false;
+            deleteConversation = false;
         }
         return this;
     }
@@ -72,12 +75,12 @@ public class MessageLogRequestBuilder {
      *              <code>false</code> if all the members in the list should not be removed.
      * @return this builder object.
      */
-    public MessageLogRequestBuilder setRemoveMembers(boolean valid){
+    public ConversationRequestBuilder setRemoveMembers(boolean valid){
         if (valid){
-            deleteMessageLog = false;
+            deleteConversation = false;
             removeMembers = valid;
             addMembers = false;
-            newMessageLog = false;
+            newConversation = false;
             checkForMessages = false;
         }else {
             removeMembers = false;
@@ -92,12 +95,12 @@ public class MessageLogRequestBuilder {
      *              <code>false</code> if the usernames should not be added.
      * @return this builder object.
      */
-    public MessageLogRequestBuilder setAddMembers(boolean valid){
+    public ConversationRequestBuilder setAddMembers(boolean valid){
         if (valid) {
-            deleteMessageLog = false;
+            deleteConversation = false;
             removeMembers = false;
             addMembers = valid;
-            newMessageLog = false;
+            newConversation = false;
             checkForMessages = false;
         }else{
             addMembers = false;
@@ -106,21 +109,21 @@ public class MessageLogRequestBuilder {
     }
 
     /**
-     * Says if the request is about making a new messagelog.
+     * Says if the request is about making a new conversation.
      * All the other booleans will be set to false if this is set to true.
-     * @param valid <code>true</code> if the request is about making a new message log.
-     *              <code>false</code> if the request is not about making a new message log.
+     * @param valid <code>true</code> if the request is about making a new conversation.
+     *              <code>false</code> if the request is not about making a new conversation.
      * @return this builder object.
      */
-    public MessageLogRequestBuilder setNewMessageLog(boolean valid){
+    public ConversationRequestBuilder setNewConversation(boolean valid){
         if (valid){
-            deleteMessageLog = false;
+            deleteConversation = false;
             removeMembers = false;
             addMembers = false;
-            newMessageLog = valid;
+            newConversation = valid;
             checkForMessages = false;
         }else {
-            newMessageLog = false;
+            newConversation = false;
         }
         return this;
     }
@@ -132,12 +135,12 @@ public class MessageLogRequestBuilder {
      *              <code>false</code> if the does not want to check for new messages.
      * @return this builder object.
      */
-    public MessageLogRequestBuilder setCheckForMessages(boolean valid){
+    public ConversationRequestBuilder setCheckForMessages(boolean valid){
         if (valid){
-            deleteMessageLog = false;
+            deleteConversation = false;
             removeMembers = false;
             addMembers = false;
-            newMessageLog = false;
+            newConversation = false;
             checkForMessages = valid;
         }else {
             checkForMessages = false;
@@ -150,42 +153,53 @@ public class MessageLogRequestBuilder {
      * @param usernames the list with usernames you want to add.
      * @return this builder object.
      */
-    public MessageLogRequestBuilder addUsernames(List<String> usernames){
+    public ConversationRequestBuilder addUsernames(List<String> usernames){
         checkIfObjectIsNull(usernames, "usernames");
         this.usernames = usernames;
         return this;
     }
 
     /**
-     * Adds a message log number to the request.
-     * @param messageLogNumber the message log number.
+     * Adds a conversation number to the request.
+     * @param conversationNumber the conversation number.
      * @return this builder object.
      */
-    public MessageLogRequestBuilder addMessageLogNumber(long messageLogNumber){
-        checkIfLongIsAboveZero(messageLogNumber, "messagelog number", false);
-        this.messageLogNumber = messageLogNumber;
+    public ConversationRequestBuilder addConversationNumber(long conversationNumber){
+        checkIfLongIsAboveZero(conversationNumber, "messagelog number", false);
+        this.conversationNumber = conversationNumber;
         return this;
     }
 
     /**
      * Adds a list size to the request.
-     * @param listSize the list size of the message log.
+     * @param lastMessage the list size of the conversation.
      * @return this builder object.
      */
-    public MessageLogRequestBuilder addListSize(int listSize){
-        checkIfLongIsAboveZero(listSize, "list size", true);
-        this.listSize = listSize;
+    public ConversationRequestBuilder addLastMessageNumber(long lastMessage){
+        checkIfLongIsAboveZero(lastMessage, "list size", true);
+        this.lastMessage = lastMessage;
         return this;
     }
 
     /**
-     * Adds a message log name to the request.
-     * @param messageLogName the message log name.
+     * Adds a conversation name to the request.
+     * @param conversationName the conversation name.
      * @return this builder object.
      */
-    public MessageLogRequestBuilder addMessageLogName(String messageLogName){
-        checkString(messageLogName, "message log name");
-        this.messageLogName = messageLogName;
+    public ConversationRequestBuilder addConversationName(String conversationName){
+        checkString(conversationName, "conversation name");
+        this.conversationName = conversationName;
+        return this;
+    }
+
+    /**
+     * Adds the date you want to check.
+     * @param date the date that the request is about.
+     * @return this builder object.
+     */
+    public ConversationRequestBuilder addDate(LocalDate date){
+        checkIfObjectIsNull(date, "date");
+        this.dateMade = date;
         return this;
     }
 
@@ -200,20 +214,20 @@ public class MessageLogRequestBuilder {
     }
 
     /**
-     * Gets the size of the message log that you want to check.
-     * @return the size of the message log.
+     * Gets the size of the conversation that you want to check.
+     * @return the size of the conversation.
      */
-    public int getListSize(){
-        return listSize;
+    public long getLastMessage(){
+        return lastMessage;
     }
 
     /**
-     * Says true if the request is an delete message log request.
-     * @return <code>true</code> if the message log needs to be deleted.
-     *         <code>false</code> if the message log is going to be deleted.
+     * Says true if the request is a remove conversation request.
+     * @return <code>true</code> if the conversation needs to be deleted.
+     *         <code>false</code> if the conversation is going to be deleted.
      */
-    public boolean isDeleteMessageLog() {
-        return deleteMessageLog;
+    public boolean isDeleteConversation() {
+        return deleteConversation;
     }
 
     /**
@@ -235,12 +249,12 @@ public class MessageLogRequestBuilder {
     }
 
     /**
-     * Says true if this request is a new message log.
-     * @return <code>true</code> if this request is a new message log.
-     *         <code>false</code> if this request is not a new message log.
+     * Says true if this request is a new conversation.
+     * @return <code>true</code> if this request is a new conversation.
+     *         <code>false</code> if this request is not a new conversation.
      */
-    public boolean isNewMessageLog() {
-        return newMessageLog;
+    public boolean isNewConversation() {
+        return newConversation;
     }
 
     /***
@@ -252,23 +266,31 @@ public class MessageLogRequestBuilder {
     }
 
     /**
-     * Gets the message log number.
-     * @return the message log number.
+     * Gets the conversation number.
+     * @return the conversation number.
      */
-    public long getMessageLogNumber() {
-        return messageLogNumber;
+    public long getConversationNumber() {
+        return conversationNumber;
     }
 
     /**
-     * Gets the name of the message log.
-     * @return the name of the message log.
+     * Gets the name of the conversation.
+     * @return the name of the conversation.
      */
-    public String getNameOfMessageLog() {
-        return messageLogName;
+    public String getNameOfConversation() {
+        return conversationName;
     }
 
     /**
-     * Makes the message log request.
+     * Gets the date of the conversation.
+     * @return the date of the conversation.
+     */
+    public LocalDate getDate() {
+        return dateMade;
+    }
+
+    /**
+     * Makes the conversation request.
      * @return a request that matches the set values in this builder.
      */
     public ConversationRequest build(){

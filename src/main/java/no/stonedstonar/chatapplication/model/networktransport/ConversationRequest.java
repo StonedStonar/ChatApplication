@@ -1,6 +1,6 @@
 package no.stonedstonar.chatapplication.model.networktransport;
 
-import no.stonedstonar.chatapplication.model.networktransport.builder.MessageLogRequestBuilder;
+import no.stonedstonar.chatapplication.model.networktransport.builder.ConversationRequestBuilder;
 
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -13,39 +13,40 @@ import java.util.List;
  */
 public class ConversationRequest implements Serializable {
 
-    private boolean deleteMessageLog;
+    private boolean deleteConversation;
 
     private boolean removeMembers;
 
     private boolean addMembers;
 
-    private boolean newMessageLog;
+    private boolean newConversation;
 
     private boolean checkForMessages;
 
-    private String nameOfMessageLog;
+    private String nameOfConversation;
 
     private List<String> usernames;
 
-    private int listSize;
+    private long lastMessage;
     
-    private LocalDate dateMade;
+    private LocalDate date;
 
-    private long messageLogNumber;
+    private long conversationNumber;
 
     /**
       * Makes an instance of the MessageLogRequest class.
       */
-    public ConversationRequest(MessageLogRequestBuilder messageLogRequestBuilder){
-        deleteMessageLog = messageLogRequestBuilder.isDeleteMessageLog();
-        removeMembers = messageLogRequestBuilder.isRemoveMembers();
-        addMembers = messageLogRequestBuilder.isAddMembers();
-        newMessageLog = messageLogRequestBuilder.isNewMessageLog();
-        usernames = messageLogRequestBuilder.getUsernames();
-        messageLogNumber = messageLogRequestBuilder.getMessageLogNumber();
-        checkForMessages = messageLogRequestBuilder.isCheckForMessages();
-        listSize = messageLogRequestBuilder.getListSize();
-        nameOfMessageLog = messageLogRequestBuilder.getNameOfMessageLog();
+    public ConversationRequest(ConversationRequestBuilder conversationRequestBuilder){
+        deleteConversation = conversationRequestBuilder.isDeleteConversation();
+        removeMembers = conversationRequestBuilder.isRemoveMembers();
+        addMembers = conversationRequestBuilder.isAddMembers();
+        newConversation = conversationRequestBuilder.isNewConversation();
+        usernames = conversationRequestBuilder.getUsernames();
+        conversationNumber = conversationRequestBuilder.getConversationNumber();
+        checkForMessages = conversationRequestBuilder.isCheckForMessages();
+        lastMessage = conversationRequestBuilder.getLastMessage();
+        nameOfConversation = conversationRequestBuilder.getNameOfConversation();
+        date = conversationRequestBuilder.getDate();
     }
 
     /**
@@ -58,20 +59,20 @@ public class ConversationRequest implements Serializable {
     }
 
     /**
-     * Gets the size of the message log that you want to check.
-     * @return the size of the message log.
+     * Gets the size of the conversation that you want to check.
+     * @return the size of the conversation.
      */
-    public int getListSize(){
-        return listSize;
+    public long getLastMessage(){
+        return lastMessage;
     }
 
     /**
-     * Says true if the request is an delete message log request.
-     * @return <code>true</code> if the message log needs to be deleted.
-     *         <code>false</code> if the message log is going to be deleted.
+     * Says true if the request is a remove conversation request.
+     * @return <code>true</code> if the conversation needs to be deleted.
+     *         <code>false</code> if the conversation is going to be deleted.
      */
-    public boolean isDeleteMessageLog() {
-        return deleteMessageLog;
+    public boolean isDeleteConversation() {
+        return deleteConversation;
     }
 
     /**
@@ -93,12 +94,12 @@ public class ConversationRequest implements Serializable {
     }
 
     /**
-     * Says true if this request is a new message log.
-     * @return <code>true</code> if this request is a new message log.
-     *         <code>false</code> if this request is not a new message log.
+     * Says true if this request is a new conversation.
+     * @return <code>true</code> if this request is a new conversation.
+     *         <code>false</code> if this request is not a new conversation.
      */
-    public boolean isNewMessageLog() {
-        return newMessageLog;
+    public boolean isNewConversation() {
+        return newConversation;
     }
 
     /***
@@ -110,19 +111,27 @@ public class ConversationRequest implements Serializable {
     }
 
     /**
-     * Gets the message log number.
-     * @return the message log number.
+     * Gets the conversation number.
+     * @return the conversation number.
      */
-    public long getMessageLogNumber() {
-        return messageLogNumber;
+    public long getConversationNumber() {
+        return conversationNumber;
     }
 
     /**
-     * Gets the name of the message log.
-     * @return the name of the message log.
+     * Gets the name of the conversation.
+     * @return the name of the conversation.
      */
-    public String getNameOfMessageLog() {
-        return nameOfMessageLog;
+    public String getNameOfConversation() {
+        return nameOfConversation;
+    }
+
+    /**
+     * Gets the date of the conversation.
+     * @return the date of the conversation.
+     */
+    public LocalDate getDate() {
+        return date;
     }
 
     /**

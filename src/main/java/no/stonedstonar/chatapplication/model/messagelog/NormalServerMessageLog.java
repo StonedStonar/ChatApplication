@@ -3,6 +3,7 @@ package no.stonedstonar.chatapplication.model.messagelog;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMessageException;
 import no.stonedstonar.chatapplication.model.message.Message;
+import no.stonedstonar.chatapplication.model.message.TextMessage;
 
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -13,9 +14,9 @@ import java.util.*;
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class NormalMessageLog implements Serializable, MessageLog {
+public class NormalServerMessageLog implements Serializable, ServerMessageLog {
 
-    private Map<Long, Message> messageMap;
+    private List<Message> messageList;
 
     private LocalDate dateMade;
 
@@ -25,9 +26,9 @@ public class NormalMessageLog implements Serializable, MessageLog {
       * Makes an instance of the MessageLog class.
      * @param dateMade the date this object was made.
       */
-    public NormalMessageLog(LocalDate dateMade){
+    public NormalServerMessageLog(LocalDate dateMade){
         checkIfObjectIsNull(dateMade, "date made");
-        messageMap = new HashMap<>();
+        messageList = new ArrayList<>();
         lastMessageNumber = 0;
         this.dateMade = dateMade;
     }
@@ -37,7 +38,8 @@ public class NormalMessageLog implements Serializable, MessageLog {
         checkIfObjectIsNull(message, "message");
         if (!checkIfMessageIsInMessageLog(message)){
             lastMessageNumber += 1;
-            messageMap.put(lastMessageNumber, message);
+            message.setMessageNumber(lastMessageNumber);
+            messageList.add(message);
         }else {
             throw new CouldNotAddMessageException("The message " + message + " is already in the system.");
         }
@@ -50,23 +52,32 @@ public class NormalMessageLog implements Serializable, MessageLog {
      *         <code>false</code> if the message does not match any messages in the log.
      */
     private boolean checkIfMessageIsInMessageLog(Message message){
-        return messageMap.values().stream().anyMatch(mess -> mess.equals(message));
+        return messageList.stream().anyMatch(mess -> {
+            boolean valid = false;
+            if (mess instanceof TextMessage textMessage){
+                return textMessage.checkIfMessageContentsAreEqual(message);
+            }
+            return valid;
+        });
     }
 
     @Override
-    public Map<Long, Message> checkForNewMessages(long lastMessageNumber){
+    public List<Message> checkForNewMessages(long lastMessageNumber){
         checkIfLongIsNegative(lastMessageNumber, "last message number");
-        Map<Long, Message> newMessageMap = new HashMap<>();
+        List<Message> newMessageList = new ArrayList<>();
         if (this.lastMessageNumber > lastMessageNumber){
-            long start = lastMessageNumber + 1;
-            long stop = this.lastMessageNumber;
-            do {
-                Message message = messageMap.get(start);
-                newMessageMap.put(start, message);
-                start += 1;
-            }while (start < stop);
+            newMessageList = getMessagesOverMessageNumber(lastMessageNumber);
         }
-        return newMessageMap;
+        return newMessageList;
+    }
+
+    /**
+     * Finds all the messages that are over a certain message number.
+     * @param messageNumber the message number.
+     * @return a list with all the messages that are over the input message number.
+     */
+    private List<Message> getMessagesOverMessageNumber(long messageNumber){
+        return messageList.stream().filter(mess -> mess.getMessageNumber() > messageNumber).toList();
     }
 
     //Todo: Vurder om denne metoden trengs.
@@ -131,8 +142,8 @@ public class NormalMessageLog implements Serializable, MessageLog {
     }
 
     @Override
-    public Map<Long, Message> getMessages() {
-        return messageMap;
+    public List<Message> getMessages() {
+        return messageList;
     }
 
     @Override
@@ -143,8 +154,8 @@ public class NormalMessageLog implements Serializable, MessageLog {
     @Override
     public void removeMessage(Message message) throws CouldNotRemoveMessageException {
         checkIfObjectIsNull(message, "message");
-        if (checkIfMessageIsInMessageLog(message)){
-            messageMap.values().remove(message);
+        if (messageList.contains(message)){
+            messageList.remove(message);
         }else {
             throw new CouldNotRemoveMessageException("Could not remove the message since its not in the register.");
         }

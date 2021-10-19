@@ -4,7 +4,7 @@ import no.stonedstonar.chatapplication.model.networktransport.UserRequest;
 
 /**
  * A builder that makes an user request. This can be used to make a new user or check a username.
- * @version 0.1
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public class UserRequestBuilder {

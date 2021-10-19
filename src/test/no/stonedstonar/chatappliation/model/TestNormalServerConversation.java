@@ -1,7 +1,8 @@
 package no.stonedstonar.chatappliation.model;
 
 import no.stonedstonar.chatapplication.model.conversation.Conversation;
-import no.stonedstonar.chatapplication.model.conversation.NormalConversation;
+import no.stonedstonar.chatapplication.model.conversation.NormalServerConversation;
+import no.stonedstonar.chatapplication.model.conversation.ServerConversation;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
 import no.stonedstonar.chatapplication.model.message.Message;
@@ -14,21 +15,19 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Represents a testing class for MessageLog.
- * @version 0.1
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class TestNormalConversation {
+public class TestNormalServerConversation {
 
-    private Conversation testConversation;
+    private ServerConversation testConversation;
 
     /**
      * Makes a test message log that can be used for testing.
@@ -36,10 +35,11 @@ public class TestNormalConversation {
     @BeforeEach
     private void makeTestConversation(){
         try {
-            testConversation = new NormalConversation(301L, makeUsernames());
+            testConversation = new NormalServerConversation(301L, makeUsernames());
             testConversation.addNewMessage(new TextMessage("Hello its me", "bjarne21"));
             testConversation.addNewMessage(new TextMessage("Hey bjarne21 its time to join the darkside.", "lordVader"));
         }catch (IllegalArgumentException exception){
+            System.out.println(exception.getMessage());
             fail("Expected the test message log to be made since all the input is valid.");
         }catch (CouldNotAddMessageException exception){
             fail("Expected all the text messages for the test message log to be added since they are valid.");
@@ -86,11 +86,11 @@ public class TestNormalConversation {
     @DisplayName("Tests if the constructor works with a negative input.")
     public void testIfConstructorWorksWithNegativeInput(){
         try {
-            Conversation conversation = new NormalConversation(-1L, makeUsernames());
+            Conversation conversation = new NormalServerConversation(-1L, makeUsernames());
             fail("Expected to get a exception since the input is negative.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
-        }catch (CouldNotAddMemberException exception){
+        }catch (CouldNotAddMemberException exception){;
             fail("Expected to get a IllegalArgumentException since the input is invalid.");
         }
     }
@@ -102,7 +102,7 @@ public class TestNormalConversation {
     @DisplayName("Tests if constructor works with invalid list input.")
     public void testIfConstructorWorksWithInvalidUsernames(){
         try {
-            Conversation conversation = new NormalConversation(1L, new ArrayList<>());
+            Conversation conversation = new NormalServerConversation(1L, new ArrayList<>());
             fail("Expected to get a exception since the input list is zero in size.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -118,7 +118,7 @@ public class TestNormalConversation {
     @DisplayName("Tests if the constructor works as intended with valid input.")
     public void testIfConstructorWorksWithValidInput(){
         try {
-            Conversation conversation = new NormalConversation(1L, makeUsernames());
+            Conversation conversation = new NormalServerConversation(1L, makeUsernames());
             assertTrue(true);
         }catch (IllegalArgumentException | CouldNotAddMemberException exception){
             fail("Expected to make a messagelog since the input is valid.");
@@ -212,6 +212,7 @@ public class TestNormalConversation {
             testConversation.addAllMessagesWithSameDate(messageList);
             fail("Expected to get a CouldNotAddMessageException since the dates are wrong.");
         }catch (IllegalArgumentException | CouldNotGetMessageLogException exception){
+            System.out.println(exception.getMessage());
             fail("Expected to get a CouldNotAddMessageException since the dates are wrong.");
         }catch (CouldNotAddMessageException exception){
             assertTrue(true);
@@ -342,7 +343,7 @@ public class TestNormalConversation {
     @DisplayName("Tests if checkForNewMessagesOnDate works with valid input.")
     public void testIfCheckForNewMessagesOnDateWorksWithValidInput(){
         try {
-            Map<Long, Message> newMessages = testConversation.checkForNewMessagesOnDate(LocalDate.now(), 0L);
+            List<Message> newMessages = testConversation.checkForNewMessagesOnDate(LocalDate.now(), 0L);
             if (newMessages.size() == 2){
                 assertTrue(true);
             }else {

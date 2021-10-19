@@ -6,7 +6,6 @@ import no.stonedstonar.chatapplication.model.message.Message;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Represents the basic methods a message log should have.
@@ -23,9 +22,9 @@ public interface MessageLog {
 
     /**
      * Gets the messages this message log holds.
-     * @return the map that holds all the messages.
+     * @return the list that holds all the messages.
      */
-    Map<Long, Message> getMessages();
+    List<Message> getMessages();
 
     /**
      * Gets the number of the last message this message log holds.
@@ -54,11 +53,4 @@ public interface MessageLog {
      *         <code>false</code> if none of the input messages are in the message log.
      */
     boolean checkIfAllMessagesAreNewMessages(List<Message> messageList);
-
-    /**
-     * Gets the newest messages from the message log.
-     * @param lastMessageNumber the last message the other log has gotten.
-     * @return a list with the new messages.
-     */
-    Map<Long, Message> checkForNewMessages(long lastMessageNumber);
 }

@@ -11,6 +11,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import no.stonedstonar.chatapplication.frontend.ChatClient;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
+import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
@@ -152,6 +153,8 @@ public class ConversationController implements Controller {
                 AlertTemplates.makeAndShowCriticalErrorAlert(exception);
             } catch (InvalidResponseException e) {
                 AlertTemplates.makeAndShowInvalidResponseFromTheServer();
+            } catch (CouldNotAddConversationException exception) {
+                //Todo: Fix me
             }
         });
     }

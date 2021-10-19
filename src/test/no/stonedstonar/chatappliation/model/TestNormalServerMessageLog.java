@@ -5,25 +5,26 @@ import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMes
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
 import no.stonedstonar.chatapplication.model.messagelog.MessageLog;
-import no.stonedstonar.chatapplication.model.messagelog.NormalMessageLog;
+import no.stonedstonar.chatapplication.model.messagelog.NormalServerMessageLog;
+import no.stonedstonar.chatapplication.model.messagelog.ServerMessageLog;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
-import java.util.Map;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Tests the normal message log.
- * @version 0.1
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class TestNormalMessageLog {
+public class TestNormalServerMessageLog {
 
-    private MessageLog testMessageLog;
+    private ServerMessageLog testMessageLog;
 
     private Message testMessage;
 
@@ -33,7 +34,7 @@ public class TestNormalMessageLog {
     @BeforeEach
     private void makeTestMessageLog(){
         try {
-            testMessageLog = new NormalMessageLog(LocalDate.now());
+            testMessageLog = new NormalServerMessageLog(LocalDate.now());
             Message message = new TextMessage("Hei", "bjarne21");
             testMessage= new TextMessage("Hello", "lordVader");
             testMessageLog.addMessage(message);
@@ -52,7 +53,7 @@ public class TestNormalMessageLog {
     @DisplayName("Tests if constructor works with invalid date format.")
     public void testIfConstructorWorksWithInvalidDateFormat(){
         try {
-            MessageLog messageLog = new NormalMessageLog(null);
+            MessageLog messageLog = new NormalServerMessageLog(null);
             fail("Expected to get a IllegalLArgumentException since the input is invalid format.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -66,7 +67,7 @@ public class TestNormalMessageLog {
     @DisplayName("Tests if constructor works with valid date.")
     public void testIfConstructorWorksWithValidInput(){
         try {
-            MessageLog messageLog = new NormalMessageLog(LocalDate.now());
+            MessageLog messageLog = new NormalServerMessageLog(LocalDate.now());
             assertTrue(true);
         }catch (IllegalArgumentException exception){
             fail("Expected the message log to be made since the input is valid.");
@@ -192,7 +193,7 @@ public class TestNormalMessageLog {
         try {
             Message message = new TextMessage("ss", "bjarne21");
             testMessageLog.addMessage(message);
-            Map<Long, Message> newMessages = testMessageLog.checkForNewMessages(1L);
+            List<Message> newMessages = testMessageLog.checkForNewMessages(1L);
             if (newMessages.size() == 2){
                 assertTrue(true);
             }else {

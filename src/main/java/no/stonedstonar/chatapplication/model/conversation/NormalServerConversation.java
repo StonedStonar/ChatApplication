@@ -1,14 +1,15 @@
 package no.stonedstonar.chatapplication.model.conversation;
 
 import no.stonedstonar.chatapplication.model.Members;
-import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
+import no.stonedstonar.chatapplication.model.User;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMessageException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.messagelog.MessageLog;
-import no.stonedstonar.chatapplication.model.messagelog.NormalMessageLog;
+import no.stonedstonar.chatapplication.model.messagelog.NormalServerMessageLog;
+import no.stonedstonar.chatapplication.model.messagelog.ServerMessageLog;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -18,13 +19,13 @@ import java.util.*;
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class NormalConversation implements Conversation {
+public class NormalServerConversation implements ServerConversation {
 
     private LocalDate conversationDateMade;
 
     private String conversationName;
 
-    private List<MessageLog> messageLogList;
+    private List<ServerMessageLog> messageLogList;
 
     private long conversationNumber;
 
@@ -37,14 +38,15 @@ public class NormalConversation implements Conversation {
       * @param conversationNumber the number this conversation is.
       * @throws CouldNotAddMemberException gets thrown if the same username is written twice in the list.
       */
-    public NormalConversation(long conversationNumber, List<String> usernames) throws CouldNotAddMemberException {
-        checkIfObjectIsNull(conversationName, "conversation name");
+    public NormalServerConversation(long conversationNumber, List<String> usernames) throws CouldNotAddMemberException {
         checkIfLongIsNegative(conversationNumber, "conversation number");
         checkIfListIsValid(usernames, "usernames");
         conversationDateMade = LocalDate.now();
         messageLogList = new ArrayList<>();
         members = new Members();
         members.addAllMembers(usernames);
+        this.conversationNumber = conversationNumber;
+        conversationName = "";
     }
 
     /**
@@ -54,7 +56,7 @@ public class NormalConversation implements Conversation {
      * @param dateMade the date this class was made.
      * @param conversationName the name of the conversation.
      */
-    protected NormalConversation(long conversationNumber, Members members, LocalDate dateMade, String conversationName){
+    protected NormalServerConversation(long conversationNumber, Members members, LocalDate dateMade, String conversationName){
         checkIfLongIsNegative(conversationNumber, "conversation number");
         checkIfObjectIsNull(members, "members");
         checkIfDateIsValid(dateMade);
@@ -70,7 +72,7 @@ public class NormalConversation implements Conversation {
      * @param conversationName the name of the conversation.
      * @param conversationNumber the number this conversation is.
      */
-    public NormalConversation(String conversationName, long conversationNumber, Members members) {
+    public NormalServerConversation(String conversationName, long conversationNumber, Members members) {
         checkString(conversationName, "conversation name");
         checkIfLongIsNegative(conversationNumber, "conversation number");
         checkIfObjectIsNull(members, "members");
@@ -106,13 +108,23 @@ public class NormalConversation implements Conversation {
     }
 
     @Override
-    public MessageLog getMessageLogForDate(LocalDate localDate) throws CouldNotGetMessageLogException {
+    public ServerMessageLog getMessageLogForDate(LocalDate localDate) throws CouldNotGetMessageLogException {
         if (checkForMessageLogByDate(localDate)){
             return getMessageLogByTheDate(localDate);
         }else {
-            MessageLog messageLog = new NormalMessageLog(localDate);
+            ServerMessageLog messageLog = new NormalServerMessageLog(localDate);
             addNewMessageLog(messageLog);
             return messageLog;
+        }
+    }
+
+    @Override
+    public List<ServerMessageLog> getMessageLogs(String username) {
+        checkString(username, "user");
+        if (members.checkIfUsernameIsMember(username)){
+            return messageLogList;
+        }else {
+            throw new IllegalArgumentException("The user with the username " + username + " is not a part of this conversation.");
         }
     }
 
@@ -126,7 +138,7 @@ public class NormalConversation implements Conversation {
     public void addNewMessage(Message message) throws CouldNotGetMessageLogException, CouldNotAddMessageException {
         checkIfObjectIsNull(message, "message");
         checkIfDateIsValid(message.getDate());
-        MessageLog messageLog = getMessageLogForDate(message.getDate());
+        ServerMessageLog messageLog = getMessageLogForDate(message.getDate());
         addMessageToMessageLog(message, messageLog);
     }
 
@@ -144,7 +156,7 @@ public class NormalConversation implements Conversation {
      * @param messageLog the message log this message is going into.
      * @throws CouldNotAddMessageException gets thrown if the message could not be added.
      */
-    private void addMessageToMessageLog(Message message, MessageLog messageLog) throws CouldNotAddMessageException {
+    private void addMessageToMessageLog(Message message, ServerMessageLog messageLog) throws CouldNotAddMessageException {
         messageLog.addMessage(message);
     }
 
@@ -152,11 +164,10 @@ public class NormalConversation implements Conversation {
     public void addAllMessagesWithSameDate(List<Message> newMessageList) throws CouldNotAddMessageException, CouldNotGetMessageLogException {
         checkIfListIsValid(newMessageList, "new message list");
         LocalDate testDateFromOneMessage = newMessageList.get(0).getDate();
-        newMessageList.forEach(message -> checkIfDateIsValid(message.getDate()));
         boolean validDate = newMessageList.stream().allMatch(message -> message.getDate().isEqual(testDateFromOneMessage));
         if (validDate){
-            MessageLog messageLog = getMessageLogByTheDate(testDateFromOneMessage);
-            if (messageLog.checkIfAllMessagesAreNewMessages(newMessageList)){
+            ServerMessageLog messageLog = getMessageLogByTheDate(testDateFromOneMessage);
+            if (!messageLog.checkIfAllMessagesAreNewMessages(newMessageList)){
                 for (Message message : newMessageList) {
                     addMessageToMessageLog(message, messageLog);
                 }
@@ -169,15 +180,15 @@ public class NormalConversation implements Conversation {
     }
 
     @Override
-    public Map<Long, Message> checkForNewMessagesOnDate(LocalDate localDate, long lastMessage) throws CouldNotGetMessageLogException {
+    public List<Message> checkForNewMessagesOnDate(LocalDate localDate, long lastMessage) throws CouldNotGetMessageLogException {
         checkIfDateIsValid(localDate);
         checkIfLongIsNegative(lastMessage, "last message");
         try {
-            MessageLog messageLog = getMessageLogByTheDate(localDate);
+            ServerMessageLog messageLog = getMessageLogByTheDate(localDate);
             return messageLog.checkForNewMessages(lastMessage);
         }catch (CouldNotGetMessageLogException exception){
             if ((lastMessage == 0) && localDate.isEqual(LocalDate.now())){
-                MessageLog messageLog = getMessageLogForDate(localDate);
+                ServerMessageLog messageLog = getMessageLogForDate(localDate);
                 return messageLog.checkForNewMessages(lastMessage);
             }else {
                 throw new CouldNotGetMessageLogException("There is no message log for the date " + localDate.toString() + " and the last message is not zero.");
@@ -189,7 +200,7 @@ public class NormalConversation implements Conversation {
      * Adds a new message log to the conversation.
      * @param messageLog the new message log to be added.
      */
-    private void addNewMessageLog(MessageLog messageLog){
+    private void addNewMessageLog(ServerMessageLog messageLog){
         messageLogList.add(messageLog);
     }
 
@@ -199,9 +210,9 @@ public class NormalConversation implements Conversation {
      * @throws CouldNotGetMessageLogException gets thrown if there is no message log that matches the date.
      * @return the message log that matches that date.
      */
-    private MessageLog getMessageLogByTheDate(LocalDate localDate) throws CouldNotGetMessageLogException {
+    private ServerMessageLog getMessageLogByTheDate(LocalDate localDate) throws CouldNotGetMessageLogException {
         checkIfObjectIsNull(localDate, "local date");
-        Optional<MessageLog> optionalMessageLog = messageLogList.stream().filter(log -> log.getDateMade().isEqual(localDate)).findFirst();
+        Optional<ServerMessageLog> optionalMessageLog = messageLogList.stream().filter(log -> log.getDateMade().isEqual(localDate)).findFirst();
         if (optionalMessageLog.isPresent()){
             return optionalMessageLog.get();
         }else {
@@ -213,7 +224,7 @@ public class NormalConversation implements Conversation {
      * Gets the message log list.
      * @return a list with all the message logs for each day.
      */
-    public List<MessageLog> getMessageLogList(){
+    public List<ServerMessageLog> getMessageLogList(){
         return messageLogList;
     }
 
@@ -223,8 +234,7 @@ public class NormalConversation implements Conversation {
      */
     private void checkIfDateIsValid(LocalDate localDate){
         checkIfObjectIsNull(localDate, "local date");
-        int date = localDate.compareTo(localDate);
-        if (date < 0){
+        if (localDate.isAfter(LocalDate.now())){
             throw new IllegalArgumentException("The input date must be before or at this current date.");
         }
     }
@@ -234,11 +244,10 @@ public class NormalConversation implements Conversation {
      * @param number the number to check.
      * @param prefix the prefix the error should have.
      */
-    protected void checkIfLongIsNegative(long number, String prefix){
+    private void checkIfLongIsNegative(long number, String prefix){
         if (number < 0){
             throw new IllegalArgumentException("Expected the " + prefix + " to be larger than zero.");
         }
-
     }
 
     /**
