@@ -8,7 +8,6 @@ import no.stonedstonar.chatapplication.model.conversation.ServerConversation;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -35,6 +34,7 @@ public class NormalPersonalConversationRegister implements PersonalConversationR
       */
     public NormalPersonalConversationRegister(List<ServerConversation> normalMessageLogList, String username){
         checkIfObjectIsNull(normalMessageLogList, "message log list");
+        checkString(username, "username");
         conversationRegisterObservers = new ArrayList<>();
         personalConversations = new ArrayList<>();
         normalMessageLogList.forEach(log -> {
@@ -140,6 +140,18 @@ public class NormalPersonalConversationRegister implements PersonalConversationR
              return optionalPersonalConversation.get();
         }else {
             throw new CouldNotGetConversationException("The conversation with the conversation number " + conversationNumber + " is not in this register.");
+        }
+    }
+
+    /**
+     * Checks if a string is of a valid format or not.
+     * @param stringToCheck the string you want to check.
+     * @param errorPrefix the error the exception should have if the string is invalid.
+     */
+    private void checkString(String stringToCheck, String errorPrefix){
+        checkIfObjectIsNull(stringToCheck, errorPrefix);
+        if (stringToCheck.isEmpty()){
+            throw new IllegalArgumentException("The " + errorPrefix + " cannot be empty.");
         }
     }
 }

@@ -7,10 +7,39 @@ package no.stonedstonar.chatappliation.model;
 public class TestPersonalConversationRegister {
 
     /**
-      * Makes an instance of the TestPersonalConversationRegister class.
-      */
-    public TestPersonalConversationRegister(){
-    
-    }
+     * Tests if constructor works with invalid normalMessageLogList.
+     */
+
+    /**
+     * Tests if constructor works with invalid username.
+     */
+
+    /**
+     * Tests if constructor works with valid input.
+     */
+
+    /**
+     * Tests if addConversation works with invalid conversation.
+     */
+
+    /**
+     * Tests if addConversation works with invalid username.
+     */
+
+    /**
+     * Tests if addConversation works with valid username.
+     */
+
+    /**
+     * Tests if getConversationByNumber works with invalid conversation number.
+     */
+
+    /**
+     * Tests if getConversationByNumber works with valid input.
+     */
+
+    /**
+     * Tests if getConversationByNumber works with conversation number not in register.
+     */
 
 }
