@@ -1,6 +1,5 @@
 package no.stonedstonar.chatapplication.model.conversationregister;
 
-import no.stonedstonar.chatapplication.model.User;
 import no.stonedstonar.chatapplication.model.conversation.Conversation;
 import no.stonedstonar.chatapplication.model.conversation.NormalPersonalConversation;
 import no.stonedstonar.chatapplication.model.conversation.PersonalConversation;
@@ -29,15 +28,15 @@ public class NormalPersonalConversationRegister implements PersonalConversationR
 
     /**
       * Makes an instance of the PersonalConversationRegister class.
-      * @param normalMessageLogList the list of all the conversations of a user.
+      * @param messageLogList the list of all the conversations of a user.
      *  @param username the username of the user that is making the personal conversation register.
       */
-    public NormalPersonalConversationRegister(List<ServerConversation> normalMessageLogList, String username){
-        checkIfObjectIsNull(normalMessageLogList, "message log list");
+    public NormalPersonalConversationRegister(List<ServerConversation> messageLogList, String username){
+        checkIfObjectIsNull(messageLogList, "message log list");
         checkString(username, "username");
         conversationRegisterObservers = new ArrayList<>();
         personalConversations = new ArrayList<>();
-        normalMessageLogList.forEach(log -> {
+        messageLogList.forEach(log -> {
             NormalPersonalConversation personalMessageLog = new NormalPersonalConversation(log, username);
             personalConversations.add(personalMessageLog);
         });

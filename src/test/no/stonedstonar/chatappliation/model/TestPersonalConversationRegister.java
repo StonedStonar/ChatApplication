@@ -1,11 +1,20 @@
 package no.stonedstonar.chatappliation.model;
 
+import no.stonedstonar.chatapplication.model.conversation.ServerConversation;
+import no.stonedstonar.chatapplication.model.conversationregister.ConversationRegister;
+import no.stonedstonar.chatapplication.model.conversationregister.NormalPersonalConversationRegister;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 /**
- *
- * @version 0.1
+ * A class that tests the personal conversation register.
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public class TestPersonalConversationRegister {
@@ -16,7 +25,13 @@ public class TestPersonalConversationRegister {
     @Test
     @DisplayName("Tests if constructor works with invalid normalMessageLogList.")
     public void testIfConstructorWorksWithInvalidNormalMessageLogList(){
-
+        try{
+            List<ServerConversation> serverConversationList = new ArrayList<>();
+            ConversationRegister conversationRegister = new NormalPersonalConversationRegister(serverConversationList, "");
+            fail("Expected to get a IllegalArgumentException since the input is invalid.");
+        }catch (IllegalArgumentException exception){
+            assertTrue(true);
+        }
     }
 
     /**

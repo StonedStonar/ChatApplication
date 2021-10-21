@@ -1,6 +1,7 @@
 package no.stonedstonar.chatapplication.model.conversation;
 
 import no.stonedstonar.chatapplication.model.Members;
+import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMessageException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
@@ -73,7 +74,7 @@ public interface Conversation {
      * @throws CouldNotAddMessageException gets thrown if the message could not be added.
      * @throws CouldNotGetMessageLogException gets thrown if the message log with the same date as the message could not be found.
      */
-    void addNewMessage(Message message) throws CouldNotGetMessageLogException, CouldNotAddMessageException;
+    void addNewMessage(Message message) throws CouldNotGetMessageLogException, CouldNotAddMessageException, UsernameNotPartOfConversationException;
 
     /**
      * Removes a message that is in the conversation.
@@ -81,7 +82,7 @@ public interface Conversation {
      * @throws CouldNotRemoveMessageException gets thrown if the message is not in the message log.
      * @throws CouldNotGetMessageLogException gets thrown if the message log could not be found.
      */
-    void removeMessage(Message message) throws CouldNotRemoveMessageException, CouldNotGetMessageLogException;
+    void removeMessage(Message message) throws CouldNotRemoveMessageException, CouldNotGetMessageLogException, UsernameNotPartOfConversationException;
 
     /**
      * Adds all the messages in the list to the conversation.
@@ -89,5 +90,5 @@ public interface Conversation {
      * @throws CouldNotAddMessageException gets thrown if one or more messages are already in the conversation.
      * @throws CouldNotGetMessageLogException gets thrown if the message log with the same date as the message could not be found.
      */
-    void addAllMessagesWithSameDate(List<Message> newMessageList) throws CouldNotAddMessageException, CouldNotGetMessageLogException;
+    void addAllMessagesWithSameDate(List<Message> newMessageList) throws CouldNotAddMessageException, CouldNotGetMessageLogException, UsernameNotPartOfConversationException;
 }

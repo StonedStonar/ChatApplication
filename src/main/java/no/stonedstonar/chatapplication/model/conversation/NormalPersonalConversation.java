@@ -1,13 +1,12 @@
 package no.stonedstonar.chatapplication.model.conversation;
 
 import no.stonedstonar.chatapplication.model.Members;
-import no.stonedstonar.chatapplication.model.User;
+import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMessageException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.messagelog.MessageLog;
-import no.stonedstonar.chatapplication.model.messagelog.NormalServerMessageLog;
 import no.stonedstonar.chatapplication.model.messagelog.PersonalMessageLog;
 import no.stonedstonar.chatapplication.model.messagelog.ServerMessageLog;
 
@@ -99,7 +98,7 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
      * @param list the list you want to check.
      * @param prefix the prefix the error should have.
      */
-    protected void checkIfListIsValid(List list, String prefix){
+    private void checkIfListIsValid(List list, String prefix){
         checkIfObjectIsNull(list, prefix);
         if (list.isEmpty()){
             throw new IllegalArgumentException("The " + prefix + " list cannot be zero in size.");
@@ -161,9 +160,10 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
     }
 
     @Override
-    public void addNewMessage(Message message) throws CouldNotGetMessageLogException, CouldNotAddMessageException {
+    public void addNewMessage(Message message) throws CouldNotGetMessageLogException, CouldNotAddMessageException, UsernameNotPartOfConversationException {
         checkIfObjectIsNull(message, "message");
         checkIfDateIsValid(message.getDate());
+        checkIfUsernameIsMemberAndThrowExceptionIfNot(message.getFromUsername());
         PersonalMessageLog personalMessageLog = getMessageLogForDate(message.getDate());
         personalMessageLog.addMessage(message);
         this.newlyAddedMessage = message;
@@ -171,10 +171,33 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
         notifyObservers();
     }
 
+    /**
+     * Checks if the username is a part of this conversation.
+     * @param username the username of the member.
+     * @throws UsernameNotPartOfConversationException gets thrown if the user is not a part of this conversation.
+     */
+    private void checkIfUsernameIsMemberAndThrowExceptionIfNot(String username) throws UsernameNotPartOfConversationException {
+        if (!checkIfUsernameIsMember(username)){
+            throw new UsernameNotPartOfConversationException("The user by the useranme " + username + " is not a part of this conversation.");
+        }
+    }
+
+
+    /**
+     * Checks if the username is a member of the conversation. Throws an exception if the username is not a member.
+     * @param username the username you want to check.
+     * @return <code>true</code> if the username is a member of this conversation.
+     *         <code>false</code> if the username is not a member of this conversation.
+     */
+    private boolean checkIfUsernameIsMember(String username) {
+        return members.checkIfUsernameIsMember(username);
+    }
+
     @Override
-    public void removeMessage(Message message) throws CouldNotRemoveMessageException, CouldNotGetMessageLogException {
+    public void removeMessage(Message message) throws CouldNotRemoveMessageException, CouldNotGetMessageLogException, UsernameNotPartOfConversationException {
         checkIfObjectIsNull(message, "message");
         checkIfDateIsValid(message.getDate());
+        checkIfUsernameIsMember(message.getFromUsername());
         PersonalMessageLog personalMessageLog = getMessageLogForDate(message.getDate());
         personalMessageLog.removeMessage(message);
         this.newlyAddedMessage = message;
@@ -193,13 +216,16 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
     }
 
     @Override
-    public void addAllMessagesWithSameDate(List<Message> newMessageList) throws CouldNotAddMessageException, CouldNotGetMessageLogException {
+    public void addAllMessagesWithSameDate(List<Message> newMessageList) throws CouldNotAddMessageException, CouldNotGetMessageLogException, UsernameNotPartOfConversationException {
         checkIfListIsValid(newMessageList, "new message list");
         LocalDate testDateFromOneMessage = newMessageList.get(0).getDate();
         newMessageList.forEach(message -> checkIfDateIsValid(message.getDate()));
+        newMessageList.forEach(message -> checkIfUsernameIsMember(message.getFromUsername()));
+        String username = ;
+        boolean allAreMembers = newMessageList.stream().allMatch(message -> message.getFromUsername().equals(username));
         boolean validDate = newMessageList.stream().allMatch(message -> message.getDate().isEqual(testDateFromOneMessage));
-        if (validDate){
-            PersonalMessageLog messageLog = getMessageLogByTheDate(testDateFromOneMessage);
+        if (validDate && allAreMembers){
+            PersonalMessageLog messageLog = getMessageLogByTheDate(testDateFromOneMessage, );
             if (!messageLog.checkIfAllMessagesAreNewMessages(newMessageList)){
                 Iterator<Message> it = newMessageList.iterator();
                 while (it.hasNext()){
@@ -213,7 +239,11 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
                 throw new CouldNotAddMessageException("One of the messages in the list is already in the message log. " + messageLog.getDateMade() + " and the conversation is "  + conversationNumber);
             }
         }else {
-            throw new CouldNotAddMessageException("The dates all of the messages are not the same.");
+            if (!allAreMembers){
+                throw new UsernameNotPartOfConversationException("There is a username in the message list that is not a part of this conversation");
+            }else {
+                throw new CouldNotAddMessageException("The dates all of the messages are not the same.");
+            }
         }
     }
 
@@ -223,8 +253,9 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
      * @throws CouldNotGetMessageLogException gets thrown if there is no message log that matches the date.
      * @return the message log that matches that date.
      */
-    private PersonalMessageLog getMessageLogByTheDate(LocalDate localDate) throws CouldNotGetMessageLogException {
+    private PersonalMessageLog getMessageLogByTheDate(LocalDate localDate, String username) throws CouldNotGetMessageLogException {
         checkIfObjectIsNull(localDate, "local date");
+        checkIfUsernameIsMember(username);
         Optional<PersonalMessageLog> optionalMessageLog = personalMessageLogs.stream().filter(log -> log.getDateMade().isEqual(localDate)).findFirst();
         if (optionalMessageLog.isPresent()){
             return optionalMessageLog.get();
