@@ -144,6 +144,7 @@ public class ConversationController implements Controller {
                 String nameOfConversation = conversationField.textProperty().get();
                 chatClient.makeNewConversation(usernames, nameOfConversation);
                 usernames.clear();
+                membersBox.getChildren().clear();
                 ChatApplicationClient.getChatApplication().setNewScene(ChatWindow.getChatWindow());
             } catch (CouldNotAddMessageLogException exception) {
                 AlertTemplates.makeAndShowCouldNotGetMessageLogExceptionAlert();

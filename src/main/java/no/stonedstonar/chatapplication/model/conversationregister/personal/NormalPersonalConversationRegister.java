@@ -1,4 +1,4 @@
-package no.stonedstonar.chatapplication.model.conversationregister;
+package no.stonedstonar.chatapplication.model.conversationregister.personal;
 
 import no.stonedstonar.chatapplication.model.conversation.Conversation;
 import no.stonedstonar.chatapplication.model.conversation.NormalPersonalConversation;
@@ -50,32 +50,24 @@ public class NormalPersonalConversationRegister implements PersonalConversationR
         return personalConversations;
     }
 
-    /**
-     * Adds a conversation to the personal conversation.
-     * @param username the name of the user.
-     * @param conversation the new conversation.
-     * @throws CouldNotAddConversationException gets thrown if a conversation is already in the register.
-     */
-    public void addConversation(ServerConversation conversation, String username) throws CouldNotAddConversationException {
-        NormalPersonalConversation personalMessageLog = new NormalPersonalConversation(conversation, username);
-        if (!checkIfConversationIsInRegister(conversation)){
-            personalConversations.add(personalMessageLog);
-            this.newlyAddedNormalPersonalConversation = personalMessageLog;
-            removed = false;
-            notifyObservers();
+    @Override
+    public void addConversation(PersonalConversation personalConversation) throws CouldNotAddConversationException {
+        checkIfObjectIsNull(personalConversation, "personal conversation");
+        if (!checkIfConversationIsInRegister(personalConversation)){
+            personalConversations.add(personalConversation);
         }else {
             throw new CouldNotAddConversationException("The conversation is already in the register.");
         }
     }
 
     /**
-     * Checks if the conversation is in the register.
+     * Checks if the conversation is in the register based on the conversation number.
      * @param conversation the conversation to check for.
      * @return <code>true</code> if the conversation is in the register.
      *         <code>false</code> if the conversation is not in the register.
      */
     private boolean checkIfConversationIsInRegister(Conversation conversation){
-        return personalConversations.stream().anyMatch(con -> con.equals(conversation));
+        return personalConversations.stream().anyMatch(con -> con.getConversationNumber() == conversation.getConversationNumber());
     }
 
     @Override

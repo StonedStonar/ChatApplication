@@ -2,8 +2,8 @@ package no.stonedstonar.chatappliation.model;
 
 import no.stonedstonar.chatapplication.model.conversation.Conversation;
 import no.stonedstonar.chatapplication.model.conversation.NormalServerConversation;
-import no.stonedstonar.chatapplication.model.conversationregister.NormalConversationRegister;
-import no.stonedstonar.chatapplication.model.conversationregister.ServerConversationRegister;
+import no.stonedstonar.chatapplication.model.conversationregister.server.NormalConversationRegister;
+import no.stonedstonar.chatapplication.model.conversationregister.server.ServerConversationRegister;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotRemoveConversationException;

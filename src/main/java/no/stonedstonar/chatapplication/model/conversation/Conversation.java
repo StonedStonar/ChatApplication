@@ -48,10 +48,12 @@ public interface Conversation {
      * Gets the message log that matches the date as long as the date is not before current date.
      * If no message log exists for that date it is made.
      * @param localDate the date to ask for messages.
+     * @param username the username of the user that wants that log.
      * @return the message log that has that date.
      * @throws CouldNotGetMessageLogException gets thrown if the message log could not be found.
+     * @throws UsernameNotPartOfConversationException if the user is not a part of this conversation.
      */
-    MessageLog getMessageLogForDate(LocalDate localDate) throws CouldNotGetMessageLogException;
+    MessageLog getMessageLogForDate(LocalDate localDate, String username) throws CouldNotGetMessageLogException, UsernameNotPartOfConversationException;
 
     /**
      * Sets the conversation name to a new value.
@@ -73,6 +75,7 @@ public interface Conversation {
      * @param message the new message to add.
      * @throws CouldNotAddMessageException gets thrown if the message could not be added.
      * @throws CouldNotGetMessageLogException gets thrown if the message log with the same date as the message could not be found.
+     * @throws UsernameNotPartOfConversationException if the user is not a part of this conversation.
      */
     void addNewMessage(Message message) throws CouldNotGetMessageLogException, CouldNotAddMessageException, UsernameNotPartOfConversationException;
 
@@ -81,6 +84,7 @@ public interface Conversation {
      * @param message the message to remove.
      * @throws CouldNotRemoveMessageException gets thrown if the message is not in the message log.
      * @throws CouldNotGetMessageLogException gets thrown if the message log could not be found.
+     * @throws UsernameNotPartOfConversationException if the user is not a part of this conversation.
      */
     void removeMessage(Message message) throws CouldNotRemoveMessageException, CouldNotGetMessageLogException, UsernameNotPartOfConversationException;
 
@@ -89,6 +93,7 @@ public interface Conversation {
      * @param newMessageList the list that contains all the new messages.
      * @throws CouldNotAddMessageException gets thrown if one or more messages are already in the conversation.
      * @throws CouldNotGetMessageLogException gets thrown if the message log with the same date as the message could not be found.
+     * @throws UsernameNotPartOfConversationException if the user is not a part of this conversation.
      */
     void addAllMessagesWithSameDate(List<Message> newMessageList) throws CouldNotAddMessageException, CouldNotGetMessageLogException, UsernameNotPartOfConversationException;
 }

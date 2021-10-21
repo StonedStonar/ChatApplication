@@ -2,6 +2,7 @@ package no.stonedstonar.chatapplication.model.conversation;
 
 import no.stonedstonar.chatapplication.model.Members;
 import no.stonedstonar.chatapplication.model.User;
+import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMessageException;
@@ -81,6 +82,28 @@ public class NormalServerConversation implements ServerConversation {
         this.members = members;
     }
 
+    /**
+     * Checks if the username is a part of this conversation.
+     * @param username the username of the member.
+     * @throws UsernameNotPartOfConversationException gets thrown if the user is not a part of this conversation.
+     */
+    private void checkIfUsernameIsMemberAndThrowExceptionIfNot(String username) throws UsernameNotPartOfConversationException {
+        if (!checkIfUsernameIsMember(username)){
+            throw new UsernameNotPartOfConversationException("The user by the useranme " + username + " is not a part of this conversation.");
+        }
+    }
+
+
+    /**
+     * Checks if the username is a member of the conversation. Throws an exception if the username is not a member.
+     * @param username the username you want to check.
+     * @return <code>true</code> if the username is a member of this conversation.
+     *         <code>false</code> if the username is not a member of this conversation.
+     */
+    private boolean checkIfUsernameIsMember(String username) {
+        return members.checkIfUsernameIsMember(username);
+    }
+
     @Override
     public String getConversationName() {
         return conversationName;
@@ -108,7 +131,9 @@ public class NormalServerConversation implements ServerConversation {
     }
 
     @Override
-    public ServerMessageLog getMessageLogForDate(LocalDate localDate) throws CouldNotGetMessageLogException {
+    public ServerMessageLog getMessageLogForDate(LocalDate localDate, String username) throws CouldNotGetMessageLogException, UsernameNotPartOfConversationException {
+        checkString(username, "username");
+        checkIfUsernameIsMemberAndThrowExceptionIfNot(username);
         if (checkForMessageLogByDate(localDate)){
             return getMessageLogByTheDate(localDate);
         }else {
@@ -121,7 +146,7 @@ public class NormalServerConversation implements ServerConversation {
     @Override
     public List<ServerMessageLog> getMessageLogs(String username) {
         checkString(username, "user");
-        if (members.checkIfUsernameIsMember(username)){
+        if (checkIfUsernameIsMember(username)){
             return messageLogList;
         }else {
             throw new IllegalArgumentException("The user with the username " + username + " is not a part of this conversation.");
@@ -129,23 +154,25 @@ public class NormalServerConversation implements ServerConversation {
     }
 
     @Override
-    public boolean checkForMessageLogByDate(LocalDate localDate){
+    public boolean checkForMessageLogByDate(LocalDate localDate) {
         checkIfDateIsValid(localDate);
         return messageLogList.stream().anyMatch(log -> log.getDateMade().isEqual(localDate));
     }
 
     @Override
-    public void addNewMessage(Message message) throws CouldNotGetMessageLogException, CouldNotAddMessageException {
+    public void addNewMessage(Message message) throws CouldNotGetMessageLogException, CouldNotAddMessageException, UsernameNotPartOfConversationException {
         checkIfObjectIsNull(message, "message");
         checkIfDateIsValid(message.getDate());
-        ServerMessageLog messageLog = getMessageLogForDate(message.getDate());
+        checkIfUsernameIsMemberAndThrowExceptionIfNot(message.getFromUsername());
+        ServerMessageLog messageLog = getMessageLogForDate(message.getDate(), message.getFromUsername());
         addMessageToMessageLog(message, messageLog);
     }
 
     @Override
-    public void removeMessage(Message message) throws CouldNotGetMessageLogException, CouldNotRemoveMessageException {
+    public void removeMessage(Message message) throws CouldNotGetMessageLogException, CouldNotRemoveMessageException, UsernameNotPartOfConversationException {
         checkIfObjectIsNull(message, "message");
         checkIfDateIsValid(message.getDate());
+        checkIfUsernameIsMemberAndThrowExceptionIfNot(message.getFromUsername());
         MessageLog messageLog = getMessageLogByTheDate(message.getDate());
         messageLog.removeMessage(message);
     }
@@ -182,7 +209,7 @@ public class NormalServerConversation implements ServerConversation {
     }
 
     @Override
-    public List<Message> checkForNewMessagesOnDate(LocalDate localDate, long lastMessage) throws CouldNotGetMessageLogException {
+    public List<Message> checkForNewMessagesOnDate(LocalDate localDate, long lastMessage, String username) throws CouldNotGetMessageLogException, UsernameNotPartOfConversationException {
         checkIfDateIsValid(localDate);
         checkIfLongIsNegative(lastMessage, "last message");
         try {
@@ -190,7 +217,7 @@ public class NormalServerConversation implements ServerConversation {
             return messageLog.checkForNewMessages(lastMessage);
         }catch (CouldNotGetMessageLogException exception){
             if ((lastMessage == 0) && localDate.isEqual(LocalDate.now())){
-                ServerMessageLog messageLog = getMessageLogForDate(localDate);
+                ServerMessageLog messageLog = getMessageLogForDate(localDate, username);
                 return messageLog.checkForNewMessages(lastMessage);
             }else {
                 throw new CouldNotGetMessageLogException("There is no message log for the date " + localDate.toString() + " and the last message is not zero.");

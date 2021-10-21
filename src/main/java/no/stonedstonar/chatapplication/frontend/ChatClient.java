@@ -1,12 +1,11 @@
 package no.stonedstonar.chatapplication.frontend;
 
-import no.stonedstonar.chatapplication.model.conversation.Conversation;
 import no.stonedstonar.chatapplication.model.conversation.PersonalConversation;
-import no.stonedstonar.chatapplication.model.conversation.ServerConversation;
-import no.stonedstonar.chatapplication.model.conversationregister.NormalPersonalConversationRegister;
+import no.stonedstonar.chatapplication.model.conversationregister.personal.NormalPersonalConversationRegister;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
+import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
@@ -16,9 +15,9 @@ import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserExcep
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
-import no.stonedstonar.chatapplication.backend.networktransport.*;
-import no.stonedstonar.chatapplication.backend.networktransport.builder.ConversationRequestBuilder;
-import no.stonedstonar.chatapplication.backend.networktransport.builder.UserRequestBuilder;
+import no.stonedstonar.chatapplication.networktransport.*;
+import no.stonedstonar.chatapplication.networktransport.builder.ConversationRequestBuilder;
+import no.stonedstonar.chatapplication.networktransport.builder.UserRequestBuilder;
 import no.stonedstonar.chatapplication.model.User;
 
 import java.io.*;
@@ -149,7 +148,7 @@ public class ChatClient {
                     count += 1;
                 }
                 Thread.sleep(5000);
-            }catch (CouldNotAddMessageException | IOException | InvalidResponseException | CouldNotGetMessageLogException | InterruptedException exception){
+            }catch (CouldNotAddMessageException | IOException | InvalidResponseException | CouldNotGetMessageLogException | InterruptedException | UsernameNotPartOfConversationException exception){
                 logWaringError(exception);
                 stopThread();
             }
@@ -208,8 +207,8 @@ public class ChatClient {
             ConversationRequest conversationRequest = conversationRequestBuilder.build();
             sendObject(conversationRequest, socket);
             Object object = getObject(socket);
-            if (object instanceof ServerConversation serverConversation){
-                personalConversationRegister.addConversation(serverConversation, user.getUsername());
+            if (object instanceof PersonalConversation personalConversation){
+                personalConversationRegister.addConversation(personalConversation);
             }else if (object instanceof CouldNotAddMessageLogException exception){
                 throw exception;
             }else if (object instanceof CouldNotAddMemberException exception){
@@ -304,11 +303,12 @@ public class ChatClient {
      * @throws InvalidResponseException gets thrown if the class could not be found for that object or the response is a different object than expected.
      * @throws CouldNotAddMessageException gets thrown if the text message could not be added.
      * @throws CouldNotGetMessageLogException gets thrown if the server can't find the message log.
+     * @throws UsernameNotPartOfConversationException gets thrown if the user is not a part of the specified conversation.
      */
     //Todo: Finn en berdre måte å synkronisere meldinger på. De kan sende meldinger likt og da burde man kanskje ta basis i den siste meldingen som ble sendt fra lista?
     // Det som kan funke er å ha en liste for hver person i samtalen. Så de er separate.
     // Da er det dermed umulig at to meldinger kommer likt og ingen av dem får oppdateringen. 
-    private void checkForNewMessages() throws CouldNotAddMessageException, IOException, InvalidResponseException, CouldNotGetMessageLogException {
+    private void checkForNewMessages() throws CouldNotAddMessageException, IOException, InvalidResponseException, CouldNotGetMessageLogException, UsernameNotPartOfConversationException {
         try (Socket socket = new Socket(localHost, portNumber)){
             socket.setKeepAlive(true);
             SetKeepAliveRequest setKeepAliveRequest = new SetKeepAliveRequest(true);
@@ -321,7 +321,7 @@ public class ChatClient {
             }
             SetKeepAliveRequest notKeepAlive = new SetKeepAliveRequest(false);
             sendObject(notKeepAlive, socket);
-        } catch (IOException | InvalidResponseException | CouldNotAddMessageException | CouldNotGetMessageLogException exception) {
+        } catch (IOException | InvalidResponseException | CouldNotAddMessageException | CouldNotGetMessageLogException | UsernameNotPartOfConversationException exception) {
             logWaringError(exception);
             throw exception;
         }
@@ -334,15 +334,18 @@ public class ChatClient {
      * @throws IOException gets thrown if the socket failed to be made.
      * @throws InvalidResponseException gets thrown if the class could not be found for that object or the response is a different object than expected.
      * @throws CouldNotAddMessageException gets thrown if the text message could not be added to the local message log.
-     * @throws CouldNotGetMessageLogException gets thrown if the server cant find the message log.
+     * @throws CouldNotGetMessageLogException gets thrown if the server can't find the message log.
+     * @throws UsernameNotPartOfConversationException gets thrown if the user is not a part of the specified conversation.
      */
-    private synchronized void checkMessageLogForNewMessages(PersonalConversation personalConversation, Socket socket) throws IOException, CouldNotAddMessageException, CouldNotGetMessageLogException, InvalidResponseException {
+    private synchronized void checkMessageLogForNewMessages(PersonalConversation personalConversation, Socket socket) throws IOException, CouldNotAddMessageException, CouldNotGetMessageLogException, InvalidResponseException, UsernameNotPartOfConversationException {
         try {
             logger.log(Level.INFO, "Syncing message log " + personalConversation.getConversationNumber());
             LocalDate localDate = LocalDate.now();
-            long lastMessageNumber = personalConversation.getMessageLogForDate(localDate).getLastMessageNumber();
+            long lastMessageNumber = personalConversation.getMessageLogForDate(localDate, user.getUsername()).getLastMessageNumber();
             long messageLogNumber = personalConversation.getConversationNumber();
-            ConversationRequest conversationRequest = new ConversationRequestBuilder().setCheckForMessages(true).addLastMessageNumber(lastMessageNumber).addConversationNumber(messageLogNumber).addDate(LocalDate.now()).build();
+            ArrayList<String> name = new ArrayList<>();
+            name.add(user.getUsername());
+            ConversationRequest conversationRequest = new ConversationRequestBuilder().setCheckForMessages(true).addLastMessageNumber(lastMessageNumber).addUsernames(name).addConversationNumber(messageLogNumber).addDate(LocalDate.now()).build();
             sendObject(conversationRequest, socket);
             Object object = getObject(socket);
             if(object instanceof MessageTransport messageTransport){
@@ -359,7 +362,7 @@ public class ChatClient {
             }else{
                 throw new InvalidResponseException("The response from the server was invalid format.");
             }
-        }catch (CouldNotGetMessageLogException | IllegalArgumentException | CouldNotAddMessageException | IOException | InvalidResponseException exception){
+        }catch (CouldNotGetMessageLogException | IllegalArgumentException | CouldNotAddMessageException | IOException | InvalidResponseException | UsernameNotPartOfConversationException exception){
             logWaringError(exception);
             throw exception;
         }

@@ -1,4 +1,4 @@
-package no.stonedstonar.chatapplication.backend.networktransport;
+package no.stonedstonar.chatapplication.networktransport;
 
 import no.stonedstonar.chatapplication.model.conversation.Conversation;
 import no.stonedstonar.chatapplication.model.message.Message;

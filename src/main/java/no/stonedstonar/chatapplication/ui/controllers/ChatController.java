@@ -20,7 +20,7 @@ import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
-import no.stonedstonar.chatapplication.model.conversationregister.ConversationRegisterObserver;
+import no.stonedstonar.chatapplication.model.conversationregister.personal.ConversationRegisterObserver;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;

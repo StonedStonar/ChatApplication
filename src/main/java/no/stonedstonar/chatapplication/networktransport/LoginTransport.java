@@ -1,7 +1,7 @@
-package no.stonedstonar.chatapplication.backend.networktransport;
+package no.stonedstonar.chatapplication.networktransport;
 
 import no.stonedstonar.chatapplication.model.User;
-import no.stonedstonar.chatapplication.model.conversationregister.NormalPersonalConversationRegister;
+import no.stonedstonar.chatapplication.model.conversationregister.personal.NormalPersonalConversationRegister;
 
 import java.io.Serializable;
 

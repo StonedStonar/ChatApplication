@@ -1,9 +1,9 @@
 package no.stonedstonar.chatapplication.model.conversation;
 
+import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.messagelog.PersonalMessageLog;
-import no.stonedstonar.chatapplication.model.messagelog.ServerMessageLog;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.List;
 public interface PersonalConversation extends Conversation, ObservableConversation{
 
     @Override
-    PersonalMessageLog getMessageLogForDate(LocalDate localDate) throws CouldNotGetMessageLogException;
+    PersonalMessageLog getMessageLogForDate(LocalDate localDate, String username) throws CouldNotGetMessageLogException, UsernameNotPartOfConversationException;
 
     /**
      * Gets all the messages of the conversation as a list.

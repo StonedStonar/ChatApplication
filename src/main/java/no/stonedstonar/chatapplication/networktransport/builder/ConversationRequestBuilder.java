@@ -1,6 +1,6 @@
-package no.stonedstonar.chatapplication.backend.networktransport.builder;
+package no.stonedstonar.chatapplication.networktransport.builder;
 
-import no.stonedstonar.chatapplication.backend.networktransport.ConversationRequest;
+import no.stonedstonar.chatapplication.networktransport.ConversationRequest;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -33,6 +33,10 @@ public class ConversationRequestBuilder {
 
     private LocalDate dateMade;
 
+    private boolean checkForNewConversation;
+
+    private List<Long> conversationNumberList;
+
     /**
      * Makes an instance of the MessageLogRequest class.
      */
@@ -42,6 +46,7 @@ public class ConversationRequestBuilder {
         addMembers = false;
         newConversation = false;
         checkForMessages = false;
+        checkForNewConversation = false;
         usernames = new ArrayList<>();
         conversationNumber = 0;
         lastMessage = 0;
@@ -62,6 +67,7 @@ public class ConversationRequestBuilder {
             addMembers = false;
             newConversation = false;
             checkForMessages = false;
+            checkForNewConversation = false;
         }else {
             deleteConversation = false;
         }
@@ -82,6 +88,7 @@ public class ConversationRequestBuilder {
             addMembers = false;
             newConversation = false;
             checkForMessages = false;
+            checkForNewConversation = false;
         }else {
             removeMembers = false;
         }
@@ -102,6 +109,7 @@ public class ConversationRequestBuilder {
             addMembers = valid;
             newConversation = false;
             checkForMessages = false;
+            checkForNewConversation = false;
         }else{
             addMembers = false;
         }
@@ -122,6 +130,7 @@ public class ConversationRequestBuilder {
             addMembers = false;
             newConversation = valid;
             checkForMessages = false;
+            checkForNewConversation = false;
         }else {
             newConversation = false;
         }
@@ -142,8 +151,29 @@ public class ConversationRequestBuilder {
             addMembers = false;
             newConversation = false;
             checkForMessages = valid;
+            checkForNewConversation = false;
         }else {
             checkForMessages = false;
+        }
+        return this;
+    }
+
+    /**
+     * Says if the request is about checking for new messages.
+     * @param valid <code>true</code> if the request wants to check for new conversations.
+     *              <code>false</code> if the does not want to check for new conversations.
+     * @return this builder object.
+     */
+    public ConversationRequestBuilder setCheckForNewConversations(boolean valid){
+        if (valid){
+            deleteConversation = false;
+            removeMembers = false;
+            addMembers = false;
+            newConversation = false;
+            checkForMessages = false;
+            checkForNewConversation = true;
+        }else {
+            checkForNewConversation = false;
         }
         return this;
     }
@@ -203,6 +233,33 @@ public class ConversationRequestBuilder {
         return this;
     }
 
+    /**
+     * Adds a list with all the conversation numbers.
+     * @param conversationNumberList the list with all conversation numbers.
+     * @return a list with all the conversation numbers.
+     */
+    public ConversationRequestBuilder addConversationNumberList(List<Long> conversationNumberList){
+        checkIfObjectIsNull(conversationNumberList, "conversation number list");
+        this.conversationNumberList = conversationNumberList;
+        return this;
+    }
+
+    /**
+     * Gets the list with all the conversation numbers.
+     * @return the list with all the conversation numbers.
+     */
+    public List<Long> getConversationNumberList(){
+        return conversationNumberList;
+    }
+
+    /**
+     * Says true if the request is a check for new conversations.
+     * @return <code>true</code> if the request wants to check for new conversations.
+     *         <code>false</code> if the does not want to check for new conversations.
+     */
+    public boolean isCheckForNewConversation(){
+        return checkForNewConversation;
+    }
 
     /**
      * Says true if the request is a check for new messages.

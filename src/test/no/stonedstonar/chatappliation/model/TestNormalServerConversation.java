@@ -3,6 +3,7 @@ package no.stonedstonar.chatappliation.model;
 import no.stonedstonar.chatapplication.model.conversation.Conversation;
 import no.stonedstonar.chatapplication.model.conversation.NormalServerConversation;
 import no.stonedstonar.chatapplication.model.conversation.ServerConversation;
+import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
 import no.stonedstonar.chatapplication.model.message.Message;
@@ -29,6 +30,8 @@ public class TestNormalServerConversation {
 
     private ServerConversation testConversation;
 
+    private String username;
+
     /**
      * Makes a test message log that can be used for testing.
      */
@@ -47,6 +50,8 @@ public class TestNormalServerConversation {
             fail("Expected all the members for the test message log to be added since the format is valid.");
         } catch (CouldNotGetMessageLogException exception) {
             fail("Expected the message log to be gotten since the date is valid.");
+        } catch (UsernameNotPartOfConversationException e) {
+            fail("Expected the messages to be added since they are a part of the conversation.");
         }
     }
 
@@ -56,7 +61,8 @@ public class TestNormalServerConversation {
      */
     private List<String> makeUsernames(){
         List<String> usernames = new ArrayList<>();
-        usernames.add("bjarne21");
+        username = "bjarne21";
+        usernames.add(username);
         usernames.add("lordVader");
         return usernames;
     }
@@ -66,7 +72,7 @@ public class TestNormalServerConversation {
      * @return the text message that matches that message.
      */
     private Message addTextMessageTextAndReturnIt(){
-        Message textMessage = new TextMessage("Hello", "bjarne22");
+        Message textMessage = new TextMessage("Hello", "bjarne21");
         try {
             testConversation.addNewMessage(textMessage);
         }catch (IllegalArgumentException exception){
@@ -75,6 +81,8 @@ public class TestNormalServerConversation {
             fail("Expected all the text messages for the test message log to be added since its valid.");
         } catch (CouldNotGetMessageLogException exception) {
             fail("Expected the message log to be found since the date is valid.");
+        } catch (UsernameNotPartOfConversationException e) {
+            fail("Expected the username to be valid since they are part of the conversation.");
         }
         return textMessage;
     }
@@ -137,7 +145,7 @@ public class TestNormalServerConversation {
             fail("Expected to get a exception since the input is invalid.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
-        }catch (CouldNotAddMessageException | CouldNotGetMessageLogException exception){
+        }catch (CouldNotAddMessageException | UsernameNotPartOfConversationException | CouldNotGetMessageLogException exception){
             fail("Expected to get a IllegalArgumentException since the input format is invalid.");
         }
     }
@@ -157,8 +165,8 @@ public class TestNormalServerConversation {
             fail("Expected to get a CouldNotAddTextMessageException since the format is valid.");
         }catch (CouldNotAddMessageException exception){
             assertTrue(true);
-        } catch (CouldNotGetMessageLogException exception) {
-            fail("Expected the message log to be found since its a valid date.");
+        } catch (CouldNotGetMessageLogException | UsernameNotPartOfConversationException exception) {
+            fail("Expected the message log to be found since its a invalid date.");
         }
     }
 
@@ -178,6 +186,8 @@ public class TestNormalServerConversation {
             fail("Expected the message log to be found sine the format is valid.");
         }catch (IllegalArgumentException exception){
             fail("Expected the message to be added since the input format is valid. ");
+        } catch (UsernameNotPartOfConversationException e) {
+            fail("Expected the message to be added since the user is a part of the conversation.");
         }
     }
 
@@ -192,7 +202,7 @@ public class TestNormalServerConversation {
             fail("Expected to get a IllegalArgumentException since the input is invalid format.");
         } catch (IllegalArgumentException e) {
             assertTrue(true);
-        } catch (CouldNotGetMessageLogException | CouldNotAddMessageException exception) {
+        } catch (CouldNotGetMessageLogException | UsernameNotPartOfConversationException |CouldNotAddMessageException exception) {
             fail("Expected to get a IllegalArgumentException since the input is invalid format.");
         }
     }
@@ -216,6 +226,8 @@ public class TestNormalServerConversation {
             fail("Expected to get a CouldNotAddMessageException since the dates are wrong.");
         }catch (CouldNotAddMessageException exception){
             assertTrue(true);
+        } catch (UsernameNotPartOfConversationException e) {
+            fail("Expected to get a CouldNotAddMessageException since the username is a part of the covnersation.");
         }
     }
 
@@ -233,7 +245,7 @@ public class TestNormalServerConversation {
             messageList.add(mess2);
             testConversation.addAllMessagesWithSameDate(messageList);
             assertTrue(true);
-        }catch (IllegalArgumentException | CouldNotAddMessageException | CouldNotGetMessageLogException exception){
+        }catch (IllegalArgumentException | CouldNotAddMessageException | CouldNotGetMessageLogException | UsernameNotPartOfConversationException exception){
             fail("Expected the messages to be added since the format is valid." + exception.getClass());
         }
     }
@@ -249,10 +261,14 @@ public class TestNormalServerConversation {
             fail("Expected to get a exception since the input is null.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
-        }catch (CouldNotRemoveMessageException | CouldNotGetMessageLogException exception){
+        }catch (CouldNotRemoveMessageException | UsernameNotPartOfConversationException | CouldNotGetMessageLogException exception){
             fail("Expected to get a IllegalArgumentException since the format is invalid.");
         }
     }
+
+    /**
+     * Tests if removeMessage works with message from one not in the conversation.
+     */
 
     /**
      * Tests if removeMessage works with valid input.
@@ -266,8 +282,8 @@ public class TestNormalServerConversation {
             assertTrue(true);
         }catch (IllegalArgumentException exception){
             fail("Expected the message to be removed since the input format is valid.");
-        }catch (CouldNotRemoveMessageException | CouldNotGetMessageLogException exception) {
-            fail("Expected the message to be removed since the input is valid.");
+        }catch (CouldNotRemoveMessageException | UsernameNotPartOfConversationException | CouldNotGetMessageLogException exception) {
+            fail("Expected the message to be removed since the input is valid and the user is valid.");
         }
     }
 
@@ -281,7 +297,7 @@ public class TestNormalServerConversation {
             Message message = new TextMessage("Hello vader", "bjarne21");
             testConversation.removeMessage(message);
             fail("Expected to get a exception since the message is not a part of the message log.");
-        }catch (IllegalArgumentException | CouldNotGetMessageLogException exception){
+        }catch (IllegalArgumentException | CouldNotGetMessageLogException | UsernameNotPartOfConversationException exception){
             fail("Expected to get a CouldNotRemoveTextMessageException since the format is valid.");
         }catch (CouldNotRemoveMessageException exception){
             assertTrue(true);
@@ -295,11 +311,11 @@ public class TestNormalServerConversation {
     @DisplayName("Tests if checkForNewMessagesOnDate works with invalid format on date.")
     public void testIfCheckForNewMessagesOnDateWorksWithInvalidFormatOnDate(){
         try {
-            testConversation.checkForNewMessagesOnDate(null, 2L);
+            testConversation.checkForNewMessagesOnDate(null, 2L, username);
             fail("Expected to get a IllegalArgumentException since the input format is invalid.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
-        }catch (CouldNotGetMessageLogException exception){
+        }catch (CouldNotGetMessageLogException | UsernameNotPartOfConversationException exception){
             fail("Expected to get a IllegalArgumentException since the input format is invalid.");
         }
     }
@@ -311,11 +327,11 @@ public class TestNormalServerConversation {
     @DisplayName("Tests if checkForNewMessagesOnDate works with invalid date.")
     public void testIfCheckForNewMessagesOnDateWorksWithInvalidDate(){
         try {
-            testConversation.checkForNewMessagesOnDate(LocalDate.of(2100, 1, 1), 2L);
+            testConversation.checkForNewMessagesOnDate(LocalDate.of(2100, 1, 1), 2L, username);
             fail("Expected to get a IllegalArgumentException since the input format is invalid.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
-        }catch (CouldNotGetMessageLogException exception){
+        }catch (CouldNotGetMessageLogException | UsernameNotPartOfConversationException exception){
             fail("Expected to get a IllegalArgumentException since the input format is invalid.");
         }
     }
@@ -327,11 +343,11 @@ public class TestNormalServerConversation {
     @DisplayName("Tests if checkForNewMessagesOnDate works with invalid long.")
     public void testIfCheckForNewMessagesOnDateWorksWithInvalidLong(){
         try {
-            testConversation.checkForNewMessagesOnDate(LocalDate.now(), -1L);
+            testConversation.checkForNewMessagesOnDate(LocalDate.now(), -1L, username);
             fail("Expected to get a IllegalArgumentException since the input format is invalid.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
-        }catch (CouldNotGetMessageLogException exception){
+        }catch (CouldNotGetMessageLogException | UsernameNotPartOfConversationException exception){
             fail("Expected to get a IllegalArgumentException since the input format is invalid.");
         }
     }
@@ -343,7 +359,7 @@ public class TestNormalServerConversation {
     @DisplayName("Tests if checkForNewMessagesOnDate works with valid input.")
     public void testIfCheckForNewMessagesOnDateWorksWithValidInput(){
         try {
-            List<Message> newMessages = testConversation.checkForNewMessagesOnDate(LocalDate.now(), 0L);
+            List<Message> newMessages = testConversation.checkForNewMessagesOnDate(LocalDate.now(), 0L, username);
             if (newMessages.size() == 2){
                 assertTrue(true);
             }else {
@@ -351,7 +367,7 @@ public class TestNormalServerConversation {
             }
         }catch (IllegalArgumentException exception){
             fail("Expected the method to be executed since the input format is valid.");
-        }catch (CouldNotGetMessageLogException exception){
+        }catch (CouldNotGetMessageLogException | UsernameNotPartOfConversationException exception){
             fail("Expected to get a IllegalArgumentException since the input format is invalid.");
         }
     }

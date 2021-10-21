@@ -1,6 +1,8 @@
-package no.stonedstonar.chatapplication.model.conversationregister;
+package no.stonedstonar.chatapplication.model.conversationregister.server;
 
+import no.stonedstonar.chatapplication.backend.Server;
 import no.stonedstonar.chatapplication.model.conversation.*;
+import no.stonedstonar.chatapplication.model.conversationregister.personal.NormalPersonalConversationRegister;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotRemoveConversationException;
@@ -41,7 +43,7 @@ public class NormalConversationRegister implements ServerConversationRegister {
     };
 
     @Override
-    public Conversation addNewConversationWithUsernames(List<String> usernames, String nameOfConversation) throws CouldNotAddMemberException, CouldNotAddConversationException {
+    public ServerConversation addNewConversationWithUsernames(List<String> usernames, String nameOfConversation) throws CouldNotAddMemberException, CouldNotAddConversationException {
         checkIfObjectIsNull(usernames, "usernames");
         checkIfObjectIsNull(nameOfConversation, "name of messagelog");
         if (!usernames.isEmpty()){

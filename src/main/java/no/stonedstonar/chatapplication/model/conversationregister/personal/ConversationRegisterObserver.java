@@ -1,4 +1,4 @@
-package no.stonedstonar.chatapplication.model.conversationregister;
+package no.stonedstonar.chatapplication.model.conversationregister.personal;
 
 
 import no.stonedstonar.chatapplication.model.conversation.PersonalConversation;

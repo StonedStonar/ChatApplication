@@ -1,4 +1,4 @@
-package no.stonedstonar.chatapplication.model.conversationregister;
+package no.stonedstonar.chatapplication.model.conversationregister.personal;
 
 /**
  * Represents a conversation register that can be observed.

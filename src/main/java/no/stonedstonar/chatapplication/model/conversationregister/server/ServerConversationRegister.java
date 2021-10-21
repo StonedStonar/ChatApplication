@@ -1,7 +1,9 @@
-package no.stonedstonar.chatapplication.model.conversationregister;
+package no.stonedstonar.chatapplication.model.conversationregister.server;
 
 import no.stonedstonar.chatapplication.model.conversation.Conversation;
 import no.stonedstonar.chatapplication.model.conversation.ServerConversation;
+import no.stonedstonar.chatapplication.model.conversationregister.ConversationRegister;
+import no.stonedstonar.chatapplication.model.conversationregister.personal.NormalPersonalConversationRegister;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
@@ -14,7 +16,7 @@ import java.util.List;
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public interface ServerConversationRegister extends ConversationRegister{
+public interface ServerConversationRegister extends ConversationRegister {
 
     @Override
     ServerConversation getConversationByNumber(long messageLogNumber) throws CouldNotGetConversationException;
@@ -40,6 +42,6 @@ public interface ServerConversationRegister extends ConversationRegister{
      * @throws CouldNotAddMessageLogException gets thrown if the conversation is already in the register.
      * @throws CouldNotAddMemberException gets thrown if a member could not be added.
      */
-    Conversation addNewConversationWithUsernames(List<String> usernames, String nameOfConversation) throws CouldNotAddMemberException, CouldNotAddConversationException;
+    ServerConversation addNewConversationWithUsernames(List<String> usernames, String nameOfConversation) throws CouldNotAddMemberException, CouldNotAddConversationException;
 
 }

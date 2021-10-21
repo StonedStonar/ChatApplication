@@ -1,6 +1,6 @@
-package no.stonedstonar.chatapplication.backend.networktransport;
+package no.stonedstonar.chatapplication.networktransport;
 
-import no.stonedstonar.chatapplication.backend.networktransport.builder.ConversationRequestBuilder;
+import no.stonedstonar.chatapplication.networktransport.builder.ConversationRequestBuilder;
 
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -33,6 +33,10 @@ public class ConversationRequest implements Serializable {
 
     private long conversationNumber;
 
+    private List<Long> conversationNumberList;
+
+    private boolean checkForNewConversation;
+
     /**
       * Makes an instance of the MessageLogRequest class.
       */
@@ -47,6 +51,25 @@ public class ConversationRequest implements Serializable {
         lastMessage = conversationRequestBuilder.getLastMessage();
         nameOfConversation = conversationRequestBuilder.getNameOfConversation();
         date = conversationRequestBuilder.getDate();
+        checkForNewConversation = conversationRequestBuilder.isCheckForNewConversation();
+        conversationNumberList = conversationRequestBuilder.getConversationNumberList();
+    }
+
+    /**
+     * Gets the list with all the conversation numbers.
+     * @return the list with all the conversation numbers.
+     */
+    public List<Long> getConversationNumberList(){
+        return conversationNumberList;
+    }
+
+    /**
+     * Says true if the request is a check for new conversations.
+     * @return <code>true</code> if the request wants to check for new conversations.
+     *         <code>false</code> if the does not want to check for new conversations.
+     */
+    public boolean isCheckForNewConversation(){
+        return checkForNewConversation;
     }
 
     /**

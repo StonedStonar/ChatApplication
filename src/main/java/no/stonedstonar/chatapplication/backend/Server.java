@@ -2,12 +2,15 @@ package no.stonedstonar.chatapplication.backend;
 
 import javafx.application.Platform;
 import no.stonedstonar.chatapplication.model.conversation.Conversation;
+import no.stonedstonar.chatapplication.model.conversation.NormalPersonalConversation;
+import no.stonedstonar.chatapplication.model.conversation.PersonalConversation;
 import no.stonedstonar.chatapplication.model.conversation.ServerConversation;
-import no.stonedstonar.chatapplication.model.conversationregister.NormalConversationRegister;
-import no.stonedstonar.chatapplication.model.conversationregister.NormalPersonalConversationRegister;
+import no.stonedstonar.chatapplication.model.conversationregister.server.NormalConversationRegister;
+import no.stonedstonar.chatapplication.model.conversationregister.personal.NormalPersonalConversationRegister;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
+import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
@@ -15,7 +18,7 @@ import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserExcep
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
-import no.stonedstonar.chatapplication.backend.networktransport.*;
+import no.stonedstonar.chatapplication.networktransport.*;
 import no.stonedstonar.chatapplication.model.User;
 import no.stonedstonar.chatapplication.model.UserRegister;
 
@@ -162,7 +165,7 @@ public class Server{
             }else if (object instanceof UserRequest userRequest){
                 handleUserInteraction(userRequest, socket);
             }else if (object instanceof ConversationRequest conversationRequest){
-                handleMessageLogInteraction(conversationRequest, socket);
+                handleConversationInteraction(conversationRequest, socket);
             }else if (object instanceof SetKeepAliveRequest setKeepAliveRequest) {
                 socket.setKeepAlive(setKeepAliveRequest.isKeepAlive());
             }else {
@@ -185,7 +188,7 @@ public class Server{
             conversations.addAllMessagesWithSameDate(newMessages);
             System.out.println("The message is now added.");
             sendObject(messageTransport, socket);
-        }catch (CouldNotAddMessageException | CouldNotGetMessageLogException | CouldNotGetConversationException exception){
+        }catch (CouldNotAddMessageException | CouldNotGetMessageLogException | CouldNotGetConversationException | UsernameNotPartOfConversationException exception){
             String message = "Something went wrong in adding " + messageTransport.getMessages().size() + " with the exception " + exception.getMessage() + " and class " + exception.getClass();
             logEvent(Level.WARNING, message);
             sendObject(exception, socket);
@@ -225,22 +228,27 @@ public class Server{
      * @param socket the socket the communication is happening over.
      * @throws IOException gets thrown if the socket closes or cannot finish its task.
      */
-    private void handleMessageLogInteraction(ConversationRequest conversationRequest, Socket socket) throws IOException {
+    private void handleConversationInteraction(ConversationRequest conversationRequest, Socket socket) throws IOException {
         try {
             if (conversationRequest.isNewConversation()){
-                makeNewMessageLog(conversationRequest, socket);
+                makeNewConversation(conversationRequest, socket);
             }else if (conversationRequest.isCheckForMessages()){
-                checkForNewMessagesInMessageLog(conversationRequest, socket);
+                checkForNewConversation(conversationRequest, socket);
             }else if (conversationRequest.isAddMembers()){
-                addNewMembersToMessageLog(conversationRequest, socket);
-            }else if (conversationRequest.isRemoveMembers()){
-                
+                addNewMembersToConversation(conversationRequest, socket);
+            }else if (conversationRequest.isCheckForNewConversation()){
+                handleCheckForNewConversations(conversationRequest);
             }
-        }catch (CouldNotAddMemberException | CouldNotAddConversationException | CouldNotGetConversationException | CouldNotGetMessageLogException exception) {
+        }catch (CouldNotAddMemberException | CouldNotAddConversationException | CouldNotGetConversationException | CouldNotGetMessageLogException | UsernameNotPartOfConversationException exception) {
             String message = "Something went wrong in the " + conversationRequest + " with the exception " + exception.getMessage() + " and class " + exception.getClass();
             logEvent(Level.WARNING, message);
             sendObject(exception, socket);
         }
+    }
+
+    private void handleCheckForNewConversations(ConversationRequest conversationRequest){
+        List<Long> conversationNumbers = conversationRequest.getConversationNumberList();
+
     }
 
     /**
@@ -251,29 +259,31 @@ public class Server{
      * @throws CouldNotAddConversationException gets thrown if the conversation could not be added.
      * @throws CouldNotAddMemberException gets thrown if a member could not be added.
      */
-    private void makeNewMessageLog(ConversationRequest conversationRequest, Socket socket) throws IOException, CouldNotAddMemberException, CouldNotAddConversationException {
+    private void makeNewConversation(ConversationRequest conversationRequest, Socket socket) throws IOException, CouldNotAddMemberException, CouldNotAddConversationException {
         List<String> usernames = conversationRequest.getUsernames();
         String nameOfMessageLog = conversationRequest.getNameOfConversation();
-        Conversation conversation = normalConversationRegister.addNewConversationWithUsernames(usernames, nameOfMessageLog);
-        sendObject(conversation, socket);
+        ServerConversation conversation = normalConversationRegister.addNewConversationWithUsernames(usernames, nameOfMessageLog);
+        PersonalConversation personalConversation = new NormalPersonalConversation(conversation, conversationRequest.getUsernames().get(0));
+        sendObject(personalConversation, socket);
     }
 
-    private void addNewMembersToMessageLog(ConversationRequest conversationRequest, Socket socket){
+    private void addNewMembersToConversation(ConversationRequest conversationRequest, Socket socket){
 
     }
 
     /**
-     * Checks if a message log has new messages compared to the conversation request.
+     * Checks if a conversation has new messages compared to the conversation request.
      * @param conversationRequest the request that wants messages for a conversation.
      * @param socket socket that the communication is happening over.
-     * @throws CouldNotGetMessageLogException gets thrown if the message log could not be found.
+     * @throws CouldNotGetMessageLogException gets thrown if the conversation could not be found.
      * @throws IOException gets thrown if something goes wrong with the communication.
      * @throws CouldNotGetConversationException gets thrown if the conversation could not be found.
+     * @throws UsernameNotPartOfConversationException gets thrown if the username is not a part of the conversation.
      */
-    private void checkForNewMessagesInMessageLog(ConversationRequest conversationRequest, Socket socket) throws IOException, CouldNotGetConversationException, CouldNotGetMessageLogException {
+    private void checkForNewConversation(ConversationRequest conversationRequest, Socket socket) throws IOException, CouldNotGetConversationException, CouldNotGetMessageLogException, UsernameNotPartOfConversationException {
         ServerConversation conversation = normalConversationRegister.getConversationByNumber(conversationRequest.getConversationNumber());
         System.out.println("Last message " + conversationRequest.getLastMessage());
-        List<Message> newMessages = conversation.checkForNewMessagesOnDate(conversationRequest.getDate(),conversationRequest.getLastMessage());
+        List<Message> newMessages = conversation.checkForNewMessagesOnDate(conversationRequest.getDate(),conversationRequest.getLastMessage(), conversationRequest.getUsernames().get(0));
         MessageTransport messageTransport = new MessageTransport(newMessages, conversation, LocalDate.now());
         sendObject(messageTransport, socket);
     }

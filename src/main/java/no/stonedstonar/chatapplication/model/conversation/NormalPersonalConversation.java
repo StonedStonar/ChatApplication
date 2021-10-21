@@ -41,8 +41,6 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
     private volatile boolean removed;
 
 
-    //Todo: Vurder å ikke ta imot hele samtalen men at dette objektet må spørre etter deler av den.
-    // Finish this tomorrow and start on the testing part.
     /**
      * Makes an instance of the PersonalNormalConversation class.
      * @param serverConversation the conversation this personal conversation is going to imitate.
@@ -156,6 +154,7 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
 
     @Override
     public boolean checkForMessageLogByDate(LocalDate localDate) {
+        checkIfDateIsValid(localDate);
         return personalMessageLogs.stream().anyMatch(log -> log.getDateMade().isEqual(localDate));
     }
 
@@ -164,7 +163,7 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
         checkIfObjectIsNull(message, "message");
         checkIfDateIsValid(message.getDate());
         checkIfUsernameIsMemberAndThrowExceptionIfNot(message.getFromUsername());
-        PersonalMessageLog personalMessageLog = getMessageLogForDate(message.getDate());
+        PersonalMessageLog personalMessageLog = getMessageLogForDate(message.getDate(), message.getFromUsername());
         personalMessageLog.addMessage(message);
         this.newlyAddedMessage = message;
         this.removed = false;
@@ -197,8 +196,8 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
     public void removeMessage(Message message) throws CouldNotRemoveMessageException, CouldNotGetMessageLogException, UsernameNotPartOfConversationException {
         checkIfObjectIsNull(message, "message");
         checkIfDateIsValid(message.getDate());
-        checkIfUsernameIsMember(message.getFromUsername());
-        PersonalMessageLog personalMessageLog = getMessageLogForDate(message.getDate());
+        checkIfUsernameIsMemberAndThrowExceptionIfNot(message.getFromUsername());
+        PersonalMessageLog personalMessageLog = getMessageLogForDate(message.getDate(), message.getFromUsername());
         personalMessageLog.removeMessage(message);
         this.newlyAddedMessage = message;
         this.removed = true;
@@ -220,12 +219,11 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
         checkIfListIsValid(newMessageList, "new message list");
         LocalDate testDateFromOneMessage = newMessageList.get(0).getDate();
         newMessageList.forEach(message -> checkIfDateIsValid(message.getDate()));
-        newMessageList.forEach(message -> checkIfUsernameIsMember(message.getFromUsername()));
-        String username = ;
-        boolean allAreMembers = newMessageList.stream().allMatch(message -> message.getFromUsername().equals(username));
+        String username = newMessageList.get(0).getFromUsername();
+        boolean allAreMembers = newMessageList.stream().allMatch(message -> members.checkIfUsernameIsMember(message.getFromUsername()));
         boolean validDate = newMessageList.stream().allMatch(message -> message.getDate().isEqual(testDateFromOneMessage));
         if (validDate && allAreMembers){
-            PersonalMessageLog messageLog = getMessageLogByTheDate(testDateFromOneMessage, );
+            PersonalMessageLog messageLog = getMessageLogByTheDate(testDateFromOneMessage, username);
             if (!messageLog.checkIfAllMessagesAreNewMessages(newMessageList)){
                 Iterator<Message> it = newMessageList.iterator();
                 while (it.hasNext()){
@@ -253,9 +251,10 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
      * @throws CouldNotGetMessageLogException gets thrown if there is no message log that matches the date.
      * @return the message log that matches that date.
      */
-    private PersonalMessageLog getMessageLogByTheDate(LocalDate localDate, String username) throws CouldNotGetMessageLogException {
+    private PersonalMessageLog getMessageLogByTheDate(LocalDate localDate, String username) throws CouldNotGetMessageLogException, UsernameNotPartOfConversationException {
         checkIfObjectIsNull(localDate, "local date");
-        checkIfUsernameIsMember(username);
+        checkString(username, "username");
+        checkIfUsernameIsMemberAndThrowExceptionIfNot(username);
         Optional<PersonalMessageLog> optionalMessageLog = personalMessageLogs.stream().filter(log -> log.getDateMade().isEqual(localDate)).findFirst();
         if (optionalMessageLog.isPresent()){
             return optionalMessageLog.get();
@@ -265,9 +264,10 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
     }
 
     @Override
-    public PersonalMessageLog getMessageLogForDate(LocalDate localDate) throws CouldNotGetMessageLogException {
+    public PersonalMessageLog getMessageLogForDate(LocalDate localDate, String username) throws CouldNotGetMessageLogException, UsernameNotPartOfConversationException {
+        checkIfUsernameIsMemberAndThrowExceptionIfNot(username);
         if (checkForMessageLogByDate(localDate)){
-            return getMessageLogByTheDate(localDate);
+            return getMessageLogByTheDate(localDate, username);
         }else {
             PersonalMessageLog messageLog = new PersonalMessageLog(LocalDate.now());
             personalMessageLogs.add(messageLog);
