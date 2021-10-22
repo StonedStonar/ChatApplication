@@ -16,6 +16,7 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import no.stonedstonar.chatapplication.frontend.ChatClient;
 import no.stonedstonar.chatapplication.model.conversation.PersonalConversation;
+import no.stonedstonar.chatapplication.model.conversationregister.personal.PersonalConversationRegister;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
@@ -378,6 +379,10 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
         }catch (Exception exception){
             System.out.println(exception.getClass() + " " + exception.getMessage());
         }
+        PersonalConversationRegister personalConversationRegister = ChatApplicationClient.getChatApplication().getChatClient().getPersonalConversationRegister();
+        if(!personalConversationRegister.checkIfObjectIsObserver(this)){
+            personalConversationRegister.registerObserver(this);
+        }
     }
 
     /**
@@ -392,7 +397,6 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
         }
     }
 
-
     @Override
     public void updateConversationMessage(Message message, boolean removed) {
         Platform.runLater(() ->{
@@ -405,7 +409,7 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
 
     @Override
     public void updateConversation(PersonalConversation personalConversation, boolean removed) {
-        Platform.runLater(()->{
+        Platform.runLater(() -> {
             addNewConversation(personalConversation);
         });
     }

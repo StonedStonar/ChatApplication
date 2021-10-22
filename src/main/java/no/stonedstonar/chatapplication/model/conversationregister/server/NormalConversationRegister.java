@@ -45,7 +45,7 @@ public class NormalConversationRegister implements ServerConversationRegister {
     @Override
     public ServerConversation addNewConversationWithUsernames(List<String> usernames, String nameOfConversation) throws CouldNotAddMemberException, CouldNotAddConversationException {
         checkIfObjectIsNull(usernames, "usernames");
-        checkIfObjectIsNull(nameOfConversation, "name of messagelog");
+        checkIfObjectIsNull(nameOfConversation, "name of conversation");
         if (!usernames.isEmpty()){
             makeNewConversationNumber();
             ServerConversation conversation = new NormalServerConversation(lastConversationNumber, usernames);

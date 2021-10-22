@@ -278,9 +278,23 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
     @Override
     public List<Message> getAllMessagesOfConversationAsList() {
         List<Message> messages = new ArrayList<>();
+        if (!checkIfCurrentDateIsInConversation()){
+            personalMessageLogs.add(new PersonalMessageLog(LocalDate.now()));
+        }
         personalMessageLogs.forEach(messageLog -> messages.addAll(messageLog.getMessages()));
+
         return messages;
     }
+
+    /**
+     * Checks if the current date is in the message log.
+     * @return <code>true</code> if the current date is in the message log.
+     *         <code>false</code> when the current date is not in the register.
+     */
+    private boolean checkIfCurrentDateIsInConversation(){
+        return personalMessageLogs.stream().anyMatch(log -> log.getDateMade().isEqual(LocalDate.now()));
+    }
+
 
     /**
      * Checks if the date is valid. That it is before current date or the current date.

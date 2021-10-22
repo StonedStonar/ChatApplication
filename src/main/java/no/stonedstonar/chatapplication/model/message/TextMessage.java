@@ -112,7 +112,7 @@ public class TextMessage implements Serializable, Message{
      * @param number the number to check.
      * @param prefix the prefix the error should have.
      */
-    protected void checkIfLongIsNegative(long number, String prefix){
+    private void checkIfLongIsNegative(long number, String prefix){
         if (number < 0){
             throw new IllegalArgumentException("Expected the " + prefix + " to be larger than zero.");
         }

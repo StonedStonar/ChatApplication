@@ -213,7 +213,12 @@ public class NormalServerConversation implements ServerConversation {
         checkIfDateIsValid(localDate);
         checkIfLongIsNegative(lastMessage, "last message");
         try {
-            ServerMessageLog messageLog = getMessageLogByTheDate(localDate);
+            ServerMessageLog messageLog;
+            if (localDate.isEqual(LocalDate.now())){
+                messageLog = getMessageLogForDate(localDate, username);
+            }else{
+                messageLog = getMessageLogByTheDate(localDate);
+            }
             return messageLog.checkForNewMessages(lastMessage);
         }catch (CouldNotGetMessageLogException exception){
             if ((lastMessage == 0) && localDate.isEqual(LocalDate.now())){

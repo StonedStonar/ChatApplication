@@ -2,6 +2,7 @@ package no.stonedstonar.chatapplication.frontend;
 
 import no.stonedstonar.chatapplication.model.conversation.PersonalConversation;
 import no.stonedstonar.chatapplication.model.conversationregister.personal.NormalPersonalConversationRegister;
+import no.stonedstonar.chatapplication.model.conversationregister.personal.PersonalConversationRegister;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
@@ -87,6 +88,14 @@ public class ChatClient {
     }
 
     /**
+     * Gets the personal conversation register.
+     * @return the personal conversation regsiter.
+     */
+    public PersonalConversationRegister getPersonalConversationRegister(){
+        return personalConversationRegister;
+    }
+
+    /**
      * Sets the message log that is active in the gui. Starts a listening thread.
      * @param messageLogNumber the message log you want to listen for new messages on.
      */
@@ -141,6 +150,7 @@ public class ChatClient {
             try {
                 if (count > 2){
                     checkForNewMessages();
+                    checkForNewConversations();
                     count = 0;
                 }else {
                     Socket socket = new Socket(localHost, portNumber);
@@ -148,7 +158,7 @@ public class ChatClient {
                     count += 1;
                 }
                 Thread.sleep(5000);
-            }catch (CouldNotAddMessageException | IOException | InvalidResponseException | CouldNotGetMessageLogException | InterruptedException | UsernameNotPartOfConversationException exception){
+            }catch (CouldNotAddMessageException | IOException | InvalidResponseException | CouldNotGetMessageLogException | InterruptedException | UsernameNotPartOfConversationException | CouldNotAddConversationException exception){
                 logWaringError(exception);
                 stopThread();
             }
@@ -208,7 +218,7 @@ public class ChatClient {
             sendObject(conversationRequest, socket);
             Object object = getObject(socket);
             if (object instanceof PersonalConversation personalConversation){
-                personalConversationRegister.addConversation(personalConversation);
+
             }else if (object instanceof CouldNotAddMessageLogException exception){
                 throw exception;
             }else if (object instanceof CouldNotAddMemberException exception){
@@ -216,7 +226,7 @@ public class ChatClient {
             }else {
                 throw new IllegalArgumentException("The returned object is not what excepted.");
             }
-        }catch (CouldNotAddMemberException | CouldNotAddMessageLogException | InvalidResponseException | CouldNotAddConversationException exception){
+        }catch (CouldNotAddMemberException | CouldNotAddMessageLogException | InvalidResponseException exception){
             logWaringError(exception);
             throw exception;
         }
@@ -348,21 +358,50 @@ public class ChatClient {
             ConversationRequest conversationRequest = new ConversationRequestBuilder().setCheckForMessages(true).addLastMessageNumber(lastMessageNumber).addUsernames(name).addConversationNumber(messageLogNumber).addDate(LocalDate.now()).build();
             sendObject(conversationRequest, socket);
             Object object = getObject(socket);
-            if(object instanceof MessageTransport messageTransport){
+            if (object instanceof MessageTransport messageTransport) {
                 List<Message> textMessageList = messageTransport.getMessages();
                 System.out.println("List size:  " + messageTransport.getMessages().size());
-                if (!textMessageList.isEmpty()){
+                if (!textMessageList.isEmpty()) {
                     //Todo: Se om denne kan endres slik at flere meldinger kan legges til fra forksjellig dato.
                     personalConversation.addAllMessagesWithSameDate(textMessageList);
                 }
-            }else if(object instanceof CouldNotGetMessageLogException exception){
+            } else if (object instanceof CouldNotGetMessageLogException exception) {
                 throw exception;
-            }else if(object instanceof IllegalArgumentException exception){
+            } else if (object instanceof IllegalArgumentException exception) {
                 throw exception;
-            }else{
+            } else {
                 throw new InvalidResponseException("The response from the server was invalid format.");
             }
-        }catch (CouldNotGetMessageLogException | IllegalArgumentException | CouldNotAddMessageException | IOException | InvalidResponseException | UsernameNotPartOfConversationException exception){
+        } catch (CouldNotGetMessageLogException | IllegalArgumentException | CouldNotAddMessageException | IOException | InvalidResponseException | UsernameNotPartOfConversationException exception) {
+            logWaringError(exception);
+            throw exception;
+        }
+    }
+
+    /**
+     * Checks if there are any new conversations on the server.
+     * @throws IOException gets thrown if the socket failed to be made.
+     * @throws InvalidResponseException gets thrown if the response from the server is invalid.
+     * @throws CouldNotAddConversationException gets thrown if the conversation could not be added.
+     */
+    public void checkForNewConversations() throws IOException, InvalidResponseException, CouldNotAddConversationException {
+        try (Socket socket = new Socket(localHost, portNumber)){
+            List<String> usernames = new ArrayList<>();
+            List<Long> conversationNumbers = personalConversationRegister.getAllConversationNumbers();
+            usernames.add(user.getUsername());
+            ConversationRequest conversationRequest = new ConversationRequestBuilder().setCheckForNewConversations(true).addUsernames(usernames).addConversationNumberList(conversationNumbers).build();
+            sendObject(conversationRequest, socket);
+            Object object = getObject(socket);
+            if(object instanceof PersonalConversationTransport personalConversationTransport){
+                Iterator<PersonalConversation> it = personalConversationTransport.getPersonalConversationList().iterator();
+                while (it.hasNext()){
+                    PersonalConversation personalConversation = it.next();
+                    personalConversationRegister.addConversation(personalConversation);
+                }
+            }else if (object instanceof IllegalArgumentException exception){
+                throw exception;
+            }
+        } catch (IOException | InvalidResponseException | IllegalArgumentException |  CouldNotAddConversationException exception) {
             logWaringError(exception);
             throw exception;
         }

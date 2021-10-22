@@ -55,9 +55,17 @@ public class NormalPersonalConversationRegister implements PersonalConversationR
         checkIfObjectIsNull(personalConversation, "personal conversation");
         if (!checkIfConversationIsInRegister(personalConversation)){
             personalConversations.add(personalConversation);
+            newlyAddedNormalPersonalConversation = personalConversation;
+            removed = false;
+            notifyObservers();
         }else {
             throw new CouldNotAddConversationException("The conversation is already in the register.");
         }
+    }
+
+    @Override
+    public List<Long> getAllConversationNumbers() {
+        return personalConversations.stream().map(convo -> convo.getConversationNumber()).toList();
     }
 
     /**

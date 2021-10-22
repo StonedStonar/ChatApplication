@@ -1,12 +1,10 @@
 package no.stonedstonar.chatapplication.backend;
 
 import javafx.application.Platform;
-import no.stonedstonar.chatapplication.model.conversation.Conversation;
-import no.stonedstonar.chatapplication.model.conversation.NormalPersonalConversation;
-import no.stonedstonar.chatapplication.model.conversation.PersonalConversation;
-import no.stonedstonar.chatapplication.model.conversation.ServerConversation;
+import no.stonedstonar.chatapplication.model.conversation.*;
 import no.stonedstonar.chatapplication.model.conversationregister.server.NormalConversationRegister;
 import no.stonedstonar.chatapplication.model.conversationregister.personal.NormalPersonalConversationRegister;
+import no.stonedstonar.chatapplication.model.conversationregister.server.ServerConversationRegister;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
@@ -237,7 +235,7 @@ public class Server{
             }else if (conversationRequest.isAddMembers()){
                 addNewMembersToConversation(conversationRequest, socket);
             }else if (conversationRequest.isCheckForNewConversation()){
-                handleCheckForNewConversations(conversationRequest);
+                handleCheckForNewConversations(conversationRequest, socket);
             }
         }catch (CouldNotAddMemberException | CouldNotAddConversationException | CouldNotGetConversationException | CouldNotGetMessageLogException | UsernameNotPartOfConversationException exception) {
             String message = "Something went wrong in the " + conversationRequest + " with the exception " + exception.getMessage() + " and class " + exception.getClass();
@@ -246,9 +244,31 @@ public class Server{
         }
     }
 
-    private void handleCheckForNewConversations(ConversationRequest conversationRequest){
+    /**
+     * Checks for new conversations by a user.
+     * @param conversationRequest the conversation request that wants to check for new messages.
+     * @param socket the socket this communication is happening over.
+     * @throws IOException gets thrown if the socket closes or cannot finish its task.
+     */
+    private void handleCheckForNewConversations(ConversationRequest conversationRequest, Socket socket) throws IOException {
         List<Long> conversationNumbers = conversationRequest.getConversationNumberList();
-
+        String username = conversationRequest.getUsernames().get(0);
+        List<ServerConversation> list = normalConversationRegister.getAllConversationsOfUsername(username);
+        List<PersonalConversation> personalConversations = new ArrayList<>();
+        if (conversationNumbers.size() < list.size()){
+            List<Long> notMatchingNumbers = list.stream().map(convo -> convo.getConversationNumber()).filter(number -> {
+                boolean valid = false;
+                if (!conversationNumbers.contains(number)){
+                    valid = true;
+                }
+                return valid;
+            }).toList();
+            notMatchingNumbers.forEach(number -> {
+                personalConversations.add(new NormalPersonalConversation(list.stream().filter(convo -> convo.getConversationNumber() == number).findFirst().get(), username));
+            });
+        }
+        PersonalConversationTransport personalConversationTransport = new PersonalConversationTransport(personalConversations);
+        sendObject(personalConversationTransport, socket);
     }
 
     /**
@@ -263,6 +283,7 @@ public class Server{
         List<String> usernames = conversationRequest.getUsernames();
         String nameOfMessageLog = conversationRequest.getNameOfConversation();
         ServerConversation conversation = normalConversationRegister.addNewConversationWithUsernames(usernames, nameOfMessageLog);
+        String username = usernames.get(0);
         PersonalConversation personalConversation = new NormalPersonalConversation(conversation, conversationRequest.getUsernames().get(0));
         sendObject(personalConversation, socket);
     }
