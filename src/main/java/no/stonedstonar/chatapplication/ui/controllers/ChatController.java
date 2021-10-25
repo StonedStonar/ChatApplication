@@ -1,16 +1,11 @@
 package no.stonedstonar.chatapplication.ui.controllers;
 
 import javafx.application.Platform;
+import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyCombination;
-import javafx.scene.input.Mnemonic;
+import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -66,6 +61,9 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
 
     @FXML
     private Button logOutButton;
+
+    @FXML
+    private ScrollPane scrollPane;
 
     private long activeMessageLog;
 
@@ -143,7 +141,8 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
         });
 
         sendButton.setDefaultButton(true);
-        
+        logOutButton.setCancelButton(true);
+
     }
 
     /**
@@ -340,7 +339,7 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
      * Adds a message to the conversation box.
      * @param message the message you want to add to the gui.
      */
-    private void addMessage(TextMessage message){
+    private void addMessage(TextMessage message) {
         Text text = new Text();
         LocalTime timeOfMessage = message.getTime();
         Label label = new Label(message.getFromUsername() + " " + addZeroUntilLengthIsValid(timeOfMessage.getHour()) + ":" + addZeroUntilLengthIsValid(timeOfMessage.getMinute()));
@@ -349,11 +348,14 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
         text.setFont(Font.font(label.getFont().getName(), FontWeight.NORMAL, FontPosture.REGULAR, 12));
         text.setText(message.getMessage());
         VBox vBox = new VBox();
-        vBox.setPadding(new Insets(0,5,10,5));
+        vBox.setPadding(new Insets(0, 5, 10, 5));
         vBox.setMinWidth(Long.MAX_VALUE);
         vBox.getChildren().add(label);
         vBox.getChildren().add(text);
         messageBox.getChildren().add(vBox);
+        messageBox.heightProperty().addListener((obs, oldVal, newVal) -> {
+            scrollPane.setVvalue(1.0);
+        });
     }
 
     /**
