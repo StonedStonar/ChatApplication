@@ -1,12 +1,18 @@
 package no.stonedstonar.chatapplication.ui.controllers;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.Mnemonic;
+import no.stonedstonar.chatapplication.frontend.ChatClient;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
 import no.stonedstonar.chatapplication.ui.windows.AlertTemplates;
 import no.stonedstonar.chatapplication.ui.windows.ChatWindow;
+import no.stonedstonar.chatapplication.ui.windows.LoginWindow;
 import no.stonedstonar.chatapplication.ui.windows.NewUserWindow;
 
 import java.io.IOException;
@@ -76,12 +82,15 @@ public class LoginController implements Controller {
      * Sets the functions of all the buttons.
      */
     private void setButtonFunctions(){
+        ChatApplicationClient chatApplicationClient = ChatApplicationClient.getChatApplication();
+        ChatClient chatClient = chatApplicationClient.getChatClient();
+
         loginButton.setOnAction(actionEvent -> {
             try {
                 String username = usernameField.textProperty().get();
                 String password = passwordField.textProperty().get();
-                ChatApplicationClient.getChatApplication().getChatClient().loginToUser(username, password);
-                ChatApplicationClient.getChatApplication().setNewScene(ChatWindow.getChatWindow());
+                chatClient.loginToUser(username, password);
+                chatApplicationClient.setNewScene(ChatWindow.getChatWindow());
             }catch (IOException exception){
                 //Todo: Sett inn error melding
             }catch (IllegalArgumentException exception){
@@ -93,16 +102,20 @@ public class LoginController implements Controller {
             }
         });
         cancelButton.setOnAction(actionEvent -> {
-
+            chatClient.stopThread();
+            Platform.exit();
         });
 
         newUserButton.setOnAction(actionEvent -> {
             try {
-                ChatApplicationClient.getChatApplication().setNewScene(NewUserWindow.getNewUserWindow());
+                chatApplicationClient.setNewScene(NewUserWindow.getNewUserWindow());
             } catch (IOException e) {
                 AlertTemplates.makeAndShowCriticalErrorAlert(e);
             }
         });
+
+        loginButton.setDefaultButton(true);
+        cancelButton.setCancelButton(true);
     }
 
     /**

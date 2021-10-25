@@ -157,7 +157,7 @@ public class ChatClient {
                     checkMessageLogForNewMessages(personalConversation, socket);
                     count += 1;
                 }
-                Thread.sleep(5000);
+                Thread.sleep(2000);
             }catch (CouldNotAddMessageException | IOException | InvalidResponseException | CouldNotGetMessageLogException | InterruptedException | UsernameNotPartOfConversationException | CouldNotAddConversationException exception){
                 logWaringError(exception);
                 stopThread();

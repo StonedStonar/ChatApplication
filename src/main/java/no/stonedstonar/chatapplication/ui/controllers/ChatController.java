@@ -8,6 +8,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -26,6 +27,7 @@ import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
 import no.stonedstonar.chatapplication.ui.windows.AlertTemplates;
+import no.stonedstonar.chatapplication.ui.windows.ChatWindow;
 import no.stonedstonar.chatapplication.ui.windows.LoginWindow;
 import no.stonedstonar.chatapplication.ui.windows.NewConversationWindow;
 
@@ -135,6 +137,9 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
                 AlertTemplates.makeAndShowCriticalErrorAlert(e);
             }
         });
+
+        sendButton.setDefaultButton(true);
+        logOutButton.setCancelButton(true);
     }
 
     /**
