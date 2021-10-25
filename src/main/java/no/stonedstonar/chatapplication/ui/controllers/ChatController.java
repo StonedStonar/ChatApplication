@@ -143,6 +143,7 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
         });
 
         sendButton.setDefaultButton(true);
+        
     }
 
     /**
