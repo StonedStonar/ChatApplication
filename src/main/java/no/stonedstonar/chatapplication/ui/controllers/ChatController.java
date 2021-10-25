@@ -8,6 +8,9 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCombination;
+import javafx.scene.input.Mnemonic;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -138,6 +141,8 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
                 AlertTemplates.makeAndShowCriticalErrorAlert(e);
             }
         });
+
+        sendButton.setDefaultButton(true);
     }
 
     /**
@@ -347,7 +352,6 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
         vBox.setMinWidth(Long.MAX_VALUE);
         vBox.getChildren().add(label);
         vBox.getChildren().add(text);
-        //vBox.setBackground(new Background(new BackgroundFill(Color.valueOf("#dbdbdb"), CornerRadii.EMPTY, Insets.EMPTY)));
         messageBox.getChildren().add(vBox);
     }
 
@@ -368,9 +372,6 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
 
     @Override
     public void updateContent() {
-        String string = loggedInLabel.textProperty().get();
-        string += " " + ChatApplicationClient.getChatApplication().getChatClient().getUsername();
-        loggedInLabel.textProperty().set(string);
         emptyContent();
         setButtonFunctions();
         addListeners();
@@ -385,10 +386,19 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
         }
     }
 
+    /**
+     * Sets the logged in label to the wanted name.
+     */
+    private void setLoggedInLabel(){
+        String string = "Logged in as";
+        string += " " + ChatApplicationClient.getChatApplication().getChatClient().getUsername();
+        loggedInLabel.textProperty().set(string);
+    }
     @Override
     public void emptyContent() {
         setAllFieldsEmpty();
         setAllValidFieldsToFalseAndDisableButtons();
+        setLoggedInLabel();
     }
 
     /**
