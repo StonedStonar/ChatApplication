@@ -123,7 +123,6 @@ public class Server{
                         }
                     }
                 });
-
             }
         }catch (IOException exception){
             String message = "The server has crashed and gotten the following exception class: " + exception.getClass() + " and message: " + exception.getMessage();

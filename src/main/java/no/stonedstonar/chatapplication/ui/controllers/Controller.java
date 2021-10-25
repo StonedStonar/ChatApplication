@@ -11,4 +11,9 @@ public interface Controller {
      * Updates the content on the wanted page.
      */
     void updateContent();
+
+    /**
+     * Makes all the content to reset that needs to be reset.
+     */
+    void emptyContent();
 }

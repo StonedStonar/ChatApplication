@@ -10,6 +10,9 @@ import no.stonedstonar.chatapplication.ui.windows.LoginWindow;
 import no.stonedstonar.chatapplication.ui.windows.Window;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Represents the backbone of the application. Loads windows and manages loading of the scenes.
@@ -24,12 +27,23 @@ public class ChatApplicationClient extends Application {
 
     private Stage stage;
 
+    private volatile ExecutorService executor;
+
     /**
      * Makes an instance of the ChatApplicationGUI app.
      */
     public ChatApplicationClient(){
         chatClient = new ChatClient();
         chatApplicationClient = this;
+        executor = Executors.newFixedThreadPool(2);
+    }
+
+    /**
+     * Gets the executor of the application.
+     * @return the executor with its fixed size threads.
+     */
+    public ExecutorService getExecutor(){
+        return executor;
     }
 
     @Override
@@ -119,7 +133,7 @@ public class ChatApplicationClient extends Application {
     @Override
     public void stop() throws Exception {
         super.stop();
-        chatClient.stopThread();
+        chatClient.stopAllThreads();
         while (!chatClient.checkIfThreadIsStopped()){
             Thread.sleep(50);
         }

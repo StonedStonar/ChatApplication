@@ -27,6 +27,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,39 +45,34 @@ public class ChatClient {
 
     private Logger logger;
 
-    private String localHost;
+    private String host;
 
     private int portNumber;
 
     private long messageLogFocus;
 
-    private Thread checkForMessagesThread;
+    private boolean runCheckForMessageThread;
 
-    private boolean runThread;
-
-    private boolean threadStopped;
-
-    private Executors executors;
+    private ExecutorService executors;
 
     /**
       * Makes an instance of the ChatClient class.
       */
     public ChatClient(){
+        executors = Executors.newFixedThreadPool(2);
         logger = Logger.getLogger(getClass().toString());
-        //"46.212.111.100"
-        localHost = "localhost";
+        host = "localhost";
         portNumber = 1380;
         messageLogFocus = 0;
-        threadStopped = true;
     }
 
     /**
      * Logs the user out and clears all the data.
      */
     public void logOutOfUser(){
-        stopThread();
+        stopCheckingForMessages();
         messageLogFocus = 0;
-        while (!threadStopped){
+        while (!executors.isTerminated()){
             try {
                 Thread.sleep(50);
             } catch (InterruptedException e) {
@@ -101,33 +97,35 @@ public class ChatClient {
      */
     public void setMessageLogFocus(long messageLogNumber){
         System.out.println("Setting log number.");
-        stopThread();
-        while(!threadStopped){
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+        stopCheckingForMessages();
         messageLogFocus = messageLogNumber;
+
+        runCheckForMessageThread = true;
         try {
-            threadStopped = false;
-            runThread = true;
             PersonalConversation personalMessageLog = getConversationByNumber(messageLogFocus);
-            checkForMessagesThread =  new Thread(() ->{
+            executors.submit(() -> {
                 checkCurrentMessageLogForUpdates(personalMessageLog);
             });
-            checkForMessagesThread.start();
-        } catch (Throwable e) {
-            e.printStackTrace();
+        } catch (CouldNotGetConversationException e) {
+            //Todo: Fix us.
+        } catch (CouldNotGetMessageLogException exception) {
+            exception.printStackTrace();
         }
     }
 
     /**
      * Sets the run boolean to false and interrupts the thread.
      */
-    public void stopThread(){
-        runThread = false;
+    public void stopCheckingForMessages(){
+        runCheckForMessageThread = false;
+    }
+
+    /**
+     * Stops all the threads.
+     */
+    public void stopAllThreads(){
+        runCheckForMessageThread = false;
+        executors.shutdown();
     }
 
     /**
@@ -136,7 +134,7 @@ public class ChatClient {
      *         <code>false</code> if the thread is still running.
      */
     public boolean checkIfThreadIsStopped(){
-        return threadStopped;
+        return executors.isShutdown();
     }
 
     /**
@@ -144,26 +142,24 @@ public class ChatClient {
      * @param personalConversation the active message log.
      */
     public void checkCurrentMessageLogForUpdates(PersonalConversation personalConversation){
-        //Todo: sette opp slik at hvis tiden går så og så mye skal alle loggene sjekkes etter oppdateringer.
         int count = 0;
         do {
             try {
-                if (count > 2){
+                if (count > 8){
                     checkForNewMessages();
                     checkForNewConversations();
                     count = 0;
                 }else {
-                    Socket socket = new Socket(localHost, portNumber);
+                    Socket socket = new Socket(host, portNumber);
                     checkMessageLogForNewMessages(personalConversation, socket);
                     count += 1;
                 }
-                Thread.sleep(5000);
+                Thread.sleep(2000);
             }catch (CouldNotAddMessageException | IOException | InvalidResponseException | CouldNotGetMessageLogException | InterruptedException | UsernameNotPartOfConversationException | CouldNotAddConversationException exception){
                 logWaringError(exception);
-                stopThread();
+                stopCheckingForMessages();
             }
-        } while(runThread);
-        threadStopped = true;
+        } while(runCheckForMessageThread);
     }
 
     /**
@@ -244,7 +240,7 @@ public class ChatClient {
     public void sendMessage(String messageContents, PersonalConversation personalConversation) throws IOException, CouldNotAddMessageException, CouldNotGetMessageLogException, InvalidResponseException {
         checkString(messageContents, "message");
         checkIfObjectIsNull(personalConversation, "message log");
-        try (Socket socket = new Socket(localHost, portNumber)){
+        try (Socket socket = new Socket(host, portNumber)){
             TextMessage textMessage = new TextMessage(messageContents, user.getUsername());
             ArrayList<Message> textMessageList = new ArrayList<>();
             textMessageList.add(textMessage);
@@ -288,7 +284,7 @@ public class ChatClient {
     public void loginToUser(String username, String password) throws IOException, CouldNotLoginToUserException, InvalidResponseException {;
         checkString(username, "username");
         checkString(password, "password");
-        try (Socket socket = new Socket(localHost, portNumber)){
+        try (Socket socket = new Socket(host, portNumber)){
             UserRequest userRequest = new UserRequestBuilder().setLogin(true).setUsername(username).setPassword(password).build();
             sendObject(userRequest, socket);
             Object object = getObject(socket);
@@ -319,7 +315,7 @@ public class ChatClient {
     // Det som kan funke er å ha en liste for hver person i samtalen. Så de er separate.
     // Da er det dermed umulig at to meldinger kommer likt og ingen av dem får oppdateringen. 
     private void checkForNewMessages() throws CouldNotAddMessageException, IOException, InvalidResponseException, CouldNotGetMessageLogException, UsernameNotPartOfConversationException {
-        try (Socket socket = new Socket(localHost, portNumber)){
+        try (Socket socket = new Socket(host, portNumber)){
             socket.setKeepAlive(true);
             SetKeepAliveRequest setKeepAliveRequest = new SetKeepAliveRequest(true);
             sendObject(setKeepAliveRequest, socket);
@@ -385,7 +381,7 @@ public class ChatClient {
      * @throws CouldNotAddConversationException gets thrown if the conversation could not be added.
      */
     public void checkForNewConversations() throws IOException, InvalidResponseException, CouldNotAddConversationException {
-        try (Socket socket = new Socket(localHost, portNumber)){
+        try (Socket socket = new Socket(host, portNumber)){
             List<String> usernames = new ArrayList<>();
             List<Long> conversationNumbers = personalConversationRegister.getAllConversationNumbers();
             usernames.add(user.getUsername());
@@ -417,7 +413,7 @@ public class ChatClient {
      */
     public boolean checkUsername(String username) throws IOException, InvalidResponseException{
         checkString(username, "username");
-        try (Socket socket = new Socket(localHost, portNumber)){
+        try (Socket socket = new Socket(host, portNumber)){
             UserRequest userRequest = new UserRequestBuilder().setUsername(username).setCheckUsername(true).build();
             sendObject(userRequest, socket);
             Object object = getObject(socket);
@@ -443,7 +439,7 @@ public class ChatClient {
      * @throws InvalidResponseException gets thrown if the class could not be found for that object or the response is a different object than expected.
      */
     public void makeNewUser(String username, String password) throws IOException, CouldNotAddUserException, InvalidResponseException {
-        try (Socket socket = new Socket(localHost, 1380)){
+        try (Socket socket = new Socket(host, 1380)){
             checkString(username, "username");
             checkString(password, "password");
             UserRequest userRequest = new UserRequestBuilder().setNewUser(true).setUsername(username).setPassword(password).build();
@@ -472,7 +468,7 @@ public class ChatClient {
      * @param socket the socket the object should go through.
      * @throws IOException gets thrown if the object could not be sent.
      */
-    private void sendObject(Object object, Socket socket) throws IOException {
+    private synchronized void sendObject(Object object, Socket socket) throws IOException {
         OutputStream outputStream = socket.getOutputStream();
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
         objectOutputStream.writeObject(object);
@@ -485,7 +481,7 @@ public class ChatClient {
      * @throws IOException gets thrown if the object could not be received.
      * @throws InvalidResponseException gets thrown if the class could not be found for that object.
      */
-    private Object getObject(Socket socket) throws IOException, InvalidResponseException {
+    private synchronized Object getObject(Socket socket) throws IOException, InvalidResponseException {
         try {
             ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
             Object object = objectInputStream.readObject();
@@ -501,7 +497,7 @@ public class ChatClient {
      * @param list the list you want to check.
      * @param prefix the prefix the exception should have.
      */
-    private void checkIfListIsEmptyOrNull(List list, String prefix){
+    private synchronized void checkIfListIsEmptyOrNull(List list, String prefix){
         checkIfObjectIsNull(list, prefix);
         if (list.isEmpty()){
             throw new IllegalArgumentException("The " + prefix + " cannot be zero in size.");
@@ -513,7 +509,7 @@ public class ChatClient {
      * @param stringToCheck the string you want to check.
      * @param errorPrefix the error the exception should have if the string is invalid.
      */
-    private void checkString(String stringToCheck, String errorPrefix){
+    private synchronized void checkString(String stringToCheck, String errorPrefix){
         checkIfObjectIsNull(stringToCheck, errorPrefix);
         if (stringToCheck.isEmpty()){
             throw new IllegalArgumentException("The " + errorPrefix + " cannot be empty.");
@@ -525,7 +521,7 @@ public class ChatClient {
      * @param object the object you want to check.
      * @param error the error message the exception should have.
      */
-    private void checkIfObjectIsNull(Object object, String error){
+    private synchronized void checkIfObjectIsNull(Object object, String error){
         if (object == null){
             throw new IllegalArgumentException("The " + error + " cannot be null.");
         }

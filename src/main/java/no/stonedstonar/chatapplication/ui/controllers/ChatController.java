@@ -34,6 +34,7 @@ import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Represents the controller of the chat window.
@@ -80,10 +81,13 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
      */
     private void setButtonFunctions(){
         ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
+        ExecutorService executorService = ChatApplicationClient.getChatApplication().getExecutor();
         sendButton.setOnAction(event -> {
             String contents = textMessageField.textProperty().get();
             try{
-                sendNewMessage(contents, chatClient);
+                executorService.submit(() -> {
+                    sendNewMessage(contents, chatClient);
+                });
             }catch (IllegalArgumentException exception){
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Could not send message");
@@ -126,10 +130,9 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
                 if (personalConversation.checkIfObjectIsObserver(this)){
                     personalConversation.removeObserver(this);
                 }
-                Thread thread = new Thread(() -> {
+                executorService.submit(() -> {
                     chatClient.logOutOfUser();
                 });
-                thread.start();
                 ChatApplicationClient.getChatApplication().setNewScene(LoginWindow.getLoginWindow());
             } catch (Exception e) {
                 AlertTemplates.makeAndShowCriticalErrorAlert(e);
@@ -159,7 +162,7 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
      */
     private void sendNewMessage(String messageContents, ChatClient chatClient) {
         try {
-            PersonalConversation personalConversation= chatClient.getConversationByNumber(activeMessageLog);
+            PersonalConversation personalConversation = chatClient.getConversationByNumber(activeMessageLog);
             chatClient.sendMessage(messageContents, personalConversation);
             textMessageField.textProperty().set("");
         }catch (IllegalArgumentException  exception){
@@ -309,10 +312,9 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
         personalConversation.registerObserver(this);
         List<Message> messages = personalConversation.getAllMessagesOfConversationAsList();
         activeMessageLog = personalConversation.getConversationNumber();
-        Thread thread = new Thread(()-> {
+        ChatApplicationClient.getChatApplication().getExecutor().submit(()-> {
             ChatApplicationClient.getChatApplication().getChatClient().setMessageLogFocus(activeMessageLog);
         });
-        thread.start();
         if (!messages.isEmpty()){
             messages.forEach(message -> {
                 if (message instanceof TextMessage textMessage){
@@ -326,7 +328,6 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
             vBox.getChildren().add(label);
             messageBox.getChildren().add(vBox);
         }
-
     }
 
     /**
@@ -370,8 +371,7 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
         String string = loggedInLabel.textProperty().get();
         string += " " + ChatApplicationClient.getChatApplication().getChatClient().getUsername();
         loggedInLabel.textProperty().set(string);
-        setAllFieldsEmpty();
-        setAllValidFieldsToFalseAndDisableButtons();
+        emptyContent();
         setButtonFunctions();
         addListeners();
         try {
@@ -383,6 +383,12 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
         if(!personalConversationRegister.checkIfObjectIsObserver(this)){
             personalConversationRegister.registerObserver(this);
         }
+    }
+
+    @Override
+    public void emptyContent() {
+        setAllFieldsEmpty();
+        setAllValidFieldsToFalseAndDisableButtons();
     }
 
     /**

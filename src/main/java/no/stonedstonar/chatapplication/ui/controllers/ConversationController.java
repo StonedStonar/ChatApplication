@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Represents the controller of the conversation window.
@@ -82,6 +83,8 @@ public class ConversationController implements Controller {
     public void setAllFieldsEmpty(){
         usernameField.textProperty().set("");
         conversationField.textProperty().set("");
+        usernames.clear();
+        membersBox.getChildren().clear();
     }
 
     /**
@@ -90,6 +93,7 @@ public class ConversationController implements Controller {
     private void setButtonFunctions(){
         ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
 
+        ExecutorService executorService = ChatApplicationClient.getChatApplication().getExecutor();
         cancelButton.setOnAction(event -> {
             try {
                 ChatApplicationClient.getChatApplication().setNewScene(ChatWindow.getChatWindow());
@@ -140,8 +144,8 @@ public class ConversationController implements Controller {
         });
 
         makeConversationButton.setOnAction(event -> {
+            String nameOfConversation = conversationField.textProperty().get();
             try {
-                String nameOfConversation = conversationField.textProperty().get();
                 chatClient.makeNewConversation(usernames, nameOfConversation);
                 usernames.clear();
                 membersBox.getChildren().clear();
@@ -291,10 +295,15 @@ public class ConversationController implements Controller {
 
     @Override
     public void updateContent() {
-        setAllFieldsEmpty();
-        setAllValidFieldsToFalseAndDisableButtons();
+        emptyContent();
         addUserLoggedInToConversation();
         setButtonFunctions();
         addListeners();
+    }
+
+    @Override
+    public void emptyContent(){
+        setAllFieldsEmpty();
+        setAllValidFieldsToFalseAndDisableButtons();
     }
 }

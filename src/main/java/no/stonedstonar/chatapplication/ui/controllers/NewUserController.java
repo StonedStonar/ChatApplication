@@ -214,9 +214,14 @@ public class NewUserController implements Controller {
 
     @Override
     public void updateContent() {
-        setAllFieldsEmpty();
-        setAllValidFieldsToFalseAndDisableButtons();
+        emptyContent();
         setButtonFunctions();
         makeListeners();
+    }
+
+    @Override
+    public void emptyContent() {
+        setAllFieldsEmpty();
+        setAllValidFieldsToFalseAndDisableButtons();
     }
 }
