@@ -2,6 +2,8 @@ package no.stonedstonar.chatapplication.model.conversation;
 
 import no.stonedstonar.chatapplication.model.Members;
 import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
+import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
+import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemberException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMessageException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
@@ -36,9 +38,9 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
 
     private final List<ConversationObserver> conversationObservers;
 
-    private volatile Message newlyAddedMessage;
+    private Message newlyAddedMessage;
 
-    private volatile boolean removed;
+    private boolean removed;
 
 
     /**
@@ -81,8 +83,13 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
     }
 
     @Override
-    public void notifyObservers() {
+    public void notifyObserversAboutNewMessage() {
         conversationObservers.forEach(obs -> obs.updateConversationMessage(newlyAddedMessage, removed));
+    }
+
+    @Override
+    public void notifyObserversAboutNewMember() {
+        conversationObservers.forEach(ConversationObserver::updateConversationMembers);
     }
 
     @Override
@@ -167,7 +174,7 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
         personalMessageLog.addMessage(message);
         this.newlyAddedMessage = message;
         this.removed = false;
-        notifyObservers();
+        notifyObserversAboutNewMessage();
     }
 
     /**
@@ -182,13 +189,8 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
     }
 
 
-    /**
-     * Checks if the username is a member of the conversation. Throws an exception if the username is not a member.
-     * @param username the username you want to check.
-     * @return <code>true</code> if the username is a member of this conversation.
-     *         <code>false</code> if the username is not a member of this conversation.
-     */
-    private boolean checkIfUsernameIsMember(String username) {
+    @Override
+    public boolean checkIfUsernameIsMember(String username) {
         return members.checkIfUsernameIsMember(username);
     }
 
@@ -201,7 +203,7 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
         personalMessageLog.removeMessage(message);
         this.newlyAddedMessage = message;
         this.removed = true;
-        notifyObservers();
+        notifyObserversAboutNewMessage();
     }
 
     /**
@@ -231,7 +233,7 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
                     addMessageToMessageLog(message, messageLog);
                     this.newlyAddedMessage = message;
                     this.removed = false;
-                    notifyObservers();
+                    notifyObserversAboutNewMessage();
                 }
             }else {
                 throw new CouldNotAddMessageException("One of the messages in the list is already in the message log. " + messageLog.getDateMade() + " and the conversation is "  + conversationNumber);
@@ -243,6 +245,21 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
                 throw new CouldNotAddMessageException("The dates all of the messages are not the same.");
             }
         }
+    }
+
+    @Override
+    public void addMember(String username) throws CouldNotAddMemberException {
+        members.addMember(username);
+    }
+
+    @Override
+    public void removeMember(String username) throws CouldNotRemoveMemberException {
+        members.removeMember(username);
+    }
+
+    @Override
+    public void addAllMembers(List<String> usernames) throws CouldNotAddMemberException {
+        members.addAllMembers(usernames);
     }
 
     /**

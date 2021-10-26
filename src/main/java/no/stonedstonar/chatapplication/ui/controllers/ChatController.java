@@ -12,6 +12,7 @@ import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import no.stonedstonar.chatapplication.frontend.ChatClient;
+import no.stonedstonar.chatapplication.model.conversation.ConversationObserver;
 import no.stonedstonar.chatapplication.model.conversation.PersonalConversation;
 import no.stonedstonar.chatapplication.model.conversationregister.personal.PersonalConversationRegister;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
@@ -39,7 +40,7 @@ import java.util.concurrent.ExecutorService;
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class ChatController implements Controller, no.stonedstonar.chatapplication.model.conversation.ConversationObserver, ConversationRegisterObserver {
+public class ChatController implements Controller, ConversationObserver, ConversationRegisterObserver {
 
     @FXML
     private Label loggedInLabel;
@@ -119,9 +120,7 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
                 }catch (Exception exception1){
                     AlertTemplates.makeAndShowCriticalErrorAlert(exception1);
                 }
-            }catch (CouldNotGetMessageLogException exception){
-                AlertTemplates.makeAndShowCouldNotGetMessageLogExceptionAlert();
-            } catch (CouldNotGetConversationException exception) {
+            }catch (CouldNotGetConversationException exception) {
                 //Todo: Fill me in.
             }
         });
@@ -424,6 +423,14 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
             if (message instanceof TextMessage textMessage){
                 addMessage(textMessage);
             }
+        });
+    }
+
+    @Override
+    public void updateConversationMembers() {
+        Platform.runLater(() -> {
+            contactsBox.getChildren().clear();
+            addAllConversations();
         });
     }
 

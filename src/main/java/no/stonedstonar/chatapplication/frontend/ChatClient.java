@@ -338,7 +338,7 @@ public class ChatClient {
 
     }
 
-    private void addOrRemoveMembers(PersonalConversation personalConversation, List<String> names, boolean remove){
+    private void addOrRemoveMembers(PersonalConversation personalConversation, List<String> names, boolean remove) throws CouldNotGetConversationException, IOException, InvalidResponseException, CouldNotAddMemberException {
         try (Socket socket = new Socket(host, portNumber)){
             ConversationRequestBuilder conversationRequestBuilder = new ConversationRequestBuilder().addConversationNumber(personalConversation.getConversationNumber()).addUsernames(names);
             if (remove){
@@ -351,10 +351,18 @@ public class ChatClient {
             Object object = getObject(socket);
             if (object instanceof Boolean valid){
                 //Todo: finn ut av hvordan du skal sjekke om det er nye medlemmer i en samtale.
-                // det samme med navnet. Sjekke at det ikke har endra seg.c
-            }else if ()
-        }catch (IOException | InvalidResponseException exception){
+                // det samme med navnet. Sjekke at det ikke har endra seg.
 
+            }else if (object instanceof CouldNotAddMemberException exception){
+                throw exception;
+            }else if (object instanceof CouldNotGetConversationException exception){
+                throw exception;
+            }else {
+                throw new InvalidResponseException("The response from the server was invalid format.");
+            }
+        }catch (IOException | InvalidResponseException | CouldNotGetConversationException | CouldNotAddMemberException exception){
+            logWaringError(exception);
+            throw exception;
         }
     }
 

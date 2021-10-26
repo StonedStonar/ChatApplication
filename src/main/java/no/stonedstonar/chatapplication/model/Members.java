@@ -5,8 +5,7 @@ import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemb
 import no.stonedstonar.chatapplication.model.user.User;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * A object that holds all the members of a object.
@@ -15,13 +14,16 @@ import java.util.List;
  */
 public class Members implements Serializable {
 
-    private final List<String> memberList;
+    //Todo: Endre denne til map slik at vi kan lagre hvem som var siste medlem.
+    private final Map<Long, String> memberMap;
+
+    private long lastMember;
 
     /**
       * Makes an instance of the MembersOfConversation class.
       */
     public Members(){
-        memberList = new ArrayList<>();
+        memberMap = new HashMap<>();
     }
 
     /**
@@ -33,7 +35,7 @@ public class Members implements Serializable {
         checkIfObjectIsNull(user, "user");
         String username = user.getUsername();
         if (checkIfUsernameIsMember(username)){
-            return memberList;
+            return memberMap.values().stream().toList();
         }else {
             throw new IllegalArgumentException("The user with the username " + username + " is not a part of this members object.");
         }
@@ -46,21 +48,32 @@ public class Members implements Serializable {
      */
     public void addMember(String username) throws CouldNotAddMemberException {
         if (!checkIfUsernameIsMember(username)){
-            memberList.add(username);
+            makeNewMemberNumber();
+            memberMap.put(lastMember, username);
         }else {
             throw new CouldNotAddMemberException("The user is already in the register.");
         }
     }
 
     /**
+     * Makes a new member number.
+     */
+    private void makeNewMemberNumber(){
+        lastMember += 1;
+    }
+
+    /**
      * Adds all the members to the conversation.
      * @param usernames the usernames of all the members of the conversation.
+     * @throws CouldNotAddMemberException gets thrown if the member could not be added.
      */
     public void addAllMembers(List<String> usernames) throws CouldNotAddMemberException{
-        checkIfObjectIsNull(usernames, "usernames");
+        checkIfListIsValid(usernames, "usernames");
         if (!usernames.isEmpty()){
             if (!checkIfNoneUsernamesAreInConversation(usernames)){
-                for (String name : usernames){
+                Iterator<String> it = usernames.iterator();
+                while (it.hasNext()){
+                    String name = it.next();
                     addMember(name);
                 }
             }else {
@@ -78,7 +91,7 @@ public class Members implements Serializable {
      */
     public void removeMember(String username) throws CouldNotRemoveMemberException {
         if (checkIfUsernameIsMember(username)){
-            memberList.remove(username);
+            memberMap.remove(username);
         }else {
             throw new CouldNotRemoveMemberException("The member by the username " + username + " is not a part of this conversation.");
         }
@@ -92,7 +105,7 @@ public class Members implements Serializable {
      */
     public boolean checkIfUsernameIsMember(String username){
         checkString(username, "username");
-        return memberList.stream().anyMatch(mem -> mem.equals(username));
+        return memberMap.values().stream().anyMatch(mem -> mem.equals(username));
     }
 
     /**
@@ -107,10 +120,10 @@ public class Members implements Serializable {
         boolean valid = false;
         checkIfObjectIsNull(usernames, "usernames");
         if (!usernames.isEmpty()){
-            long amount = memberList.stream().filter(name -> {
+            long amount = memberMap.values().stream().filter(name -> {
                 return usernames.stream().anyMatch(username -> username.equals(name));
             }).count();
-            if ((amount == usernames.size()) && (memberList.size() == amount)){
+            if ((amount == usernames.size()) && (memberMap.size() == amount)){
                 valid = true;
             }
         }else {
@@ -127,7 +140,7 @@ public class Members implements Serializable {
      */
     private boolean checkIfNoneUsernamesAreInConversation(List<String> usernames){
         if (!usernames.isEmpty()){
-            return memberList.stream().anyMatch(username -> {
+            return memberMap.values().stream().anyMatch(username -> {
                return usernames.stream().anyMatch(name -> name.equals(username));
             });
         }else {
@@ -148,7 +161,7 @@ public class Members implements Serializable {
         }
         StringBuilder stringBuilder = new StringBuilder();
 
-        for (String member : memberList){
+        for (String member : memberMap.values()){
             if (!member.equals(username)){
                 stringBuilder.append(" ");
                 stringBuilder.append(member);
@@ -158,11 +171,26 @@ public class Members implements Serializable {
     }
 
     /**
+     * Checks if there are any new users in the members object.
+     * @param lastMember the long the last member has.
+     * @return a list with all the new users in this members object.
+     */
+    public List<String> checkForNewUsers(long lastMember){
+        checkIfLongIsNegative(lastMember, "last member");
+        List<String> newUsers = new ArrayList<>();
+        if (lastMember < this.lastMember){
+            List<Long> newKeys = memberMap.keySet().stream().filter(num -> num > lastMember).toList();
+            newKeys.forEach(key -> newUsers.add(memberMap.get(key)));
+        }
+        return newUsers;
+    }
+
+    /**
      * Gets the size of the conversation.
      * @return the amount of users in the conversation.
      */
     public int getAmountOfMembers(){
-        return memberList.size();
+        return memberMap.size();
     }
     
     /**
@@ -186,6 +214,17 @@ public class Members implements Serializable {
        if (object == null){
            throw new IllegalArgumentException("The " + error + " cannot be null.");
        }
+    }
+
+    /**
+     * Checks if a long is negative or equal to zero.
+     * @param number the number to check.
+     * @param prefix the prefix the error should have.
+     */
+    private void checkIfLongIsNegative(long number, String prefix){
+        if (number < 0){
+            throw new IllegalArgumentException("Expected the " + prefix + " to be larger than zero.");
+        }
     }
 
     /**

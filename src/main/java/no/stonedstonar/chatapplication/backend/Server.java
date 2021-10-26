@@ -292,13 +292,14 @@ public class Server{
      * Adds new members to conversation if they are not in the conversation.
      * @param conversationRequest the conversation request that wants to add new members.
      * @param socket the socket that requests the new members to be added.
+     * @throws IOException gets thrown if the socket closes or cannot finish its task.
      * @throws CouldNotGetConversationException gets thrown if the conversation could not be located.
+     * @throws CouldNotAddMemberException gets thrown if one person in the request is already in the conversation.
      */
-    private void addNewMembersToConversation(ConversationRequest conversationRequest, Socket socket) throws CouldNotGetConversationException, CouldNotAddMemberException {
+    private void addNewMembersToConversation(ConversationRequest conversationRequest, Socket socket) throws CouldNotGetConversationException, CouldNotAddMemberException, IOException {
         List<String> newMembers = conversationRequest.getUsernames();
         ServerConversation serverConversation = normalConversationRegister.getConversationByNumber(conversationRequest.getConversationNumber());
-        Members members = serverConversation.getConversationMembers();
-        members.addAllMembers(newMembers);
+        serverConversation.addAllMembers(newMembers);
         Boolean bo = true;
         sendObject(bo, socket);
         //Todo: finn ut av hvordan du skal sjekke om det er nye medlemmer i en samtale.

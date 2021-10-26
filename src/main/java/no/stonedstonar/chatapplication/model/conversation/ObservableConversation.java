@@ -20,9 +20,14 @@ public interface ObservableConversation {
     void removeObserver(ConversationObserver conversationObserver);
 
     /**
-     * Notifies all the observers that a change has occurred.
+     * Notifies all the observers that a new message has come.
      */
-    void notifyObservers();
+    void notifyObserversAboutNewMessage();
+
+    /**
+     * Notifies all the observers that a new member is added.
+     */
+    void notifyObserversAboutNewMember();
 
     /**
      * Checks if the object is a observer.
