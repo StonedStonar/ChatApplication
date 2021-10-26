@@ -10,19 +10,19 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import no.stonedstonar.chatapplication.frontend.ChatClient;
+import no.stonedstonar.chatapplication.model.conversation.PersonalConversation;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
+import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
+import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
 import no.stonedstonar.chatapplication.ui.windows.AlertTemplates;
 import no.stonedstonar.chatapplication.ui.windows.ChatWindow;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -67,7 +67,13 @@ public class ConversationController implements Controller {
 
     private List<String> usernames;
 
+    private List<String> removedUsernames;
+
     private Map<Node, Boolean> validFields;
+
+    private boolean editConversation;
+
+    private PersonalConversation conversationToEdit;
 
     /**
       * Makes an instance of the ConversationController class.
@@ -75,6 +81,7 @@ public class ConversationController implements Controller {
     public ConversationController(){
         validFields = new HashMap<>();
         usernames = new ArrayList<>();
+        removedUsernames = new ArrayList<>();
     }
 
     /**
@@ -83,8 +90,11 @@ public class ConversationController implements Controller {
     public void setAllFieldsEmpty(){
         usernameField.textProperty().set("");
         conversationField.textProperty().set("");
-        usernames.clear();
-        membersBox.getChildren().clear();
+        removedUsernames.clear();
+        if (!editConversation){
+            usernames.clear();
+            membersBox.getChildren().clear();
+        }
     }
 
     /**
@@ -97,6 +107,8 @@ public class ConversationController implements Controller {
         ExecutorService executorService = ChatApplicationClient.getChatApplication().getExecutor();
         cancelButton.setOnAction(event -> {
             try {
+                editConversation = false;
+                conversationToEdit = null;
                 ChatApplicationClient.getChatApplication().setNewScene(ChatWindow.getChatWindow());
             } catch (IOException e) {
                 AlertTemplates.makeAndShowCouldNotConnectToServerAlert();
@@ -147,10 +159,19 @@ public class ConversationController implements Controller {
         makeConversationButton.setOnAction(event -> {
             String nameOfConversation = conversationField.textProperty().get();
             try {
-                chatClient.makeNewConversation(usernames, nameOfConversation);
-                usernames.clear();
-                membersBox.getChildren().clear();
-                chatApplicationClient.setNewScene(ChatWindow.getChatWindow());
+                if (editConversation){
+                    //Todo: Fix it so that a conversation can change name and add/remove members.
+                    List<String> originalMembers = conversationToEdit.getConversationMembers().getAllMembers(chatClient.getUser());
+                    List<String> newMembers = usernames.stream().filter(name -> originalMembers.stream().noneMatch(user -> user.equals(name))).toList();
+                    chatClient.editConversation(newMembers, removedUsernames, conversationField.getText(), conversationToEdit);
+                }else {
+                    chatClient.makeNewConversation(usernames, nameOfConversation);
+                    //usernames.clear();
+                    //membersBox.getChildren().clear();
+                    editConversation = false;
+                    conversationToEdit = null;
+                    chatApplicationClient.setNewScene(ChatWindow.getChatWindow());
+                }
             } catch (CouldNotAddMessageLogException exception) {
                 AlertTemplates.makeAndShowCouldNotGetMessageLogExceptionAlert();
             } catch (IOException exception) {
@@ -160,7 +181,7 @@ public class ConversationController implements Controller {
             } catch (InvalidResponseException e) {
                 AlertTemplates.makeAndShowInvalidResponseFromTheServer();
             } catch (CouldNotAddConversationException exception) {
-                //Todo: Fix me
+                AlertTemplates.makeAndShowCouldNotGetConversationAlert();
             }
         });
 
@@ -247,6 +268,21 @@ public class ConversationController implements Controller {
     }
 
     /**
+     * Sets the conversation window to edit mode.
+     * @param conversationNumber the conversation number that you want to edit.
+     * @throws CouldNotGetConversationException gets thrown if the conversation could not be gotten.
+     * @throws CouldNotGetMessageLogException gets thrown if a message log could not be located.
+     */
+    public void setEditMode(long conversationNumber) throws CouldNotGetConversationException, CouldNotGetMessageLogException {
+        ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
+        conversationToEdit = chatClient.getConversationByNumber(conversationNumber);
+        List<String> names = conversationToEdit.getConversationMembers().getAllMembers(chatClient.getUser());
+        emptyContent();
+        usernames.addAll(names);
+        editConversation = true;
+    }
+
+    /**
      * Adds the user that is logged in to the group.
      */
     private void addUserLoggedInToConversation(){
@@ -262,6 +298,10 @@ public class ConversationController implements Controller {
         text.setText(username);
         membersBox.getChildren().add(text);
         usernames.add(username);
+        if(removedUsernames.stream().anyMatch(name -> name.equals(username))){
+            String usernameToRemove = removedUsernames.stream().filter(name -> name.equals(username)).findFirst().get();
+            removedUsernames.remove(usernameToRemove);
+        }
     }
 
     /**
@@ -273,6 +313,7 @@ public class ConversationController implements Controller {
         membersBox.getChildren().remove(text);
         String nameToRemove = usernames.stream().filter(string -> string.equals(username)).findFirst().get();
         usernames.remove(nameToRemove);
+        removedUsernames.add(nameToRemove);
     }
 
     /**
@@ -302,12 +343,18 @@ public class ConversationController implements Controller {
         emptyContent();
         addUserLoggedInToConversation();
         setButtonFunctions();
-        addListeners();
     }
 
     @Override
     public void emptyContent(){
         setAllFieldsEmpty();
         setAllValidFieldsToFalseAndDisableButtons();
+        if(editConversation){
+            usernames.forEach(this::addUsername);
+            conversationField.setText(conversationToEdit.getConversationName());
+            makeConversationButton.setText("Edit conversation");
+        }else {
+            makeConversationButton.setText("Make conversation");
+        }
     }
 }

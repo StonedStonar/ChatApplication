@@ -2,6 +2,7 @@ package no.stonedstonar.chatapplication.model;
 
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemberException;
+import no.stonedstonar.chatapplication.model.user.User;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -21,6 +22,21 @@ public class Members implements Serializable {
       */
     public Members(){
         memberList = new ArrayList<>();
+    }
+
+    /**
+     * Gets all the members from the object if the username is a part of the group.
+     * @param user the user that is a member in the conversation.
+     * @return a list with all the members.
+     */
+    public List<String> getAllMembers(User user){
+        checkIfObjectIsNull(user, "user");
+        String username = user.getUsername();
+        if (checkIfUsernameIsMember(username)){
+            return memberList;
+        }else {
+            throw new IllegalArgumentException("The user with the username " + username + " is not a part of this members object.");
+        }
     }
 
     /**
@@ -170,5 +186,17 @@ public class Members implements Serializable {
        if (object == null){
            throw new IllegalArgumentException("The " + error + " cannot be null.");
        }
+    }
+
+    /**
+     * Checks if a list is of a valid format.
+     * @param list the list you want to check.
+     * @param prefix the prefix the error should have.
+     */
+    private void checkIfListIsValid(List list, String prefix){
+        checkIfObjectIsNull(list, prefix);
+        if (list.isEmpty()){
+            throw new IllegalArgumentException("The " + prefix + " list cannot be zero in size.");
+        }
     }
 }

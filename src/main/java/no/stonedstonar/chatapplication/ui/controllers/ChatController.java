@@ -1,7 +1,6 @@
 package no.stonedstonar.chatapplication.ui.controllers;
 
 import javafx.application.Platform;
-import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
@@ -22,6 +21,7 @@ import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessag
 import no.stonedstonar.chatapplication.model.conversationregister.personal.ConversationRegisterObserver;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
+import no.stonedstonar.chatapplication.model.user.User;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
 import no.stonedstonar.chatapplication.ui.windows.AlertTemplates;
 import no.stonedstonar.chatapplication.ui.windows.LoginWindow;
@@ -64,6 +64,9 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
 
     @FXML
     private ScrollPane scrollPane;
+
+    @FXML
+    private Button editConversationButton;
 
     private long activeMessageLog;
 
@@ -140,8 +143,8 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
 
         sendButton.setDefaultButton(true);
         logOutButton.setCancelButton(true);
-
     }
+
 
     /**
      * Sets all the fields to empty.
@@ -272,7 +275,7 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
             }catch (CouldNotGetMessageLogException exception){
                 AlertTemplates.makeAndShowCouldNotGetMessageLogExceptionAlert();
             }catch (CouldNotGetConversationException exception){
-                //Todo: Fix this.
+                AlertTemplates.makeAndShowCouldNotGetConversationAlert();
             }
         });
     }

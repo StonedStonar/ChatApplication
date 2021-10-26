@@ -1,6 +1,7 @@
 package no.stonedstonar.chatapplication.backend;
 
 import javafx.application.Platform;
+import no.stonedstonar.chatapplication.model.Members;
 import no.stonedstonar.chatapplication.model.conversation.*;
 import no.stonedstonar.chatapplication.model.conversationregister.server.NormalConversationRegister;
 import no.stonedstonar.chatapplication.model.conversationregister.personal.NormalPersonalConversationRegister;
@@ -287,8 +288,20 @@ public class Server{
         sendObject(personalConversation, socket);
     }
 
-    private void addNewMembersToConversation(ConversationRequest conversationRequest, Socket socket){
-
+    /**
+     * Adds new members to conversation if they are not in the conversation.
+     * @param conversationRequest the conversation request that wants to add new members.
+     * @param socket the socket that requests the new members to be added.
+     * @throws CouldNotGetConversationException gets thrown if the conversation could not be located.
+     */
+    private void addNewMembersToConversation(ConversationRequest conversationRequest, Socket socket) throws CouldNotGetConversationException, CouldNotAddMemberException {
+        List<String> newMembers = conversationRequest.getUsernames();
+        ServerConversation serverConversation = normalConversationRegister.getConversationByNumber(conversationRequest.getConversationNumber());
+        Members members = serverConversation.getConversationMembers();
+        members.addAllMembers(newMembers);
+        Boolean bo = true;
+        sendObject(bo, socket);
+        //Todo: finn ut av hvordan du skal sjekke om det er nye medlemmer i en samtale.
     }
 
     /**

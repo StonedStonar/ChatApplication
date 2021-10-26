@@ -17,6 +17,7 @@ import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserE
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
 import no.stonedstonar.chatapplication.model.user.EndUser;
+import no.stonedstonar.chatapplication.model.user.User;
 import no.stonedstonar.chatapplication.networktransport.*;
 import no.stonedstonar.chatapplication.networktransport.builder.ConversationRequestBuilder;
 import no.stonedstonar.chatapplication.networktransport.builder.UserRequestBuilder;
@@ -96,7 +97,7 @@ public class ChatClient {
      * Sets the message log that is active in the gui. Starts a listening thread.
      * @param messageLogNumber the message log you want to listen for new messages on.
      */
-    public void setMessageLogFocus(long messageLogNumber){
+    public void setMessageLogFocus(long messageLogNumber) {
         System.out.println("Setting log number.");
         stopCheckingForMessages();
         messageLogFocus = messageLogNumber;
@@ -108,9 +109,7 @@ public class ChatClient {
                 checkCurrentMessageLogForUpdates(personalMessageLog);
             });
         } catch (CouldNotGetConversationException e) {
-            //Todo: Fix us.
-        } catch (CouldNotGetMessageLogException exception) {
-            exception.printStackTrace();
+            logWaringError(e);
         }
     }
 
@@ -181,6 +180,14 @@ public class ChatClient {
         }else {
             throw new IllegalArgumentException("The user cannot be null.");
         }
+    }
+
+    /**
+     * Gets the user of the application.
+     * @return the user of this application.
+     */
+    public User getUser(){
+        return basicEndUser;
     }
 
     /**
@@ -267,10 +274,9 @@ public class ChatClient {
      * Gets the message log that matches that long number.
      * @param messageLogNumber the number that message log has.
      * @return the message log that matches that number.
-     * @throws CouldNotGetMessageLogException gets thrown if the message log could not be found.
      * @throws CouldNotGetConversationException gets thrown if the conversation could not be found.
      */
-    public PersonalConversation getConversationByNumber(long messageLogNumber) throws CouldNotGetMessageLogException, CouldNotGetConversationException {
+    public PersonalConversation getConversationByNumber(long messageLogNumber) throws CouldNotGetConversationException {
         return personalConversationRegister.getConversationByNumber(messageLogNumber);
     }
 
@@ -301,6 +307,54 @@ public class ChatClient {
             String message = "Something has gone wrong on the serverside " + exception.getClass() + " exception content: " + exception.getMessage();
             logger.log(Level.WARNING, message);
             throw exception;
+        }
+    }
+
+    /**
+     *
+     * @param namesToAdd
+     * @param namesToRemove
+     * @param conversationName
+     */
+    public void editConversation(List<String> namesToAdd, List<String> namesToRemove, String conversationName, PersonalConversation personalConversation){
+        checkIfObjectIsNull(conversationName, "conversation name");
+        checkIfObjectIsNull(namesToAdd, "names to add");
+        checkIfObjectIsNull(namesToRemove, "names to remove");
+        checkIfObjectIsNull(personalConversation, "personal conversation");
+        try {
+            if (!conversationName.isEmpty()){
+                editConversationName(personalConversation, conversationName);
+            }
+            if (!namesToAdd.isEmpty()){
+                addOrRemoveMembers(personalConversation, namesToAdd, false);
+            }
+            if (!namesToRemove.isEmpty()){
+                addOrRemoveMembers(personalConversation, namesToRemove, true);
+            }
+        }
+    }
+
+    private void editConversationName(PersonalConversation personalConversation, String newName){
+
+    }
+
+    private void addOrRemoveMembers(PersonalConversation personalConversation, List<String> names, boolean remove){
+        try (Socket socket = new Socket(host, portNumber)){
+            ConversationRequestBuilder conversationRequestBuilder = new ConversationRequestBuilder().addConversationNumber(personalConversation.getConversationNumber()).addUsernames(names);
+            if (remove){
+                conversationRequestBuilder.setRemoveMembers(true);
+            }else {
+                conversationRequestBuilder.setAddMembers(true);
+            }
+            ConversationRequest conversationRequest = conversationRequestBuilder.build();
+            sendObject(conversationRequest, socket);
+            Object object = getObject(socket);
+            if (object instanceof Boolean valid){
+                //Todo: finn ut av hvordan du skal sjekke om det er nye medlemmer i en samtale.
+                // det samme med navnet. Sjekke at det ikke har endra seg.c
+            }else if ()
+        }catch (IOException | InvalidResponseException exception){
+
         }
     }
 
