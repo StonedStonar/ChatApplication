@@ -88,9 +88,7 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
         sendButton.setOnAction(event -> {
             String contents = textMessageField.textProperty().get();
             try{
-                executorService.submit(() -> {
-                    sendNewMessage(contents, chatClient);
-                });
+                sendNewMessage(contents, chatClient);
             }catch (IllegalArgumentException exception){
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Could not send message");
@@ -143,7 +141,6 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
         });
 
         sendButton.setDefaultButton(true);
-        
     }
 
     /**
@@ -182,7 +179,7 @@ public class ChatController implements Controller, no.stonedstonar.chatapplicati
         } catch (InvalidResponseException e) {
             AlertTemplates.makeAndShowInvalidResponseFromTheServer();
         } catch (CouldNotGetConversationException exception) {
-            //Todo: Fix me
+            AlertTemplates.makeAndShowCouldNotGetConversationAlert();
         }
     }
 

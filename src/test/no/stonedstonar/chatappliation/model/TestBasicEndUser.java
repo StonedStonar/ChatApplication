@@ -1,6 +1,6 @@
 package no.stonedstonar.chatappliation.model;
 
-import no.stonedstonar.chatapplication.model.User;
+import no.stonedstonar.chatapplication.model.user.BasicEndUser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,9 +13,9 @@ import static org.junit.jupiter.api.Assertions.fail;
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
-public class TestUser {
+public class TestBasicEndUser {
 
-    private User testUser;
+    private BasicEndUser testBasicEndUser;
 
     /**
      * Makes a user that is used for testing.
@@ -23,7 +23,7 @@ public class TestUser {
     @BeforeEach
     private void makeTestUser(){
         try {
-            testUser = new User("bjarne21", "pass");
+            testBasicEndUser = new BasicEndUser("bjarne21", "pass");
         }catch (IllegalArgumentException exception){
             fail("Expected the test user to be made since the input is valid.");
         }
@@ -36,7 +36,7 @@ public class TestUser {
     @DisplayName("Tests if constructor works with invalid username.")
     private void testIfConstructorWorksWithInvalidUsername(){
         try {
-            User user = new User("", "pass");
+            BasicEndUser basicEndUser = new BasicEndUser("", "pass");
             fail("Expected to get a exception since the username is invalid.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -50,7 +50,7 @@ public class TestUser {
     @DisplayName("Tests if constructor works with invalid password.")
     public void testIfConstructorWorksWithInvalidPassword(){
         try {
-            User user = new User("bjarne21", null);
+            BasicEndUser basicEndUser = new BasicEndUser("bjarne21", null);
             fail("Expected to get a exception since the password is null.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -64,7 +64,7 @@ public class TestUser {
     @DisplayName("Tests if constructor works with valid input.")
     public void testIfConstructorWorksWithValidInput(){
         try {
-            User user = new User("bjarne21", "pass");
+            BasicEndUser basicEndUser = new BasicEndUser("bjarne21", "pass");
             assertTrue(true);
         }catch (IllegalArgumentException exception){
             fail("Expected the user to be made since the input is valid.");
@@ -78,7 +78,7 @@ public class TestUser {
     @DisplayName("Tests if setUsername works with invalid input.")
     public void testIfSetNameWorksWithInvalidUsername(){
         try {
-            testUser.setUsername("", "pass");
+            testBasicEndUser.setUsername("", "pass");
             fail("Expected to get a exception since the input is invalid.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -92,7 +92,7 @@ public class TestUser {
     @DisplayName("Tests if setUsername works with invalid password.")
     public void testIfSetNameWorksWithInvalidPassword(){
         try {
-            testUser.setUsername("bjarne22", "bjarne21");
+            testBasicEndUser.setUsername("bjarne22", "bjarne21");
             fail("Expected to get a exception since the password is wrong format.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -106,7 +106,7 @@ public class TestUser {
     @DisplayName("Tests if setUsername works with valid input.")
     public void testIfSetNameWorksWithValidInput(){
         try {
-            testUser.setUsername("bjarne22", "pass");
+            testBasicEndUser.setUsername("bjarne22", "pass");
             assertTrue(true);
         }catch (IllegalArgumentException exception){
             fail("Expected the username to be set to a new value since the input is valid.");
@@ -120,7 +120,7 @@ public class TestUser {
     @DisplayName("Tests if setPassword works with invalid new password.")
     public void testIfSetPasswordWorksWithInvalidNewPassword(){
         try {
-            testUser.setPassword("", "pass");
+            testBasicEndUser.setPassword("", "pass");
             fail("Expected to get a exception since the new password is invalid format.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -134,7 +134,7 @@ public class TestUser {
     @DisplayName("Tests if setPassword works with wrong old password.")
     public void testIfSetPasswordWorksWithWrongOldPassword(){
         try {
-            testUser.setPassword("password", "passs");
+            testBasicEndUser.setPassword("password", "passs");
             fail("Expected to get a exception since the input old password is wrong.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -148,7 +148,7 @@ public class TestUser {
     @DisplayName("Tests if setPassword works with valid input.")
     public void testIfSetPasswordWorksWithValidInput(){
         try {
-            testUser.setPassword("password", "pass");
+            testBasicEndUser.setPassword("password", "pass");
             assertTrue(true);
         }catch (IllegalArgumentException exception){
             fail("Expected the password to be changed since the input is valid.");

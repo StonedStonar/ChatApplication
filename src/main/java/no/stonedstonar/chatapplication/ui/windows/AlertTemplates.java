@@ -91,4 +91,15 @@ public class AlertTemplates {
         alert.setContentText("Could not make a user since the username is already taken.");
         alert.show();
     }
+
+    /**
+     * Makes and shows an alert that is used when a conversation could not be gotten.
+     */
+    public static void makeAndShowCouldNotGetConversationAlert(){
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Could not get conversation");
+        alert.setHeaderText("Could not get the conversation");
+        alert.setContentText("The conversation could not be gotten. \nPlease restart the program and try again.");
+        alert.show();
+    }
 }

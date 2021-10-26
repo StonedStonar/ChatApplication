@@ -1,7 +1,6 @@
 package no.stonedstonar.chatapplication.model.conversation;
 
 import no.stonedstonar.chatapplication.model.Members;
-import no.stonedstonar.chatapplication.model.User;
 import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;

@@ -1,13 +1,11 @@
-package no.stonedstonar.chatapplication.model;
-
-import java.io.Serializable;
+package no.stonedstonar.chatapplication.model.user;
 
 /**
- *
- * @version 0.1
+ * Represents a user of the program.
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class User implements Serializable{
+public class BasicEndUser implements EndUser {
 
     private String username;
 
@@ -18,25 +16,19 @@ public class User implements Serializable{
      * @param username the username the user should have.
      * @param password the password the user should have.
       */
-    public User(String username, String password){
+    public BasicEndUser(String username, String password){
         checkString(username, "username");
         checkString(password, "password");
         this.password = password;
         this.username = username;
     }
 
-    /**
-     * Gets the username of this user.
-     * @return the username of this user.
-     */
+    @Override
     public String getUsername() {
         return username;
     }
 
-    /**
-     * Sets the username to a new value.
-     * @param username the new useranme of the person.
-     */
+    @Override
     public void setUsername(String username, String password) {
         checkString(username, "username");
         checkString(password, "password");
@@ -47,11 +39,7 @@ public class User implements Serializable{
         }
     }
 
-    /**
-     * Sets the password to a new password if the old one matches the set password.
-     * @param newPassword the new password of the user.
-     * @param oldPassword the old password of the user.
-     */
+    @Override
     public void setPassword(String newPassword, String oldPassword) {
         checkString(newPassword, "new password");
         if (checkPassword(oldPassword)){
@@ -61,12 +49,7 @@ public class User implements Serializable{
         }
     }
 
-    /**
-     * Checks if the password is correct.
-     * @param password the password you want to check.
-     * @return <code>true</code> if the passwords match.
-     *         <code>false</code> if the passwords mismatch.
-     */
+    @Override
     public boolean checkPassword(String password){
         checkString(password, "input password");
         boolean valid = false;

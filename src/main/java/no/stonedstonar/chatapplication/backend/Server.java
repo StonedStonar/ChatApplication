@@ -4,7 +4,6 @@ import javafx.application.Platform;
 import no.stonedstonar.chatapplication.model.conversation.*;
 import no.stonedstonar.chatapplication.model.conversationregister.server.NormalConversationRegister;
 import no.stonedstonar.chatapplication.model.conversationregister.personal.NormalPersonalConversationRegister;
-import no.stonedstonar.chatapplication.model.conversationregister.server.ServerConversationRegister;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
@@ -16,9 +15,10 @@ import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserExcep
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
+import no.stonedstonar.chatapplication.model.user.EndUser;
 import no.stonedstonar.chatapplication.networktransport.*;
-import no.stonedstonar.chatapplication.model.User;
-import no.stonedstonar.chatapplication.model.UserRegister;
+import no.stonedstonar.chatapplication.model.user.BasicEndUser;
+import no.stonedstonar.chatapplication.model.userregister.NormalEndUserRegister;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -40,7 +40,7 @@ public class Server{
 
     private ServerSocket welcomeSocket;
 
-    private volatile UserRegister userRegister;
+    private volatile NormalEndUserRegister normalEndUserRegister;
 
     private volatile NormalConversationRegister normalConversationRegister;
 
@@ -60,7 +60,7 @@ public class Server{
       */
     public Server(){
         logger = Logger.getLogger(getClass().toString());
-        userRegister = new UserRegister();
+        normalEndUserRegister = new NormalEndUserRegister();
         normalConversationRegister = new NormalConversationRegister();
         run = true;
         executors = Executors.newFixedThreadPool(8);
@@ -76,19 +76,19 @@ public class Server{
      */
     private void addTestData(){
         try {
-            User user = new User("bjarne22", "passr");
-            User user1 = new User("fjell", "passord");
-            User user3 = new User("bass", "thepass");
-            userRegister.addUser(user);
-            userRegister.addUser(user1);
-            userRegister.addUser(user3);
+            BasicEndUser basicEndUser = new BasicEndUser("bjarne22", "passr");
+            BasicEndUser basicEndUser1 = new BasicEndUser("fjell", "passord");
+            BasicEndUser basicEndUser3 = new BasicEndUser("bass", "thepass");
+            normalEndUserRegister.addUser(basicEndUser);
+            normalEndUserRegister.addUser(basicEndUser1);
+            normalEndUserRegister.addUser(basicEndUser3);
             List<String> twoMembers = new ArrayList<>();
-            twoMembers.add(user.getUsername());
-            twoMembers.add(user1.getUsername());
+            twoMembers.add(basicEndUser.getUsername());
+            twoMembers.add(basicEndUser1.getUsername());
             List<String> threeMembers = new ArrayList<>();
-            threeMembers.add(user.getUsername());
-            threeMembers.add(user1.getUsername());
-            threeMembers.add(user3.getUsername());
+            threeMembers.add(basicEndUser.getUsername());
+            threeMembers.add(basicEndUser1.getUsername());
+            threeMembers.add(basicEndUser3.getUsername());
             normalConversationRegister.addNewConversationWithUsernames(threeMembers, "");
             normalConversationRegister.addNewConversationWithUsernames(twoMembers, "");
             List<ServerConversation> normalMessageLogs = normalConversationRegister.getAllConversationsOfUsername("bjarne22");
@@ -201,16 +201,16 @@ public class Server{
     private void handleUserInteraction(UserRequest userRequest, Socket socket) throws IOException{
         try {
             if (userRequest.isLogin()){
-                User user = userRegister.login(userRequest.getUsername(), userRequest.getPassword());
+                EndUser endUser = normalEndUserRegister.login(userRequest.getUsername(), userRequest.getPassword());
                 NormalPersonalConversationRegister personalConversationRegister = normalConversationRegister.getAllConversationsUserHasAndMakePersonalRegister(userRequest.getUsername());
-                LoginTransport loginTransport = new LoginTransport(user, personalConversationRegister);
+                LoginTransport loginTransport = new LoginTransport(endUser, personalConversationRegister);
                 sendObject(loginTransport, socket);
             }else if (userRequest.isNewUser()){
-                User user = new User(userRequest.getUsername(), userRequest.getPassword());
-                userRegister.addUser(user);
+                BasicEndUser basicEndUser = new BasicEndUser(userRequest.getUsername(), userRequest.getPassword());
+                normalEndUserRegister.addUser(basicEndUser);
                 sendObject(true, socket);
             } else if (userRequest.isCheckUsername()){
-                sendObject(userRegister.checkIfUsernameIsTaken(userRequest.getUsername()), socket);
+                sendObject(normalEndUserRegister.checkIfUsernameIsTaken(userRequest.getUsername()), socket);
             }
         }catch (CouldNotLoginToUserException | IllegalArgumentException | CouldNotAddUserException exception){
             String message = "Something went wrong in the " + userRequest + " with the exception " + exception.getMessage() + " and class " + exception.getClass();

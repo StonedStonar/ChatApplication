@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- *
+ * A basic
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */

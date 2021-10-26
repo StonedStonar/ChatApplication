@@ -1,8 +1,6 @@
 package no.stonedstonar.chatapplication.model.conversation;
 
-import no.stonedstonar.chatapplication.model.User;
 import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
-import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.messagelog.ServerMessageLog;

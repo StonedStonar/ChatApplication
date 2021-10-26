@@ -1,10 +1,11 @@
 package no.stonedstonar.chatappliation.model;
 
-import no.stonedstonar.chatapplication.model.User;
-import no.stonedstonar.chatapplication.model.UserRegister;
+import no.stonedstonar.chatapplication.model.user.BasicEndUser;
+import no.stonedstonar.chatapplication.model.userregister.NormalEndUserRegister;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotRemoveUserException;
+import no.stonedstonar.chatapplication.model.user.EndUser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,11 +18,11 @@ import static org.junit.jupiter.api.Assertions.fail;
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
-public class TestUserRegister {
+public class TestBasicEndNormalEndUserRegister {
 
-    private UserRegister userRegister;
+    private NormalEndUserRegister normalEndUserRegister;
 
-    private User user1;
+    private BasicEndUser basicEndUser1;
 
     /**
      * Makes a test user register that is used for testing.
@@ -29,10 +30,10 @@ public class TestUserRegister {
     @BeforeEach
     private void makeTestUserRegister(){
         try {
-            userRegister = new UserRegister();
-            user1 = new User("bjarne21", "pass");
-            userRegister.addUser(user1);
-            userRegister.addUser(new User("lordVoldemort", "password"));
+            normalEndUserRegister = new NormalEndUserRegister();
+            basicEndUser1 = new BasicEndUser("bjarne21", "pass");
+            normalEndUserRegister.addUser(basicEndUser1);
+            normalEndUserRegister.addUser(new BasicEndUser("lordVoldemort", "password"));
         }catch (IllegalArgumentException exception){
             fail("Expected the test user register to be made without any errors.");
         }catch (CouldNotAddUserException exception){
@@ -47,7 +48,7 @@ public class TestUserRegister {
     @DisplayName("Tests if addUser works with invalid input.")
     public void testIfAddUserWorksWithInvalidInput(){
         try {
-            userRegister.addUser(null);
+            normalEndUserRegister.addUser(null);
             fail("Expected to get a exception since the input is null");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -63,7 +64,7 @@ public class TestUserRegister {
     @DisplayName("Tests if addUser works with valid input.")
     public void testIfAddUserWorksWithValidInput(){
         try {
-            userRegister.addUser(new User("frank21", "ass"));
+            normalEndUserRegister.addUser(new BasicEndUser("frank21", "ass"));
             assertTrue(true);
         }catch (IllegalArgumentException exception){
             fail("Expected to add the user since the input is valid.");
@@ -79,9 +80,9 @@ public class TestUserRegister {
     @DisplayName("Tests if addUser works with duplicate user.")
     public void testIfAddUserWorksWithDuplicateUser(){
         try {
-            User user = new User("åse20", "ås");
-            userRegister.addUser(user);
-            userRegister.addUser(user);
+            BasicEndUser basicEndUser = new BasicEndUser("åse20", "ås");
+            normalEndUserRegister.addUser(basicEndUser);
+            normalEndUserRegister.addUser(basicEndUser);
             fail("Expected to get a exception since the user is already in the register.");
         }catch (IllegalArgumentException exception){
             fail("Expected to get a CouldNotAddUserException since the format is valid.");
@@ -97,7 +98,7 @@ public class TestUserRegister {
     @DisplayName("Tests if removeUser works with null as input.")
     public void testIfRemoveUserWorksWithNullAsInput(){
         try {
-            userRegister.removeUser(null);
+            normalEndUserRegister.removeUser(null);
             fail("Expected to get a exception since the input is null");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -113,7 +114,7 @@ public class TestUserRegister {
     @DisplayName("Tests if removeUser works with valid input.")
     public void testIfRemoveUserWorksWithValidInput(){
         try{
-            userRegister.removeUser(user1);
+            normalEndUserRegister.removeUser(basicEndUser1);
             assertTrue(true);
         }catch (IllegalArgumentException exception){
             fail("Expected the user to be removed since the input is valid.");
@@ -129,8 +130,8 @@ public class TestUserRegister {
     @DisplayName("Tests if removeUser works with user not in register.")
     public void testIfRemoveUserWorksWithUserNotInRegister(){
         try {
-            User user = new User("ar", "pass");
-            userRegister.removeUser(user);
+            BasicEndUser basicEndUser = new BasicEndUser("ar", "pass");
+            normalEndUserRegister.removeUser(basicEndUser);
             fail("Expected to get a exception since the input user is not in the register.");
         }catch (IllegalArgumentException exception){
             fail("Expected to get a CouldNotRemoveUserException since the format is valid.");
@@ -146,7 +147,7 @@ public class TestUserRegister {
     @DisplayName("Tests if login works with invalid username.")
     public void testIfLoginWorksWithInvalidUsername(){
         try {
-            userRegister.login("", "pass");
+            normalEndUserRegister.login("", "pass");
             fail("Expected to get a exception since the input username is invalid.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -162,7 +163,7 @@ public class TestUserRegister {
     @DisplayName("Tests if login works with invalid format on password.")
     public void testIfLoginWorksWithInvalidFormatOnPassword(){
         try {
-            userRegister.login("bjarne21", "");
+            normalEndUserRegister.login("bjarne21", "");
             fail("Expected to get a exception since the input password is invalid.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -178,7 +179,7 @@ public class TestUserRegister {
     @DisplayName("Tests if login works with wrong password.")
     public void testIfLoginWorksWithWrongPassword(){
         try {
-            userRegister.login("bjarne21", "p");
+            normalEndUserRegister.login("bjarne21", "p");
             fail("Expected to get a exception since the passwords does not match");
         }catch (IllegalArgumentException exception){
             fail("Expected to get a CouldNotLoginToUserException since the format is valid.");
@@ -194,8 +195,8 @@ public class TestUserRegister {
     @DisplayName("Tests if login works with valid input.")
     public void testIfLoginWorksWithValidInput(){
         try {
-            User user = userRegister.login(user1.getUsername(), "pass");
-            if (user != null){
+            EndUser endUser = normalEndUserRegister.login(basicEndUser1.getUsername(), "pass");
+            if (endUser != null){
                 assertTrue(true);
             }else {
                 fail("Expected the user to be logged in since the input is valid.");
@@ -214,7 +215,7 @@ public class TestUserRegister {
     @DisplayName("Tests if checkIfUsernameIsTaken works with invalid input.")
     public void testIfCheckIfUsernameIsTakenWorksWithInvalidInput(){
         try {
-            userRegister.checkIfUsernameIsTaken("");
+            normalEndUserRegister.checkIfUsernameIsTaken("");
             fail("Expected to get a exception since the input is invalid.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -228,7 +229,7 @@ public class TestUserRegister {
     @DisplayName("Tests if checkIfUsernameIsTaken works with valid input.")
     public void testIfCheckIfUsernameIsTakenWorksWithValidInput(){
         try {
-            assertTrue(userRegister.checkIfUsernameIsTaken(user1.getUsername()));
+            assertTrue(normalEndUserRegister.checkIfUsernameIsTaken(basicEndUser1.getUsername()));
         }catch (IllegalArgumentException exception){
             fail("Expected to get a true boolean back since the username is in the register.");
         }

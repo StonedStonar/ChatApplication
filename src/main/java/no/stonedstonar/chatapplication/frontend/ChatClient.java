@@ -16,10 +16,11 @@ import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserExcep
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
+import no.stonedstonar.chatapplication.model.user.EndUser;
 import no.stonedstonar.chatapplication.networktransport.*;
 import no.stonedstonar.chatapplication.networktransport.builder.ConversationRequestBuilder;
 import no.stonedstonar.chatapplication.networktransport.builder.UserRequestBuilder;
-import no.stonedstonar.chatapplication.model.User;
+import no.stonedstonar.chatapplication.model.user.BasicEndUser;
 
 import java.io.*;
 import java.net.*;
@@ -39,7 +40,7 @@ import java.util.logging.Logger;
  */
 public class ChatClient {
 
-    private User user;
+    private EndUser basicEndUser;
 
     private volatile NormalPersonalConversationRegister personalConversationRegister;
 
@@ -79,7 +80,7 @@ public class ChatClient {
                 logWaringError(e);
             }
         }
-        user = null;
+        basicEndUser = null;
         personalConversationRegister = null;
     }
 
@@ -175,8 +176,8 @@ public class ChatClient {
      * @return the username of the logged in user.
      */
     public String getUsername(){
-        if (user != null){
-            return user.getUsername();
+        if (basicEndUser != null){
+            return basicEndUser.getUsername();
         }else {
             throw new IllegalArgumentException("The user cannot be null.");
         }
@@ -241,7 +242,7 @@ public class ChatClient {
         checkString(messageContents, "message");
         checkIfObjectIsNull(personalConversation, "message log");
         try (Socket socket = new Socket(host, portNumber)){
-            TextMessage textMessage = new TextMessage(messageContents, user.getUsername());
+            TextMessage textMessage = new TextMessage(messageContents, basicEndUser.getUsername());
             ArrayList<Message> textMessageList = new ArrayList<>();
             textMessageList.add(textMessage);
             MessageTransport messageTransport = new MessageTransport(textMessageList, personalConversation, LocalDate.now());
@@ -289,7 +290,7 @@ public class ChatClient {
             sendObject(userRequest, socket);
             Object object = getObject(socket);
             if (object instanceof LoginTransport loginTransport){
-                this.user = loginTransport.getUser();
+                this.basicEndUser = loginTransport.getUser();
                 personalConversationRegister = loginTransport.getPersonalConversationRegister();
             }else if (object instanceof CouldNotLoginToUserException exception){
                 throw exception;
@@ -347,10 +348,10 @@ public class ChatClient {
         try {
             logger.log(Level.INFO, "Syncing message log " + personalConversation.getConversationNumber());
             LocalDate localDate = LocalDate.now();
-            long lastMessageNumber = personalConversation.getMessageLogForDate(localDate, user.getUsername()).getLastMessageNumber();
+            long lastMessageNumber = personalConversation.getMessageLogForDate(localDate, basicEndUser.getUsername()).getLastMessageNumber();
             long messageLogNumber = personalConversation.getConversationNumber();
             ArrayList<String> name = new ArrayList<>();
-            name.add(user.getUsername());
+            name.add(basicEndUser.getUsername());
             ConversationRequest conversationRequest = new ConversationRequestBuilder().setCheckForMessages(true).addLastMessageNumber(lastMessageNumber).addUsernames(name).addConversationNumber(messageLogNumber).addDate(LocalDate.now()).build();
             sendObject(conversationRequest, socket);
             Object object = getObject(socket);
@@ -384,7 +385,7 @@ public class ChatClient {
         try (Socket socket = new Socket(host, portNumber)){
             List<String> usernames = new ArrayList<>();
             List<Long> conversationNumbers = personalConversationRegister.getAllConversationNumbers();
-            usernames.add(user.getUsername());
+            usernames.add(basicEndUser.getUsername());
             ConversationRequest conversationRequest = new ConversationRequestBuilder().setCheckForNewConversations(true).addUsernames(usernames).addConversationNumberList(conversationNumbers).build();
             sendObject(conversationRequest, socket);
             Object object = getObject(socket);

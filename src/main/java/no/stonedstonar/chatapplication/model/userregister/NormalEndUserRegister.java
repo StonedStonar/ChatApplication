@@ -1,10 +1,11 @@
-package no.stonedstonar.chatapplication.model;
+package no.stonedstonar.chatapplication.model.userregister;
 
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotGetUserException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotRemoveUserException;
-import no.stonedstonar.chatapplication.model.User;
+import no.stonedstonar.chatapplication.model.user.EndUser;
+import no.stonedstonar.chatapplication.model.user.User;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,64 +13,50 @@ import java.util.Optional;
 
 /**
  * Represents a register that can hold users.
- * @version 0.1
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class UserRegister {
+public class NormalEndUserRegister implements EndUserRegister {
 
-    private final List<User> userList;
+    private final List<EndUser> basicEndUserList;
 
     /**
       * Makes an instance of the UserRegister class.
       */
-    public UserRegister(){
-        userList = new ArrayList<>();
+    public NormalEndUserRegister(){
+        basicEndUserList = new ArrayList<>();
     }
 
-    /**
-     * Adds a user to the register.
-     * @param user the user you want to add.
-     * @throws CouldNotAddUserException gets thrown if the user could not be added to the register.
-     */
-    public void addUser(User user) throws CouldNotAddUserException {
-        checkIfObjectIsNull(user, "user");
-        if (!checkIfUsernameIsTaken(user.getUsername())){
-            userList.add(user);
+    @Override
+    public void addUser(EndUser endUser) throws CouldNotAddUserException {
+        checkIfObjectIsNull(endUser, "end user");
+        if (!checkIfUsernameIsTaken(endUser.getUsername())){
+            basicEndUserList.add(endUser);
         }else {
-            throw new CouldNotAddUserException("The user by the username " + user.getUsername() + " is already in the system.");
+            throw new CouldNotAddUserException("The user by the username " + endUser.getUsername() + " is already in the system.");
         }
     }
 
-    /**
-     * Removes a user from the register.
-     * @param user the user you want to remove.
-     * @throws CouldNotRemoveUserException gets thrown if the user could not be removed.
-     */
-    public void removeUser(User user) throws CouldNotRemoveUserException {
-        checkIfObjectIsNull(user, "user");
-        if (checkIfUsernameIsTaken(user.getUsername())){
-            userList.remove(user);
+    @Override
+    public void removeUser(EndUser endUser) throws CouldNotRemoveUserException {
+        checkIfObjectIsNull(endUser, "end user");
+        if (checkIfUsernameIsTaken(endUser.getUsername())){
+            basicEndUserList.remove(endUser);
         }else {
-            throw new CouldNotRemoveUserException("The user by the username " + user.getUsername() + " is already in the system.");
+            throw new CouldNotRemoveUserException("The user by the username " + endUser.getUsername() + " is already in the system.");
         }
     }
 
     //Todo: Kanskje denne skal fjernes og heller arves av en annen klasse så denne også kan holde på vanlige brukere.
 
-    /**
-     * Logs the user in if the passwords matches.
-     * @param username the username of the user.
-     * @param password the password of the user.
-     * @return the user that matches that username and password.
-     * @throws CouldNotLoginToUserException gets thrown if the details of the user does not match.
-     */
-    public User login(String username, String password) throws CouldNotLoginToUserException {
+    @Override
+    public EndUser login(String username, String password) throws CouldNotLoginToUserException {
         checkString(password, "password");
         checkString(username, "username");
         try {
-            User user = getUserByUsername(username);
-            if (user.checkPassword(password)){
-                return user;
+            EndUser basicEndUser = getUserByUsername(username);
+            if (basicEndUser.checkPassword(password)){
+                return basicEndUser;
             }else {
                 throw new CouldNotLoginToUserException("The passwords does not match.");
             }
@@ -78,15 +65,10 @@ public class UserRegister {
         }
     }
 
-    /**
-     * Checks if there is a user by this username in the register.
-     * @param username the username of the person.
-     * @return <code>true</code> if a user already has this username.
-     *         <code>false</code> if this username does not match any user.
-     */
+    @Override
     public boolean checkIfUsernameIsTaken(String username){
         checkString(username, "username");
-        return userList.stream().anyMatch(name -> name.getUsername().equals(username));
+        return basicEndUserList.stream().anyMatch(name -> name.getUsername().equals(username));
     }
 
     /**
@@ -95,8 +77,8 @@ public class UserRegister {
      * @return the user that matches this username.
      * @throws CouldNotGetUserException gets thrown if the user could not be found.
      */
-    private User getUserByUsername(String username) throws CouldNotGetUserException {
-        Optional<User> opUser = userList.stream().filter(name -> name.getUsername().equals(username)).findFirst();
+    private EndUser getUserByUsername(String username) throws CouldNotGetUserException {
+        Optional<EndUser> opUser = basicEndUserList.stream().filter(name -> name.getUsername().equals(username)).findFirst();
         if (opUser.isPresent()) {
             return opUser.get();
         } else{

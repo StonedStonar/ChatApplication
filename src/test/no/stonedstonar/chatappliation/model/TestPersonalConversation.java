@@ -1,7 +1,5 @@
 package no.stonedstonar.chatappliation.model;
 
-import no.stonedstonar.chatapplication.backend.Server;
-import no.stonedstonar.chatapplication.model.User;
 import no.stonedstonar.chatapplication.model.conversation.NormalPersonalConversation;
 import no.stonedstonar.chatapplication.model.conversation.NormalServerConversation;
 import no.stonedstonar.chatapplication.model.conversation.PersonalConversation;
