@@ -91,6 +91,7 @@ public class ConversationController implements Controller {
      * Sets all the functions of the buttons.
      */
     private void setButtonFunctions(){
+        ChatApplicationClient chatApplicationClient = ChatApplicationClient.getChatApplication();
         ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
 
         ExecutorService executorService = ChatApplicationClient.getChatApplication().getExecutor();
@@ -128,7 +129,7 @@ public class ConversationController implements Controller {
 
         removeUsernameButton.setOnAction(event -> {
             String username = usernameField.textProperty().get();
-            String usernameOfClient = ChatApplicationClient.getChatApplication().getChatClient().getUsername();
+            String usernameOfClient = chatClient.getUsername();
             if (username.equals(usernameOfClient)){
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Error removing username");
@@ -149,7 +150,7 @@ public class ConversationController implements Controller {
                 chatClient.makeNewConversation(usernames, nameOfConversation);
                 usernames.clear();
                 membersBox.getChildren().clear();
-                ChatApplicationClient.getChatApplication().setNewScene(ChatWindow.getChatWindow());
+                chatApplicationClient.setNewScene(ChatWindow.getChatWindow());
             } catch (CouldNotAddMessageLogException exception) {
                 AlertTemplates.makeAndShowCouldNotGetMessageLogExceptionAlert();
             } catch (IOException exception) {
@@ -162,6 +163,9 @@ public class ConversationController implements Controller {
                 //Todo: Fix me
             }
         });
+
+        makeConversationButton.setDefaultButton(true);
+        cancelButton.setCancelButton(true);
     }
 
     /**

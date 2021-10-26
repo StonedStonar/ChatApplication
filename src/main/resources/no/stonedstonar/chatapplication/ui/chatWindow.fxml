@@ -21,7 +21,7 @@
                   <Font size="18.0" />
                </font>
             </Label>
-            <ScrollPane fitToWidth="true" hbarPolicy="NEVER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="363.0" prefWidth="331.0">
+            <ScrollPane fx:id="scrollPane" fitToWidth="true" hbarPolicy="NEVER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="363.0" prefWidth="437.0">
                <content>
                   <VBox fx:id="messageBox" />
                </content>
@@ -63,7 +63,7 @@
                   <Font size="18.0" />
                </font>
             </Label>
-            <ScrollPane fitToWidth="true" hbarPolicy="NEVER" prefHeight="358.0" prefWidth="176.0">
+            <ScrollPane fitToWidth="true" hbarPolicy="NEVER" prefHeight="358.0" prefWidth="176.0" vvalue="1.0">
                <content>
                   <VBox fx:id="contactsBox" />
                </content>

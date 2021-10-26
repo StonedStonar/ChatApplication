@@ -82,13 +82,14 @@ public class NewUserController implements Controller {
      * Sets the functions of all the buttons in this window.
      */
     private void setButtonFunctions(){
+        ChatApplicationClient chatApplicationClient = ChatApplicationClient.getChatApplication();
+        ChatClient chatClient = chatApplicationClient.getChatClient();
         makeUserButton.setOnAction(actionEvent -> {
             try {
                 String username = usernameField.textProperty().get();
                 String password = passwordField.textProperty().get();
-                ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
                 chatClient.makeNewUser(username, password);
-                ChatApplicationClient.getChatApplication().setNewScene(LoginWindow.getLoginWindow());
+                chatApplicationClient.setNewScene(LoginWindow.getLoginWindow());
             }catch (IllegalArgumentException exception){
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setContentText("The user with the name " + usernameField.textProperty().get() + " is already in the register.");
@@ -105,11 +106,14 @@ public class NewUserController implements Controller {
         });
         cancelButton.setOnAction(actionEvent -> {
             try {
-                ChatApplicationClient.getChatApplication().setNewScene(LoginWindow.getLoginWindow());
+                chatApplicationClient.setNewScene(LoginWindow.getLoginWindow());
             }catch (IOException exception){
                 AlertTemplates.makeAndShowCouldNotConnectToServerAlert();
             }
         });
+
+        makeUserButton.setDefaultButton(true);
+        cancelButton.setCancelButton(true);
     }
 
     /**
