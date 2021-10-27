@@ -1,6 +1,6 @@
 package no.stonedstonar.chatapplication.networktransport;
 
-import no.stonedstonar.chatapplication.model.conversation.PersonalConversation;
+import no.stonedstonar.chatapplication.model.conversation.ObservableConversation;
 
 import java.io.Serializable;
 import java.util.List;
@@ -12,23 +12,23 @@ import java.util.List;
  */
 public class PersonalConversationTransport implements Serializable {
 
-    List<PersonalConversation> personalConversationList;
+    List<ObservableConversation> observableConversationList;
 
     /**
       * Makes an instance of the PersonalConversationTransport class.
-     * @param personalConversations the list with all the conversation.
+     * @param observableConversations the list with all the conversation.
       */
-    public PersonalConversationTransport(List<PersonalConversation> personalConversations){
-        checkIfObjectIsNull(personalConversations, "the list with all the personal conversations");
-        personalConversationList = personalConversations;
+    public PersonalConversationTransport(List<ObservableConversation> observableConversations){
+        checkIfObjectIsNull(observableConversations, "the list with all the personal conversations");
+        observableConversationList = observableConversations;
     }
 
     /**
      * Gets the personal conversation list this object transports.
      * @return the personal conversation list.
      */
-    public List<PersonalConversation> getPersonalConversationList() {
-        return personalConversationList;
+    public List<ObservableConversation> getPersonalConversationList() {
+        return observableConversationList;
     }
 
     /**

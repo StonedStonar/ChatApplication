@@ -1,8 +1,8 @@
 package no.stonedstonar.chatappliation.model;
 
-import no.stonedstonar.chatapplication.model.conversation.NormalPersonalConversation;
+import no.stonedstonar.chatapplication.model.conversation.NormalObservableConversation;
 import no.stonedstonar.chatapplication.model.conversation.NormalServerConversation;
-import no.stonedstonar.chatapplication.model.conversation.PersonalConversation;
+import no.stonedstonar.chatapplication.model.conversation.ObservableConversation;
 import no.stonedstonar.chatapplication.model.conversation.ServerConversation;
 import no.stonedstonar.chatapplication.model.conversationregister.ConversationRegister;
 import no.stonedstonar.chatapplication.model.conversationregister.personal.NormalPersonalConversationRegister;
@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class TestPersonalConversationRegister {
+public class TestObservableConversationRegister {
 
     private PersonalConversationRegister personalConversationRegister;
 
@@ -149,8 +149,8 @@ public class TestPersonalConversationRegister {
     public void testIfAddConversationWorksWithValidUsername(){
         try {
             PersonalConversationRegister personalConversationRegister = new NormalPersonalConversationRegister(new ArrayList<>(), "bjarne22");
-            PersonalConversation personalConversation = new NormalPersonalConversation(makeServerConversation().get(0), "bjarne21");
-            personalConversationRegister.addConversation(personalConversation);
+            ObservableConversation observableConversation = new NormalObservableConversation(makeServerConversation().get(0), "bjarne21");
+            personalConversationRegister.addConversation(observableConversation);
             assertTrue(true);
         } catch (CouldNotAddConversationException | IllegalArgumentException exception) {
             fail("Expected the personal conversation to be added since the input is valid.");

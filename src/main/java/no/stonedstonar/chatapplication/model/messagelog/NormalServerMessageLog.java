@@ -16,9 +16,9 @@ import java.util.*;
  */
 public class NormalServerMessageLog implements Serializable, ServerMessageLog {
 
-    private List<Message> messageList;
+    private final ArrayList<Message> messageList;
 
-    private LocalDate dateMade;
+    private final LocalDate dateMade;
 
     private long lastMessageNumber;
 
@@ -78,39 +78,6 @@ public class NormalServerMessageLog implements Serializable, ServerMessageLog {
      */
     private List<Message> getMessagesOverMessageNumber(long numberOfMessage){
         return messageList.stream().filter(mess -> mess.getMessageNumber() > numberOfMessage).toList();
-    }
-
-    //Todo: Vurder om denne metoden trengs.
-    ///**
-     //* Gets the message that matches the message contents.
-     //* @param fromUsername the username this message is from.
-     //* @param localDate the local date object this message has.
-     //* @param localTime the local time object this message has.
-     //* @return the message that matches the input message.
-     //* @throws CouldNotGetMessageException gets thrown when a message could not be found.
-     //*/
-//    public Message getMessage(String fromUsername, LocalTime localTime, LocalDate localDate) throws CouldNotGetMessageException {
-//        checkString(fromUsername, "from username");
-//        checkIfObjectIsNull(localDate, "local date");
-//        checkIfObjectIsNull(localTime, "local time");
-//        Optional<Message> optionalMessage = messageMap.values().stream().filter(mess -> mess.getTime().equals(localTime)).filter(message -> message.getDate().equals(localDate)).filter(message -> message.getFromUsername().equals(fromUsername)).findFirst();
-//        if (optionalMessage.isPresent()){
-//            return optionalMessage.get();
-//        }else {
-//            throw new CouldNotGetMessageException("The message that has the date and time \"" + localDate + " " + localTime+ "\" is not a part of this messages.");
-//        }
-//    }
-    
-    /**
-     * Checks if a string is of a valid format or not.
-     * @param stringToCheck the string you want to check.
-     * @param errorPrefix the error the exception should have if the string is invalid.
-     */
-    private void checkString(String stringToCheck, String errorPrefix){
-        checkIfObjectIsNull(stringToCheck, errorPrefix);
-        if (stringToCheck.isEmpty()){
-            throw new IllegalArgumentException("The " + errorPrefix + " cannot be empty.");
-        }
     }
     
     /**

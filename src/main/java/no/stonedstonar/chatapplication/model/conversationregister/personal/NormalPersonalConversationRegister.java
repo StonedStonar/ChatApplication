@@ -1,8 +1,8 @@
 package no.stonedstonar.chatapplication.model.conversationregister.personal;
 
 import no.stonedstonar.chatapplication.model.conversation.Conversation;
-import no.stonedstonar.chatapplication.model.conversation.NormalPersonalConversation;
-import no.stonedstonar.chatapplication.model.conversation.PersonalConversation;
+import no.stonedstonar.chatapplication.model.conversation.NormalObservableConversation;
+import no.stonedstonar.chatapplication.model.conversation.ObservableConversation;
 import no.stonedstonar.chatapplication.model.conversation.ServerConversation;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
@@ -20,9 +20,9 @@ public class NormalPersonalConversationRegister implements PersonalConversationR
 
     private final List<ConversationRegisterObserver> conversationRegisterObservers;
 
-    private final List<PersonalConversation> personalConversations;
+    private final List<ObservableConversation> observableConversations;
 
-    private PersonalConversation newlyAddedNormalPersonalConversation;
+    private ObservableConversation newlyAddedNormalObservableConversation;
 
     private boolean removed;
 
@@ -35,10 +35,10 @@ public class NormalPersonalConversationRegister implements PersonalConversationR
         checkIfObjectIsNull(messageLogList, "message log list");
         checkString(username, "username");
         conversationRegisterObservers = new ArrayList<>();
-        personalConversations = new ArrayList<>();
+        observableConversations = new ArrayList<>();
         messageLogList.forEach(log -> {
-            NormalPersonalConversation personalMessageLog = new NormalPersonalConversation(log, username);
-            personalConversations.add(personalMessageLog);
+            NormalObservableConversation personalMessageLog = new NormalObservableConversation(log, username);
+            observableConversations.add(personalMessageLog);
         });
     }
 
@@ -46,16 +46,16 @@ public class NormalPersonalConversationRegister implements PersonalConversationR
      * Gets all the conversations.
      * @return a list with all the conversations.
      */
-    public List<PersonalConversation> getMessageLogList() {
-        return personalConversations;
+    public List<ObservableConversation> getMessageLogList() {
+        return observableConversations;
     }
 
     @Override
-    public void addConversation(PersonalConversation personalConversation) throws CouldNotAddConversationException {
-        checkIfObjectIsNull(personalConversation, "personal conversation");
-        if (!checkIfConversationIsInRegister(personalConversation)){
-            personalConversations.add(personalConversation);
-            newlyAddedNormalPersonalConversation = personalConversation;
+    public void addConversation(ObservableConversation observableConversation) throws CouldNotAddConversationException {
+        checkIfObjectIsNull(observableConversation, "personal conversation");
+        if (!checkIfConversationIsInRegister(observableConversation)){
+            observableConversations.add(observableConversation);
+            newlyAddedNormalObservableConversation = observableConversation;
             removed = false;
             notifyObservers();
         }else {
@@ -65,7 +65,7 @@ public class NormalPersonalConversationRegister implements PersonalConversationR
 
     @Override
     public List<Long> getAllConversationNumbers() {
-        return personalConversations.stream().map(convo -> convo.getConversationNumber()).toList();
+        return observableConversations.stream().map(convo -> convo.getConversationNumber()).toList();
     }
 
     /**
@@ -75,7 +75,7 @@ public class NormalPersonalConversationRegister implements PersonalConversationR
      *         <code>false</code> if the conversation is not in the register.
      */
     private boolean checkIfConversationIsInRegister(Conversation conversation){
-        return personalConversations.stream().anyMatch(con -> con.getConversationNumber() == conversation.getConversationNumber());
+        return observableConversations.stream().anyMatch(con -> con.getConversationNumber() == conversation.getConversationNumber());
     }
 
     @Override
@@ -100,7 +100,7 @@ public class NormalPersonalConversationRegister implements PersonalConversationR
 
     @Override
     public void notifyObservers() {
-        conversationRegisterObservers.forEach(obs -> obs.updateConversation(newlyAddedNormalPersonalConversation, removed));
+        conversationRegisterObservers.forEach(obs -> obs.updateConversation(newlyAddedNormalObservableConversation, removed));
     }
 
     @Override
@@ -132,9 +132,9 @@ public class NormalPersonalConversationRegister implements PersonalConversationR
     }
 
     @Override
-    public PersonalConversation getConversationByNumber(long conversationNumber) throws CouldNotGetConversationException {
+    public ObservableConversation getConversationByNumber(long conversationNumber) throws CouldNotGetConversationException {
         checkIfLongIsAboveZero(conversationNumber, "conversation number");
-        Optional<PersonalConversation> optionalPersonalConversation = personalConversations.stream().filter(conv -> conv.getConversationNumber() == conversationNumber).findFirst();
+        Optional<ObservableConversation> optionalPersonalConversation = observableConversations.stream().filter(conv -> conv.getConversationNumber() == conversationNumber).findFirst();
         if (optionalPersonalConversation.isPresent()){
              return optionalPersonalConversation.get();
         }else {

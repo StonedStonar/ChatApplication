@@ -1,7 +1,9 @@
-package no.stonedstonar.chatapplication.model;
+package no.stonedstonar.chatapplication.model.membersregister;
 
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
+import no.stonedstonar.chatapplication.model.exception.member.CouldNotGetMemberException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemberException;
+import no.stonedstonar.chatapplication.model.member.ConversationMember;
 import no.stonedstonar.chatapplication.model.user.User;
 
 import java.io.Serializable;
@@ -9,20 +11,20 @@ import java.util.*;
 
 /**
  * A object that holds all the members of a object.
- * @version 0.1
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class Members implements Serializable {
+public class ConversationMembers implements Serializable, ServerMembers {
 
     //Todo: Endre denne til map slik at vi kan lagre hvem som var siste medlem.
-    private final Map<Long, String> memberMap;
+    private final Map<Long, ConversationMember> memberMap;
 
     private long lastMember;
 
     /**
       * Makes an instance of the MembersOfConversation class.
       */
-    public Members(){
+    public ConversationMembers(){
         memberMap = new HashMap<>();
     }
 
@@ -31,25 +33,22 @@ public class Members implements Serializable {
      * @param user the user that is a member in the conversation.
      * @return a list with all the members.
      */
-    public List<String> getAllMembers(User user){
+    public List<String> getNameOfAllMembers(User user){
         checkIfObjectIsNull(user, "user");
         String username = user.getUsername();
         if (checkIfUsernameIsMember(username)){
-            return memberMap.values().stream().toList();
+            return memberMap.values().stream().map(ConversationMember::getUsername).toList();
         }else {
             throw new IllegalArgumentException("The user with the username " + username + " is not a part of this members object.");
         }
     }
 
-    /**
-     * Adds a user to the conversation.
-     * @param username the username.
-     * @throws CouldNotAddMemberException gets thrown if the member could not be added.
-     */
+    @Override
     public void addMember(String username) throws CouldNotAddMemberException {
         if (!checkIfUsernameIsMember(username)){
             makeNewMemberNumber();
-            memberMap.put(lastMember, username);
+            ConversationMember conversationMember = new ConversationMember(username, lastMember);
+            memberMap.put(conversationMember.getMemberNumber(), conversationMember);
         }else {
             throw new CouldNotAddMemberException("The user is already in the register.");
         }
@@ -62,11 +61,7 @@ public class Members implements Serializable {
         lastMember += 1;
     }
 
-    /**
-     * Adds all the members to the conversation.
-     * @param usernames the usernames of all the members of the conversation.
-     * @throws CouldNotAddMemberException gets thrown if the member could not be added.
-     */
+    @Override
     public void addAllMembers(List<String> usernames) throws CouldNotAddMemberException{
         checkIfListIsValid(usernames, "usernames");
         if (!usernames.isEmpty()){
@@ -84,18 +79,21 @@ public class Members implements Serializable {
         }
     }
 
-    /**
-     * Removes a user as a member.
-     * @param username the username.
-     * @throws CouldNotRemoveMemberException gets thrown if the member could not be removed.
-     */
+    @Override
+    public long getLastMemberNumber() {
+        return lastMember;
+    }
+
+    @Override
     public void removeMember(String username) throws CouldNotRemoveMemberException {
-        if (checkIfUsernameIsMember(username)){
-            memberMap.remove(username);
-        }else {
+        try {
+            ConversationMember conversationMember = getMemberByUsername(username);
+            memberMap.remove(conversationMember.getMemberNumber());
+        }catch (CouldNotGetMemberException exception){
             throw new CouldNotRemoveMemberException("The member by the username " + username + " is not a part of this conversation.");
         }
     }
+
 
     /**
      * Checks if the user is a part of this conversation.
@@ -105,7 +103,7 @@ public class Members implements Serializable {
      */
     public boolean checkIfUsernameIsMember(String username){
         checkString(username, "username");
-        return memberMap.values().stream().anyMatch(mem -> mem.equals(username));
+        return memberMap.values().stream().anyMatch(mem -> mem.getUsername().equals(username));
     }
 
     /**
@@ -120,9 +118,7 @@ public class Members implements Serializable {
         boolean valid = false;
         checkIfObjectIsNull(usernames, "usernames");
         if (!usernames.isEmpty()){
-            long amount = memberMap.values().stream().filter(name -> {
-                return usernames.stream().anyMatch(username -> username.equals(name));
-            }).count();
+            long amount = memberMap.values().stream().filter(conversationMember -> usernames.stream().anyMatch(username -> username.equals(conversationMember.getUsername()))).count();
             if ((amount == usernames.size()) && (memberMap.size() == amount)){
                 valid = true;
             }
@@ -133,6 +129,21 @@ public class Members implements Serializable {
     }
 
     /**
+     * Gets the member that matches the input name.
+     * @param username the username that it should look for.
+     * @return the member that matches that username.
+     * @throws CouldNotGetMemberException gets thrown if there is no members with that username.
+     */
+    private ConversationMember getMemberByUsername(String username) throws CouldNotGetMemberException {
+        Optional<ConversationMember> optionalMember = memberMap.values().stream().filter(mem -> mem.getUsername().equals(username)).findFirst();
+        if (optionalMember.isPresent()){
+            return optionalMember.get();
+        }else {
+            throw new CouldNotGetMemberException("The member by the username " + username  + " is not in the register.");
+        }
+    }
+
+    /**
      * Checks if one username is in the group already.
      * @param usernames the list with all the usernames to be checked.
      * @return <code>true</code> if one of the usernames are in the register.
@@ -140,11 +151,8 @@ public class Members implements Serializable {
      */
     private boolean checkIfNoneUsernamesAreInConversation(List<String> usernames){
         if (!usernames.isEmpty()){
-            return memberMap.values().stream().anyMatch(username -> {
-               return usernames.stream().anyMatch(name -> name.equals(username));
-            });
+            return memberMap.values().stream().anyMatch(conversationMember -> usernames.stream().anyMatch(name -> name.equals(conversationMember.getUsername())));
         }else {
-            System.out.println(usernames.size());
             throw new IllegalArgumentException("The list must have some usernames in it.");
         }
     }
@@ -160,24 +168,19 @@ public class Members implements Serializable {
             throw new IllegalArgumentException("The username " + username + " is not in the conversation.");
         }
         StringBuilder stringBuilder = new StringBuilder();
-
-        for (String member : memberMap.values()){
-            if (!member.equals(username)){
+        for (ConversationMember conversationMember : memberMap.values()){
+            if (!conversationMember.getUsername().equals(username)){
                 stringBuilder.append(" ");
-                stringBuilder.append(member);
+                stringBuilder.append(conversationMember);
             }
         }
         return stringBuilder.toString();
     }
 
-    /**
-     * Checks if there are any new users in the members object.
-     * @param lastMember the long the last member has.
-     * @return a list with all the new users in this members object.
-     */
-    public List<String> checkForNewUsers(long lastMember){
+    @Override
+    public List<ConversationMember> checkForNewUsers(long lastMember, String username){
         checkIfLongIsNegative(lastMember, "last member");
-        List<String> newUsers = new ArrayList<>();
+        List<ConversationMember> newUsers = new ArrayList<>();
         if (lastMember < this.lastMember){
             List<Long> newKeys = memberMap.keySet().stream().filter(num -> num > lastMember).toList();
             newKeys.forEach(key -> newUsers.add(memberMap.get(key)));
@@ -185,13 +188,7 @@ public class Members implements Serializable {
         return newUsers;
     }
 
-    /**
-     * Gets the size of the conversation.
-     * @return the amount of users in the conversation.
-     */
-    public int getAmountOfMembers(){
-        return memberMap.size();
-    }
+    /\\
     
     /**
      * Checks if a string is of a valid format or not.

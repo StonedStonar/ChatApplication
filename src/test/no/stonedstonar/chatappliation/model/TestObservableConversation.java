@@ -1,8 +1,8 @@
 package no.stonedstonar.chatappliation.model;
 
-import no.stonedstonar.chatapplication.model.conversation.NormalPersonalConversation;
+import no.stonedstonar.chatapplication.model.conversation.NormalObservableConversation;
 import no.stonedstonar.chatapplication.model.conversation.NormalServerConversation;
-import no.stonedstonar.chatapplication.model.conversation.PersonalConversation;
+import no.stonedstonar.chatapplication.model.conversation.ObservableConversation;
 import no.stonedstonar.chatapplication.model.conversation.ServerConversation;
 import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
@@ -27,10 +27,10 @@ import static org.junit.jupiter.api.Assertions.fail;
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
-public class TestPersonalConversation {
+public class TestObservableConversation {
 
 
-    private PersonalConversation personalConversation;
+    private ObservableConversation observableConversation;
 
     private String username;
 
@@ -41,7 +41,7 @@ public class TestPersonalConversation {
      */
     @BeforeEach
     private void makePersonalConversation(){
-        personalConversation = new NormalPersonalConversation(makeServerConversation(), username);
+        observableConversation = new NormalObservableConversation(makeServerConversation(), username);
     }
 
     /**
@@ -89,7 +89,7 @@ public class TestPersonalConversation {
     @DisplayName("Tests if the constructor works with invalid ServerConversation.")
     public void testIfConstructorWorksWithInvalidServerConversation(){
         try {
-            PersonalConversation personalConversation = new NormalPersonalConversation(null, username);
+            ObservableConversation observableConversation = new NormalObservableConversation(null, username);
             fail("Expected to get a IllegalArgumentException since the server conversation is null.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -103,7 +103,7 @@ public class TestPersonalConversation {
     @DisplayName("Tests if constructor works with invalid username.")
     public void testIfConstructorWorksWithInvalidUsername(){
         try {
-            PersonalConversation personalConversation = new NormalPersonalConversation(makeServerConversation(), "");
+            ObservableConversation observableConversation = new NormalObservableConversation(makeServerConversation(), "");
             fail("Expected to get a IllegalArgumentException since the username is null.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -117,7 +117,7 @@ public class TestPersonalConversation {
     @DisplayName("Tests if constructor works with valid input.")
     public void testIfConstructorWorksWithValidInput(){
         try {
-            PersonalConversation personalConversation = new NormalPersonalConversation(makeServerConversation(), username);
+            ObservableConversation observableConversation = new NormalObservableConversation(makeServerConversation(), username);
             assertTrue(true);
         }catch (IllegalArgumentException exception){
             fail("Expected the conversation to be made since the format is valid.");
@@ -131,7 +131,7 @@ public class TestPersonalConversation {
     @DisplayName("Tests if setConversationName works with invalid input.")
     public void testIfSetConversationNameWorksWithInvalidInput(){
         try {
-            personalConversation.setConversationName("");
+            observableConversation.setConversationName("");
             fail("Expected to get a IllegalArgumentException since the format is invalid.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -145,7 +145,7 @@ public class TestPersonalConversation {
     @DisplayName("Tests if setConversationName works with valid input.")
     public void testIfSetConversationNameWorksWithValidInput(){
         try {
-            personalConversation.setConversationName("test2");
+            observableConversation.setConversationName("test2");
             assertTrue(true);
         }catch (IllegalArgumentException exception){
             fail("Expected the name to be changed since the format is invalid.");
@@ -159,7 +159,7 @@ public class TestPersonalConversation {
     @DisplayName("Tests if checkForMessageLogByDate works with invalid input.")
     public void testIfCheckForMessageLogByDateWorksWithInvalidInput(){
         try {
-            personalConversation.checkForMessageLogByDate(null);
+            observableConversation.checkForMessageLogByDate(null);
             fail("Expected to get a IllegalArgumentException since the input is invalid.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -173,7 +173,7 @@ public class TestPersonalConversation {
     @DisplayName("Tests if checkForMessageLogByDate works with valid input.")
     public void testIfCheckForMessageLogByDateWorksWithValidInput(){
         try {
-            personalConversation.checkForMessageLogByDate(LocalDate.now());
+            observableConversation.checkForMessageLogByDate(LocalDate.now());
             assertTrue(true);
         }catch (IllegalArgumentException exception){
             fail("Expected to get a value back since the input is valid.");
@@ -187,7 +187,7 @@ public class TestPersonalConversation {
     @DisplayName("Tests if addNewMessage works with invalid input")
     public void testIfAddNewMessageWorksWithInvalidInput(){
         try {
-            personalConversation.addNewMessage(null);
+            observableConversation.addNewMessage(null);
             fail("Expected to get a IllegalArgumentException since the input is invalid format.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -203,7 +203,7 @@ public class TestPersonalConversation {
     @DisplayName("Tests if addNewMessage works with valid message.")
     public void testIfAddNewMessageWorksWithValidMessage(){
         try {
-            personalConversation.addNewMessage(new TextMessage("asd", username));
+            observableConversation.addNewMessage(new TextMessage("asd", username));
             assertTrue(true);
         }catch (IllegalArgumentException | UsernameNotPartOfConversationException | CouldNotAddMessageException | CouldNotGetMessageLogException exception){
             fail("Expected the masse to be added since its valid format.");
@@ -218,8 +218,8 @@ public class TestPersonalConversation {
     public void testIfAddNewMessageWorksWithDuplicateMessages(){
         try {
             Message message = new TextMessage("Test", username);
-            personalConversation.addNewMessage(message);
-            personalConversation.addNewMessage(message);
+            observableConversation.addNewMessage(message);
+            observableConversation.addNewMessage(message);
             fail("Expected to get a CouldNotAddMessageException since the message is already in the register.");
         }catch (CouldNotAddMessageException exception){
             assertTrue(true);
@@ -235,7 +235,7 @@ public class TestPersonalConversation {
     @DisplayName("Tests if removeMessage works with invalid input.")
     public void testIfRemoveMessageWorksWithInvalidInput(){
         try {
-            personalConversation.removeMessage(null);
+            observableConversation.removeMessage(null);
             fail("Expected to get a IllegalArgumentException since the input is valid.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -251,7 +251,7 @@ public class TestPersonalConversation {
     @DisplayName("Tests if removeMessage works with valid input.")
     public void testIfRemoveMessageWorksWithValidInput(){
         try {
-            personalConversation.removeMessage(message);
+            observableConversation.removeMessage(message);
             assertTrue(true);
         }catch (IllegalArgumentException | CouldNotRemoveMessageException | UsernameNotPartOfConversationException | CouldNotGetMessageLogException exception){
             fail("Expected the message to removed since the input is valid.");
@@ -266,7 +266,7 @@ public class TestPersonalConversation {
     public void testIfRemoveMessageWorksWithMessageNotInConversation(){
         try {
             Message messageToRemove = new TextMessage("ASASD", "bjarne21");
-            personalConversation.removeMessage(messageToRemove);
+            observableConversation.removeMessage(messageToRemove);
             fail("Expected to get a CouldNotRemoveMessageException since the message is not in the conversation.");
         }catch (CouldNotRemoveMessageException exception){
             assertTrue(true);
@@ -282,7 +282,7 @@ public class TestPersonalConversation {
     @DisplayName("Tests if addMessagesWithSameDate works with invalid list.")
     public void testIfAddMessageWithSameDateWorksWithInvalidList(){
         try {
-            personalConversation.addAllMessagesWithSameDate(new ArrayList<>());
+            observableConversation.addAllMessagesWithSameDate(new ArrayList<>());
             fail("Expected to get a IllegalArgumentException since the input is invalid.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -303,7 +303,7 @@ public class TestPersonalConversation {
             Message mess2 = new TextMessage("Test3", "bjarne21");
             messageList.add(mess);
             messageList.add(mess2);
-            personalConversation.addAllMessagesWithSameDate(messageList);
+            observableConversation.addAllMessagesWithSameDate(messageList);
             assertTrue(true);
         }catch (IllegalArgumentException | CouldNotAddMessageException | UsernameNotPartOfConversationException | CouldNotGetMessageLogException exception){
             fail("Expected the messages to be added since the input is valid.");
@@ -322,7 +322,7 @@ public class TestPersonalConversation {
             Message mess2 = new TextMessage("Test3", "bjarne21", LocalDate.of(2019, 01, 01));
             messageList.add(mess);
             messageList.add(mess2);
-            personalConversation.addAllMessagesWithSameDate(messageList);
+            observableConversation.addAllMessagesWithSameDate(messageList);
             fail("Expected to get a CouldNotAddMessageException since one date is invalid.");
         }catch (IllegalArgumentException | CouldNotGetMessageLogException | UsernameNotPartOfConversationException exception){
             fail("Expected to get a CouldNotAddMessageException since one date is invalid.");

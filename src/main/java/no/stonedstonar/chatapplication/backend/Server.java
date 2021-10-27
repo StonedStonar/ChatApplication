@@ -1,7 +1,6 @@
 package no.stonedstonar.chatapplication.backend;
 
 import javafx.application.Platform;
-import no.stonedstonar.chatapplication.model.Members;
 import no.stonedstonar.chatapplication.model.conversation.*;
 import no.stonedstonar.chatapplication.model.conversationregister.server.NormalConversationRegister;
 import no.stonedstonar.chatapplication.model.conversationregister.personal.NormalPersonalConversationRegister;
@@ -254,7 +253,7 @@ public class Server{
         List<Long> conversationNumbers = conversationRequest.getConversationNumberList();
         String username = conversationRequest.getUsernames().get(0);
         List<ServerConversation> list = normalConversationRegister.getAllConversationsOfUsername(username);
-        List<PersonalConversation> personalConversations = new ArrayList<>();
+        List<ObservableConversation> observableConversations = new ArrayList<>();
         if (conversationNumbers.size() < list.size()){
             List<Long> notMatchingNumbers = list.stream().map(convo -> convo.getConversationNumber()).filter(number -> {
                 boolean valid = false;
@@ -264,10 +263,10 @@ public class Server{
                 return valid;
             }).toList();
             notMatchingNumbers.forEach(number -> {
-                personalConversations.add(new NormalPersonalConversation(list.stream().filter(convo -> convo.getConversationNumber() == number).findFirst().get(), username));
+                observableConversations.add(new NormalObservableConversation(list.stream().filter(convo -> convo.getConversationNumber() == number).findFirst().get(), username));
             });
         }
-        PersonalConversationTransport personalConversationTransport = new PersonalConversationTransport(personalConversations);
+        PersonalConversationTransport personalConversationTransport = new PersonalConversationTransport(observableConversations);
         sendObject(personalConversationTransport, socket);
     }
 
@@ -284,8 +283,8 @@ public class Server{
         String nameOfMessageLog = conversationRequest.getNameOfConversation();
         ServerConversation conversation = normalConversationRegister.addNewConversationWithUsernames(usernames, nameOfMessageLog);
         String username = usernames.get(0);
-        PersonalConversation personalConversation = new NormalPersonalConversation(conversation, conversationRequest.getUsernames().get(0));
-        sendObject(personalConversation, socket);
+        ObservableConversation observableConversation = new NormalObservableConversation(conversation, conversationRequest.getUsernames().get(0));
+        sendObject(observableConversation, socket);
     }
 
     /**

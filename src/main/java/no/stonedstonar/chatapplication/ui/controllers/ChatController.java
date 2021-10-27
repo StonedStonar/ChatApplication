@@ -13,7 +13,7 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import no.stonedstonar.chatapplication.frontend.ChatClient;
 import no.stonedstonar.chatapplication.model.conversation.ConversationObserver;
-import no.stonedstonar.chatapplication.model.conversation.PersonalConversation;
+import no.stonedstonar.chatapplication.model.conversation.ObservableConversation;
 import no.stonedstonar.chatapplication.model.conversationregister.personal.PersonalConversationRegister;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
@@ -22,7 +22,6 @@ import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessag
 import no.stonedstonar.chatapplication.model.conversationregister.personal.ConversationRegisterObserver;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
-import no.stonedstonar.chatapplication.model.user.User;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
 import no.stonedstonar.chatapplication.ui.windows.AlertTemplates;
 import no.stonedstonar.chatapplication.ui.windows.LoginWindow;
@@ -104,9 +103,9 @@ public class ChatController implements Controller, ConversationObserver, Convers
 
         newContactButton.setOnAction(event -> {
             try {
-                PersonalConversation personalConversation = chatClient.getConversationByNumber(activeMessageLog);
-                if (personalConversation.checkIfObjectIsObserver(this)){
-                    personalConversation.removeObserver(this);
+                ObservableConversation observableConversation = chatClient.getConversationByNumber(activeMessageLog);
+                if (observableConversation.checkIfObjectIsObserver(this)){
+                    observableConversation.removeObserver(this);
                 }
                 ChatApplicationClient.getChatApplication().setNewScene(NewConversationWindow.getNewUserWindow());
             }catch (IOException exception){
@@ -127,9 +126,9 @@ public class ChatController implements Controller, ConversationObserver, Convers
 
         logOutButton.setOnAction(event -> {
             try {
-                PersonalConversation personalConversation = chatClient.getConversationByNumber(activeMessageLog);
-                if (personalConversation.checkIfObjectIsObserver(this)){
-                    personalConversation.removeObserver(this);
+                ObservableConversation observableConversation = chatClient.getConversationByNumber(activeMessageLog);
+                if (observableConversation.checkIfObjectIsObserver(this)){
+                    observableConversation.removeObserver(this);
                 }
                 executorService.submit(() -> {
                     chatClient.logOutOfUser();
@@ -167,8 +166,8 @@ public class ChatController implements Controller, ConversationObserver, Convers
      */
     private void sendNewMessage(String messageContents, ChatClient chatClient) {
         try {
-            PersonalConversation personalConversation = chatClient.getConversationByNumber(activeMessageLog);
-            chatClient.sendMessage(messageContents, personalConversation);
+            ObservableConversation observableConversation = chatClient.getConversationByNumber(activeMessageLog);
+            chatClient.sendMessage(messageContents, observableConversation);
             textMessageField.textProperty().set("");
         }catch (IllegalArgumentException  exception){
             AlertTemplates.makeAndShowInvalidInputAlert();
@@ -209,11 +208,11 @@ public class ChatController implements Controller, ConversationObserver, Convers
     private void addAllConversations(){
         contactsBox.getChildren().clear();
         ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
-        List<PersonalConversation> messageLogList = chatClient.getMessageLogs();
+        List<ObservableConversation> messageLogList = chatClient.getMessageLogs();
         if (!messageLogList.isEmpty()){
             messageLogList.forEach(this::addNewConversation);
-            PersonalConversation personalConversation = messageLogList.get(0);
-            showMessagesFromConversation(personalConversation);
+            ObservableConversation observableConversation = messageLogList.get(0);
+            showMessagesFromConversation(observableConversation);
         } else {
             VBox vBox = new VBox();
             vBox.setMinWidth(Long.MAX_VALUE);
@@ -225,17 +224,17 @@ public class ChatController implements Controller, ConversationObserver, Convers
 
     /**
      * Makes a new conversation to select on the left side.
-     * @param personalConversation the message log this conversation is about.
+     * @param observableConversation the message log this conversation is about.
      */
-    private void addNewConversation(PersonalConversation personalConversation){
-        System.out.println("Making conversation for " + personalConversation.getConversationNumber());
+    private void addNewConversation(ObservableConversation observableConversation){
+        System.out.println("Making conversation for " + observableConversation.getConversationNumber());
         VBox vBox = new VBox();
         vBox.setMinWidth(Long.MAX_VALUE);
-        String nameOfConversation = personalConversation.getConversationName();
-        String membersOfConversation = personalConversation.getConversationMembers().getAllMembersExceptUsernameAsString(ChatApplicationClient.getChatApplication().getChatClient().getUsername());
+        String nameOfConversation = observableConversation.getConversationName();
+        String membersOfConversation = observableConversation.getConversationMembers().getAllMembersExceptUsernameAsString(ChatApplicationClient.getChatApplication().getChatClient().getUsername());
         Label membersLabel = new Label(membersOfConversation);
         membersLabel.setFont(Font.font(membersLabel.getFont().getName(), FontWeight.NORMAL, FontPosture.REGULAR, 14));
-        long messageLogNumber = personalConversation.getConversationNumber();
+        long messageLogNumber = observableConversation.getConversationNumber();
         if (!nameOfConversation.isEmpty()){
             Label textName = new Label(nameOfConversation);
             vBox.getChildren().add(textName);
@@ -298,25 +297,25 @@ public class ChatController implements Controller, ConversationObserver, Convers
     private void handleConversationSwitch(long conversationNumber) throws CouldNotGetMessageLogException, CouldNotGetConversationException {
         if ((conversationNumber != this.activeMessageLog)){
             ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
-            PersonalConversation lastPersonalConversation = chatClient.getConversationByNumber(this.activeMessageLog);
-            if (lastPersonalConversation.checkIfObjectIsObserver(this)){
-                System.out.println("The chat controller is " + lastPersonalConversation.checkIfObjectIsObserver(this));
-                lastPersonalConversation.removeObserver(this);
+            ObservableConversation lastObservableConversation = chatClient.getConversationByNumber(this.activeMessageLog);
+            if (lastObservableConversation.checkIfObjectIsObserver(this)){
+                System.out.println("The chat controller is " + lastObservableConversation.checkIfObjectIsObserver(this));
+                lastObservableConversation.removeObserver(this);
             }
-            PersonalConversation personalConversation = chatClient.getConversationByNumber(conversationNumber);
-            showMessagesFromConversation(personalConversation);
+            ObservableConversation observableConversation = chatClient.getConversationByNumber(conversationNumber);
+            showMessagesFromConversation(observableConversation);
         }
     }
 
     /**
      * Loads the messages of this conversation.
-     * @param personalConversation the message log you want to load.
+     * @param observableConversation the message log you want to load.
      */
-    public void showMessagesFromConversation(PersonalConversation personalConversation){
+    public void showMessagesFromConversation(ObservableConversation observableConversation){
         messageBox.getChildren().clear();
-        personalConversation.registerObserver(this);
-        List<Message> messages = personalConversation.getAllMessagesOfConversationAsList();
-        activeMessageLog = personalConversation.getConversationNumber();
+        observableConversation.registerObserver(this);
+        List<Message> messages = observableConversation.getAllMessagesOfConversationAsList();
+        activeMessageLog = observableConversation.getConversationNumber();
         ChatApplicationClient.getChatApplication().getExecutor().submit(()-> {
             ChatApplicationClient.getChatApplication().getChatClient().setMessageLogFocus(activeMessageLog);
         });
@@ -435,9 +434,9 @@ public class ChatController implements Controller, ConversationObserver, Convers
     }
 
     @Override
-    public void updateConversation(PersonalConversation personalConversation, boolean removed) {
+    public void updateConversation(ObservableConversation observableConversation, boolean removed) {
         Platform.runLater(() -> {
-            addNewConversation(personalConversation);
+            addNewConversation(observableConversation);
         });
     }
 }

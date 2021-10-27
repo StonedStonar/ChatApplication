@@ -1,6 +1,6 @@
 package no.stonedstonar.chatapplication.frontend;
 
-import no.stonedstonar.chatapplication.model.conversation.PersonalConversation;
+import no.stonedstonar.chatapplication.model.conversation.ObservableConversation;
 import no.stonedstonar.chatapplication.model.conversationregister.personal.NormalPersonalConversationRegister;
 import no.stonedstonar.chatapplication.model.conversationregister.personal.PersonalConversationRegister;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
@@ -21,7 +21,6 @@ import no.stonedstonar.chatapplication.model.user.User;
 import no.stonedstonar.chatapplication.networktransport.*;
 import no.stonedstonar.chatapplication.networktransport.builder.ConversationRequestBuilder;
 import no.stonedstonar.chatapplication.networktransport.builder.UserRequestBuilder;
-import no.stonedstonar.chatapplication.model.user.BasicEndUser;
 
 import java.io.*;
 import java.net.*;
@@ -104,7 +103,7 @@ public class ChatClient {
 
         runCheckForMessageThread = true;
         try {
-            PersonalConversation personalMessageLog = getConversationByNumber(messageLogFocus);
+            ObservableConversation personalMessageLog = getConversationByNumber(messageLogFocus);
             executors.submit(() -> {
                 checkCurrentMessageLogForUpdates(personalMessageLog);
             });
@@ -139,9 +138,9 @@ public class ChatClient {
 
     /**
      * Checks the current message log for new messages.
-     * @param personalConversation the active message log.
+     * @param observableConversation the active message log.
      */
-    public void checkCurrentMessageLogForUpdates(PersonalConversation personalConversation){
+    public void checkCurrentMessageLogForUpdates(ObservableConversation observableConversation){
         int count = 0;
         do {
             try {
@@ -151,7 +150,7 @@ public class ChatClient {
                     count = 0;
                 }else {
                     Socket socket = new Socket(host, portNumber);
-                    checkMessageLogForNewMessages(personalConversation, socket);
+                    checkMessageLogForNewMessages(observableConversation, socket);
                     count += 1;
                 }
                 Thread.sleep(2000);
@@ -166,7 +165,7 @@ public class ChatClient {
      * Returns the message log of the user.
      * @return the personal message log of the user.
      */
-    public List<PersonalConversation> getMessageLogs(){
+    public List<ObservableConversation> getMessageLogs(){
         return personalConversationRegister.getMessageLogList();
     }
 
@@ -221,7 +220,7 @@ public class ChatClient {
             ConversationRequest conversationRequest = conversationRequestBuilder.build();
             sendObject(conversationRequest, socket);
             Object object = getObject(socket);
-            if (object instanceof PersonalConversation personalConversation){
+            if (object instanceof ObservableConversation observableConversation){
 
             }else if (object instanceof CouldNotAddMessageLogException exception){
                 throw exception;
@@ -239,20 +238,20 @@ public class ChatClient {
     /**
      * Sends a message to a person if this client is logged in.
      * @param messageContents the contents of the message.
-     * @param personalConversation the conversation that holds the conversation number.
+     * @param observableConversation the conversation that holds the conversation number.
      * @throws CouldNotGetMessageException gets thrown if the server could not add the message.
      * @throws CouldNotGetMessageLogException gets thrown if the server could not get the message log.
      * @throws IOException gets thrown if something fails in the socket.
      * @throws InvalidResponseException gets thrown if the class could not be found for that object or the response is a different object than expected.
      */
-    public void sendMessage(String messageContents, PersonalConversation personalConversation) throws IOException, CouldNotAddMessageException, CouldNotGetMessageLogException, InvalidResponseException {
+    public void sendMessage(String messageContents, ObservableConversation observableConversation) throws IOException, CouldNotAddMessageException, CouldNotGetMessageLogException, InvalidResponseException {
         checkString(messageContents, "message");
-        checkIfObjectIsNull(personalConversation, "message log");
+        checkIfObjectIsNull(observableConversation, "message log");
         try (Socket socket = new Socket(host, portNumber)){
             TextMessage textMessage = new TextMessage(messageContents, basicEndUser.getUsername());
             ArrayList<Message> textMessageList = new ArrayList<>();
             textMessageList.add(textMessage);
-            MessageTransport messageTransport = new MessageTransport(textMessageList, personalConversation, LocalDate.now());
+            MessageTransport messageTransport = new MessageTransport(textMessageList, observableConversation, LocalDate.now());
             sendObject(messageTransport, socket);
             Object object = getObject(socket);
             if (object instanceof  MessageTransport transport){
@@ -276,7 +275,7 @@ public class ChatClient {
      * @return the message log that matches that number.
      * @throws CouldNotGetConversationException gets thrown if the conversation could not be found.
      */
-    public PersonalConversation getConversationByNumber(long messageLogNumber) throws CouldNotGetConversationException {
+    public ObservableConversation getConversationByNumber(long messageLogNumber) throws CouldNotGetConversationException {
         return personalConversationRegister.getConversationByNumber(messageLogNumber);
     }
 
@@ -316,31 +315,31 @@ public class ChatClient {
      * @param namesToRemove
      * @param conversationName
      */
-    public void editConversation(List<String> namesToAdd, List<String> namesToRemove, String conversationName, PersonalConversation personalConversation){
+    public void editConversation(List<String> namesToAdd, List<String> namesToRemove, String conversationName, ObservableConversation observableConversation){
         checkIfObjectIsNull(conversationName, "conversation name");
         checkIfObjectIsNull(namesToAdd, "names to add");
         checkIfObjectIsNull(namesToRemove, "names to remove");
-        checkIfObjectIsNull(personalConversation, "personal conversation");
+        checkIfObjectIsNull(observableConversation, "personal conversation");
         try {
             if (!conversationName.isEmpty()){
-                editConversationName(personalConversation, conversationName);
+                editConversationName(observableConversation, conversationName);
             }
             if (!namesToAdd.isEmpty()){
-                addOrRemoveMembers(personalConversation, namesToAdd, false);
+                addOrRemoveMembers(observableConversation, namesToAdd, false);
             }
             if (!namesToRemove.isEmpty()){
-                addOrRemoveMembers(personalConversation, namesToRemove, true);
+                addOrRemoveMembers(observableConversation, namesToRemove, true);
             }
         }
     }
 
-    private void editConversationName(PersonalConversation personalConversation, String newName){
+    private void editConversationName(ObservableConversation observableConversation, String newName){
 
     }
 
-    private void addOrRemoveMembers(PersonalConversation personalConversation, List<String> names, boolean remove) throws CouldNotGetConversationException, IOException, InvalidResponseException, CouldNotAddMemberException {
+    private void addOrRemoveMembers(ObservableConversation observableConversation, List<String> names, boolean remove) throws CouldNotGetConversationException, IOException, InvalidResponseException, CouldNotAddMemberException {
         try (Socket socket = new Socket(host, portNumber)){
-            ConversationRequestBuilder conversationRequestBuilder = new ConversationRequestBuilder().addConversationNumber(personalConversation.getConversationNumber()).addUsernames(names);
+            ConversationRequestBuilder conversationRequestBuilder = new ConversationRequestBuilder().addConversationNumber(observableConversation.getConversationNumber()).addUsernames(names);
             if (remove){
                 conversationRequestBuilder.setRemoveMembers(true);
             }else {
@@ -382,10 +381,10 @@ public class ChatClient {
             socket.setKeepAlive(true);
             SetKeepAliveRequest setKeepAliveRequest = new SetKeepAliveRequest(true);
             sendObject(setKeepAliveRequest, socket);
-            List<PersonalConversation> messageLogList = personalConversationRegister.getMessageLogList();
-            Iterator<PersonalConversation> it = messageLogList.iterator();
+            List<ObservableConversation> messageLogList = personalConversationRegister.getMessageLogList();
+            Iterator<ObservableConversation> it = messageLogList.iterator();
             while(it.hasNext()) {
-                PersonalConversation log = it.next();
+                ObservableConversation log = it.next();
                 checkMessageLogForNewMessages(log, socket);
             }
             SetKeepAliveRequest notKeepAlive = new SetKeepAliveRequest(false);
@@ -398,7 +397,7 @@ public class ChatClient {
 
     /**
      * Checks for new messages and adds them if need be.
-     * @param personalConversation the message log you want to check.
+     * @param observableConversation the message log you want to check.
      * @param socket the socket the communication happens over.
      * @throws IOException gets thrown if the socket failed to be made.
      * @throws InvalidResponseException gets thrown if the class could not be found for that object or the response is a different object than expected.
@@ -406,12 +405,12 @@ public class ChatClient {
      * @throws CouldNotGetMessageLogException gets thrown if the server can't find the message log.
      * @throws UsernameNotPartOfConversationException gets thrown if the user is not a part of the specified conversation.
      */
-    private synchronized void checkMessageLogForNewMessages(PersonalConversation personalConversation, Socket socket) throws IOException, CouldNotAddMessageException, CouldNotGetMessageLogException, InvalidResponseException, UsernameNotPartOfConversationException {
+    private synchronized void checkMessageLogForNewMessages(ObservableConversation observableConversation, Socket socket) throws IOException, CouldNotAddMessageException, CouldNotGetMessageLogException, InvalidResponseException, UsernameNotPartOfConversationException {
         try {
-            logger.log(Level.INFO, "Syncing message log " + personalConversation.getConversationNumber());
+            logger.log(Level.INFO, "Syncing message log " + observableConversation.getConversationNumber());
             LocalDate localDate = LocalDate.now();
-            long lastMessageNumber = personalConversation.getMessageLogForDate(localDate, basicEndUser.getUsername()).getLastMessageNumber();
-            long messageLogNumber = personalConversation.getConversationNumber();
+            long lastMessageNumber = observableConversation.getMessageLogForDate(localDate, basicEndUser.getUsername()).getLastMessageNumber();
+            long messageLogNumber = observableConversation.getConversationNumber();
             ArrayList<String> name = new ArrayList<>();
             name.add(basicEndUser.getUsername());
             ConversationRequest conversationRequest = new ConversationRequestBuilder().setCheckForMessages(true).addLastMessageNumber(lastMessageNumber).addUsernames(name).addConversationNumber(messageLogNumber).addDate(LocalDate.now()).build();
@@ -422,7 +421,7 @@ public class ChatClient {
                 System.out.println("List size:  " + messageTransport.getMessages().size());
                 if (!textMessageList.isEmpty()) {
                     //Todo: Se om denne kan endres slik at flere meldinger kan legges til fra forksjellig dato.
-                    personalConversation.addAllMessagesWithSameDate(textMessageList);
+                    observableConversation.addAllMessagesWithSameDate(textMessageList);
                 }
             } else if (object instanceof CouldNotGetMessageLogException exception) {
                 throw exception;
@@ -452,10 +451,10 @@ public class ChatClient {
             sendObject(conversationRequest, socket);
             Object object = getObject(socket);
             if(object instanceof PersonalConversationTransport personalConversationTransport){
-                Iterator<PersonalConversation> it = personalConversationTransport.getPersonalConversationList().iterator();
+                Iterator<ObservableConversation> it = personalConversationTransport.getPersonalConversationList().iterator();
                 while (it.hasNext()){
-                    PersonalConversation personalConversation = it.next();
-                    personalConversationRegister.addConversation(personalConversation);
+                    ObservableConversation observableConversation = it.next();
+                    personalConversationRegister.addConversation(observableConversation);
                 }
             }else if (object instanceof IllegalArgumentException exception){
                 throw exception;

@@ -1,6 +1,6 @@
 package no.stonedstonar.chatapplication.model.conversation;
 
-import no.stonedstonar.chatapplication.model.Members;
+import no.stonedstonar.chatapplication.model.membersregister.ConversationMembers;
 import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemberException;
@@ -30,10 +30,11 @@ public class NormalServerConversation implements ServerConversation {
 
     private long conversationNumber;
 
-    private Members members;
+    private ConversationMembers conversationMembers;
 
     //Todo: Lag metoder så vi kan spørre etter de siste 100 meldingene eller lignende.
     // Kanskje heller lage metoder som ser på en dato.
+
     /**
       * Makes an instance of the conversation class.
       * @param conversationNumber the number this conversation is.
@@ -44,8 +45,8 @@ public class NormalServerConversation implements ServerConversation {
         checkIfListIsValid(usernames, "usernames");
         conversationDateMade = LocalDate.now();
         messageLogList = new ArrayList<>();
-        members = new Members();
-        members.addAllMembers(usernames);
+        conversationMembers = new ConversationMembers();
+        conversationMembers.addAllMembers(usernames);
         this.conversationNumber = conversationNumber;
         conversationName = "";
     }
@@ -53,18 +54,18 @@ public class NormalServerConversation implements ServerConversation {
     /**
      * Makes an instance of the conversation class.
      * @param conversationNumber the conversation number this class is going to have.
-     * @param members the members of the class.
+     * @param conversationMembers the members of the class.
      * @param dateMade the date this class was made.
      * @param conversationName the name of the conversation.
      */
-    protected NormalServerConversation(long conversationNumber, Members members, LocalDate dateMade, String conversationName){
+    protected NormalServerConversation(long conversationNumber, ConversationMembers conversationMembers, LocalDate dateMade, String conversationName){
         checkIfLongIsNegative(conversationNumber, "conversation number");
-        checkIfObjectIsNull(members, "members");
+        checkIfObjectIsNull(conversationMembers, "members");
         checkIfDateIsValid(dateMade);
         checkString(conversationName, "conversation name");
         this.conversationName = conversationName;
         this.conversationNumber = conversationNumber;
-        this.members = members;
+        this.conversationMembers = conversationMembers;
         this.conversationDateMade = dateMade;
     }
 
@@ -73,13 +74,13 @@ public class NormalServerConversation implements ServerConversation {
      * @param conversationName the name of the conversation.
      * @param conversationNumber the number this conversation is.
      */
-    public NormalServerConversation(String conversationName, long conversationNumber, Members members) {
+    public NormalServerConversation(String conversationName, long conversationNumber, ConversationMembers conversationMembers) {
         checkString(conversationName, "conversation name");
         checkIfLongIsNegative(conversationNumber, "conversation number");
-        checkIfObjectIsNull(members, "members");
+        checkIfObjectIsNull(conversationMembers, "members");
         this.conversationName = conversationName;
         this.conversationNumber = conversationNumber;
-        this.members = members;
+        this.conversationMembers = conversationMembers;
     }
 
     /**
@@ -95,7 +96,7 @@ public class NormalServerConversation implements ServerConversation {
 
     @Override
     public boolean checkIfUsernameIsMember(String username) {
-        return members.checkIfUsernameIsMember(username);
+        return conversationMembers.checkIfUsernameIsMember(username);
     }
 
     @Override
@@ -104,8 +105,8 @@ public class NormalServerConversation implements ServerConversation {
     }
 
     @Override
-    public Members getConversationMembers() {
-        return members;
+    public ConversationMembers getConversationMembers() {
+        return conversationMembers;
     }
 
     @Override
@@ -204,17 +205,17 @@ public class NormalServerConversation implements ServerConversation {
 
     @Override
     public void addMember(String username) throws CouldNotAddMemberException {
-        members.addMember(username);
+        conversationMembers.addMember(username);
     }
 
     @Override
     public void removeMember(String username) throws CouldNotRemoveMemberException {
-        members.removeMember(username);
+        conversationMembers.removeMember(username);
     }
 
     @Override
     public void addAllMembers(List<String> usernames) throws CouldNotAddMemberException {
-        members.addAllMembers(usernames);
+        conversationMembers.addAllMembers(usernames);
 
     }
 

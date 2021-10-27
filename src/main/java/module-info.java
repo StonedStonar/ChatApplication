@@ -30,4 +30,8 @@ module no.stonedstonar.chatapplication {
     opens no.stonedstonar.chatapplication.model.user to javafx.fxml, javafx.graphics;
     exports no.stonedstonar.chatapplication.model.userregister;
     opens no.stonedstonar.chatapplication.model.userregister to javafx.fxml, javafx.graphics;
+    exports no.stonedstonar.chatapplication.model.member;
+    opens no.stonedstonar.chatapplication.model.member to javafx.fxml, javafx.graphics;
+    exports no.stonedstonar.chatapplication.model.membersregister;
+    opens no.stonedstonar.chatapplication.model.membersregister to javafx.fxml, javafx.graphics;
 }

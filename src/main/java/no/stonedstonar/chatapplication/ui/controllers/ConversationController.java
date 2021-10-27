@@ -10,13 +10,13 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import no.stonedstonar.chatapplication.frontend.ChatClient;
-import no.stonedstonar.chatapplication.model.conversation.PersonalConversation;
+import no.stonedstonar.chatapplication.model.member.ConversationMember;
+import no.stonedstonar.chatapplication.model.conversation.ObservableConversation;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
-import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
 import no.stonedstonar.chatapplication.ui.windows.AlertTemplates;
 import no.stonedstonar.chatapplication.ui.windows.ChatWindow;
@@ -73,7 +73,7 @@ public class ConversationController implements Controller {
 
     private boolean editConversation;
 
-    private PersonalConversation conversationToEdit;
+    private ObservableConversation conversationToEdit;
 
     /**
       * Makes an instance of the ConversationController class.
@@ -161,7 +161,7 @@ public class ConversationController implements Controller {
             try {
                 if (editConversation){
                     //Todo: Fix it so that a conversation can change name and add/remove members.
-                    List<String> originalMembers = conversationToEdit.getConversationMembers().getAllMembers(chatClient.getUser());
+                    List<String> originalMembers = conversationToEdit.getConversationMembers().getNameOfAllMembers(chatClient.getUser());
                     List<String> newMembers = usernames.stream().filter(name -> originalMembers.stream().noneMatch(user -> user.equals(name))).toList();
                     chatClient.editConversation(newMembers, removedUsernames, conversationField.getText(), conversationToEdit);
                 }else {
@@ -271,12 +271,11 @@ public class ConversationController implements Controller {
      * Sets the conversation window to edit mode.
      * @param conversationNumber the conversation number that you want to edit.
      * @throws CouldNotGetConversationException gets thrown if the conversation could not be gotten.
-     * @throws CouldNotGetMessageLogException gets thrown if a message log could not be located.
      */
-    public void setEditMode(long conversationNumber) throws CouldNotGetConversationException, CouldNotGetMessageLogException {
+    public void setEditMode(long conversationNumber) throws CouldNotGetConversationException {
         ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
         conversationToEdit = chatClient.getConversationByNumber(conversationNumber);
-        List<String> names = conversationToEdit.getConversationMembers().getAllMembers(chatClient.getUser());
+        List<String> names = conversationToEdit.getConversationMembers().getNameOfAllMembers(chatClient.getUser()).stream().map(ConversationMember::getUsername).toList();
         emptyContent();
         usernames.addAll(names);
         editConversation = true;

@@ -1,6 +1,6 @@
 package no.stonedstonar.chatapplication.model.conversation;
 
-import no.stonedstonar.chatapplication.model.Members;
+import no.stonedstonar.chatapplication.model.membersregister.ConversationMembers;
 import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemberException;
@@ -24,7 +24,7 @@ import java.util.Optional;
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class NormalPersonalConversation implements PersonalConversation, Serializable {
+public class NormalObservableConversation implements ObservableConversation, Serializable {
 
     private LocalDate dateMade;
 
@@ -34,7 +34,7 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
 
     private long conversationNumber;
 
-    private Members members;
+    private ConversationMembers conversationMembers;
 
     private final List<ConversationObserver> conversationObservers;
 
@@ -48,14 +48,14 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
      * @param serverConversation the conversation this personal conversation is going to imitate.
      * @param username the username of the person who is a part of this conversation.
      */
-    public NormalPersonalConversation(ServerConversation serverConversation, String username) {
+    public NormalObservableConversation(ServerConversation serverConversation, String username) {
         checkIfObjectIsNull(serverConversation, "conversation");
         conversationObservers = new ArrayList<>();
         this.conversationName = serverConversation.getConversationName();
         this.conversationNumber = serverConversation.getConversationNumber();
         this.dateMade = serverConversation.getDateMade();
         this.personalMessageLogs = new ArrayList<>();
-        this.members = serverConversation.getConversationMembers();
+        this.conversationMembers = serverConversation.getConversationMembers();
         List<ServerMessageLog> messageLogList = serverConversation.getMessageLogs(username);
         messageLogList.forEach(messageLog -> {
             PersonalMessageLog personalMessageLog = new PersonalMessageLog(messageLog);
@@ -139,8 +139,8 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
     }
 
     @Override
-    public Members getConversationMembers() {
-        return members;
+    public ConversationMembers getConversationMembers() {
+        return conversationMembers;
     }
 
     @Override
@@ -191,7 +191,7 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
 
     @Override
     public boolean checkIfUsernameIsMember(String username) {
-        return members.checkIfUsernameIsMember(username);
+        return conversationMembers.checkIfUsernameIsMember(username);
     }
 
     @Override
@@ -222,7 +222,7 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
         LocalDate testDateFromOneMessage = newMessageList.get(0).getDate();
         newMessageList.forEach(message -> checkIfDateIsValid(message.getDate()));
         String username = newMessageList.get(0).getFromUsername();
-        boolean allAreMembers = newMessageList.stream().allMatch(message -> members.checkIfUsernameIsMember(message.getFromUsername()));
+        boolean allAreMembers = newMessageList.stream().allMatch(message -> conversationMembers.checkIfUsernameIsMember(message.getFromUsername()));
         boolean validDate = newMessageList.stream().allMatch(message -> message.getDate().isEqual(testDateFromOneMessage));
         if (validDate && allAreMembers){
             PersonalMessageLog messageLog = getMessageLogByTheDate(testDateFromOneMessage, username);
@@ -249,17 +249,17 @@ public class NormalPersonalConversation implements PersonalConversation, Seriali
 
     @Override
     public void addMember(String username) throws CouldNotAddMemberException {
-        members.addMember(username);
+        conversationMembers.addMember(username);
     }
 
     @Override
     public void removeMember(String username) throws CouldNotRemoveMemberException {
-        members.removeMember(username);
+        conversationMembers.removeMember(username);
     }
 
     @Override
     public void addAllMembers(List<String> usernames) throws CouldNotAddMemberException {
-        members.addAllMembers(usernames);
+        conversationMembers.addAllMembers(usernames);
     }
 
     /**

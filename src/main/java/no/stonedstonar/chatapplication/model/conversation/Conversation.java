@@ -1,6 +1,6 @@
 package no.stonedstonar.chatapplication.model.conversation;
 
-import no.stonedstonar.chatapplication.model.Members;
+import no.stonedstonar.chatapplication.model.membersregister.ConversationMembers;
 import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemberException;
@@ -9,7 +9,6 @@ import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMes
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.messagelog.MessageLog;
-import no.stonedstonar.chatapplication.model.messagelog.ServerMessageLog;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -31,7 +30,7 @@ public interface Conversation {
      * Gets the conversations members.
      * @return the conversations members.
      */
-    Members getConversationMembers();
+    ConversationMembers getConversationMembers();
 
     /**
      * Gets the date the conversation was made.
