@@ -1,7 +1,7 @@
 package no.stonedstonar.chatapplication.model.membersregister;
 /**
  *
- * @version 0.1
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public class PersonalConversationMembers {
