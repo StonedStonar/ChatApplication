@@ -1,8 +1,7 @@
-package no.stonedstonar.chatapplication.networktransport;
+package no.stonedstonar.chatapplication.network.transport;
 
-import no.stonedstonar.chatapplication.model.user.BasicEndUser;
 import no.stonedstonar.chatapplication.model.conversationregister.personal.NormalPersonalConversationRegister;
-import no.stonedstonar.chatapplication.model.user.EndUser;
+import no.stonedstonar.chatapplication.model.user.User;
 
 import java.io.Serializable;
 
@@ -14,17 +13,17 @@ import java.io.Serializable;
 public class LoginTransport implements Serializable {
 
 
-    private EndUser endUser;
+    private User user;
 
     private NormalPersonalConversationRegister personalConversationRegister;
 
     /**
       * Makes an instance of the LoginTransport class.
       */
-    public LoginTransport(EndUser endUser, NormalPersonalConversationRegister personalConversationRegister){
-        checkIfObjectIsNull(endUser, "end user");
+    public LoginTransport(User user, NormalPersonalConversationRegister personalConversationRegister){
+        checkIfObjectIsNull(user, "end user");
         checkIfObjectIsNull(personalConversationRegister, "message log list");
-        this.endUser = endUser;
+        this.user = user;
         this.personalConversationRegister = personalConversationRegister;
     }
 
@@ -32,8 +31,8 @@ public class LoginTransport implements Serializable {
      * Gets the user from the transport.
      * @return the user.
      */
-    public EndUser getUser() {
-        return endUser;
+    public User getUser() {
+        return user;
     }
 
     /**

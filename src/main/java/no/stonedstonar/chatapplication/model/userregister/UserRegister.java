@@ -1,6 +1,8 @@
 package no.stonedstonar.chatapplication.model.userregister;
 
+import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
+import no.stonedstonar.chatapplication.model.exception.user.CouldNotRemoveUserException;
 import no.stonedstonar.chatapplication.model.user.User;
 import java.io.Serializable;
 
@@ -27,4 +29,18 @@ public interface UserRegister extends Serializable {
      *         <code>false</code> if this username does not match any user.
      */
     boolean checkIfUsernameIsTaken(String username);
+
+    /**
+     * Adds a user to the register.
+     * @param user the user you want to add.
+     * @throws CouldNotAddUserException gets thrown if the user could not be added to the register.
+     */
+    void addUser(User user) throws CouldNotAddUserException;
+
+    /**
+     * Removes a user from the register.
+     * @param user the user you want to remove.
+     * @throws CouldNotRemoveUserException gets thrown if the user could not be removed.
+     */
+    void removeUser(User user) throws CouldNotRemoveUserException;
 }

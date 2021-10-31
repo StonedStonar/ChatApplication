@@ -10,7 +10,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import no.stonedstonar.chatapplication.frontend.ChatClient;
-import no.stonedstonar.chatapplication.model.member.ConversationMember;
 import no.stonedstonar.chatapplication.model.conversation.ObservableConversation;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
@@ -161,7 +160,7 @@ public class ConversationController implements Controller {
             try {
                 if (editConversation){
                     //Todo: Fix it so that a conversation can change name and add/remove members.
-                    List<String> originalMembers = conversationToEdit.getConversationMembers().getNameOfAllMembers(chatClient.getUser());
+                    List<String> originalMembers = conversationToEdit.getMembers().getNameOfAllMembers(chatClient.getUser().getUsername());
                     List<String> newMembers = usernames.stream().filter(name -> originalMembers.stream().noneMatch(user -> user.equals(name))).toList();
                     chatClient.editConversation(newMembers, removedUsernames, conversationField.getText(), conversationToEdit);
                 }else {
@@ -275,7 +274,7 @@ public class ConversationController implements Controller {
     public void setEditMode(long conversationNumber) throws CouldNotGetConversationException {
         ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
         conversationToEdit = chatClient.getConversationByNumber(conversationNumber);
-        List<String> names = conversationToEdit.getConversationMembers().getNameOfAllMembers(chatClient.getUser()).stream().map(ConversationMember::getUsername).toList();
+        List<String> names = conversationToEdit.getMembers().getNameOfAllMembers(chatClient.getUser().getUsername());
         emptyContent();
         usernames.addAll(names);
         editConversation = true;

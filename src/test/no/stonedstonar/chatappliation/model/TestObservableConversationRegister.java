@@ -13,6 +13,8 @@ import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotP
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
+import no.stonedstonar.chatapplication.model.member.ConversationMember;
+import no.stonedstonar.chatapplication.model.member.Member;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -50,7 +52,7 @@ public class TestObservableConversationRegister {
     private List<ServerConversation> makeServerConversation(){
         List<ServerConversation> serverConversations = new ArrayList<>();
         try {
-            ServerConversation testConversation = new NormalServerConversation(1L, makeUsernames());
+            ServerConversation testConversation = new NormalServerConversation(1L, makeMembers());
             testConversation.addNewMessage(new TextMessage("Hello its me", "bjarne21"));
             testConversation.addNewMessage(new TextMessage("Hey bjarne21 its time to join the darkside.", "lordVader"));
             serverConversations.add(testConversation);
@@ -75,11 +77,11 @@ public class TestObservableConversationRegister {
      * Makes a basic list with members of a conversation.
      * @return a list with some usernames.
      */
-    private List<String> makeUsernames(){
-        List<String> usernames = new ArrayList<>();
+    private List<Member> makeMembers(){
+        List<Member> usernames = new ArrayList<>();
         username = "bjarne21";
-        usernames.add(username);
-        usernames.add("lordVader");
+        usernames.add(new ConversationMember(username));
+        usernames.add(new ConversationMember("lordVader"));
         return usernames;
     }
 

@@ -8,6 +8,9 @@ import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddC
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotRemoveConversationException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
+import no.stonedstonar.chatapplication.model.member.ConversationMember;
+import no.stonedstonar.chatapplication.model.member.Member;
+import no.stonedstonar.chatapplication.model.membersregister.Members;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,18 +39,19 @@ public class TestNormalConversationRegister {
     private void makeTestConversation(){
         try {
             conversationRegister = new NormalConversationRegister();
-            username = "bjarne22";
-            String useranme2 = "lordVader";
-            String user3 = "fjell";
-            String user4 = "pål15";
-            List<String> usernames1 = new ArrayList<>();
+            Member member5 = new ConversationMember("bjarne22");
+            username = member5.getUsername();
+            Member useranme2 = new ConversationMember("lordVader");
+            Member user3 = new ConversationMember("fjell");
+            Member user4 = new ConversationMember("pål15");
+            List<Member> usernames1 = new ArrayList<>();
             usernames1.add(useranme2);
-            usernames1.add(username);
-            List<String> usernames2 = new ArrayList<>();
+            usernames1.add(member5);
+            List<Member> usernames2 = new ArrayList<>();
             usernames2.add(user3);
             usernames2.add(user4);
-            usernames2.add(username);
-            List<String> usernames3 = new ArrayList<>();
+            usernames2.add(member5);
+            List<Member> usernames3 = new ArrayList<>();
             usernames3.add(useranme2);
             usernames3.add(user4);
             conversationRegister.addNewConversationWithUsernames(usernames1, "");
@@ -69,7 +73,7 @@ public class TestNormalConversationRegister {
     @DisplayName("Tests if addNewConversationWithUsernames works with invalid usernames.")
     public void testIfAddNewConversationWithUsernamesWorksWithInvalidUsernames(){
         try {
-            List<String> list = new ArrayList<>();
+            List<Member> list = new ArrayList<>();
             conversationRegister.addNewConversationWithUsernames(list, "");
             fail("Expected to get a IllegalArgumentException since the list size is zero.");
         }catch (IllegalArgumentException exception){
@@ -86,9 +90,9 @@ public class TestNormalConversationRegister {
     @DisplayName("Tests if addNewConversationWithUsernames works with invalid conversation name.")
     public void testIfAddNewConversationWithUsernamesWorksWithInvalidConversationName(){
         try {
-            List<String> list = new ArrayList<>();
-            list.add("bjarne32");
-            list.add("bass");
+            List<Member> list = new ArrayList<>();
+            list.add(new ConversationMember("bjarne32"));
+            list.add(new ConversationMember("bass"));
             conversationRegister.addNewConversationWithUsernames(list, null);
             fail("Expected to get a IllegalArgumentException since the name is set to null.");
         }catch (CouldNotAddConversationException | CouldNotAddMemberException exception){
@@ -105,9 +109,9 @@ public class TestNormalConversationRegister {
     @DisplayName("Tests if addNewConversationWithUsernames works with valid input.")
     public void testIfAddNewConversationWithUsernamesWorksWithValidInput(){
         try {
-            List<String> list = new ArrayList<>();
-            list.add("bjarne32");
-            list.add("bass");
+            List<Member> list = new ArrayList<>();
+            list.add(new ConversationMember("bjarne32"));
+            list.add(new ConversationMember("bass"));
             conversationRegister.addNewConversationWithUsernames(list, "");
             assertTrue(true);
         }catch (IllegalArgumentException | CouldNotAddConversationException | CouldNotAddMemberException exception){
@@ -206,10 +210,10 @@ public class TestNormalConversationRegister {
     public void testIfRemoveConversationWorksWithConversationNotInRegister(){
         try {
             NormalConversationRegister normalConversationRegister = (NormalConversationRegister) conversationRegister;
-            List<String> usernames = new ArrayList<>();
-            usernames.add("fjar");
-            usernames.add("blair");
-            Conversation conversation = new NormalServerConversation(4L, usernames);
+            List<Member> list = new ArrayList<>();
+            list.add(new ConversationMember("bjarne32"));
+            list.add(new ConversationMember("bass"));
+            Conversation conversation = new NormalServerConversation(4L, list);
             normalConversationRegister.removeConversation(conversation);
         } catch (CouldNotAddMemberException exception) {
             fail("Expected the test conversation to be made without problems since there is no duplicate usernames.");

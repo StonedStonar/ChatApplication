@@ -25,6 +25,16 @@ public final class ConversationMember implements Serializable, Member {
         this.memberNumber = memberNumber;
     }
 
+    /**
+     * Makes an instance of the Member class.
+     * @param username the username of the member.
+     */
+    public ConversationMember(String username){
+        memberNumber = -1;
+        checkString(username, "username");
+        this.username = username;
+    }
+
     @Override
     public String getUsername() {
         return username;

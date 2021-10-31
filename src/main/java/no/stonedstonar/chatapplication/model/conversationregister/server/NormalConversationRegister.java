@@ -1,12 +1,12 @@
 package no.stonedstonar.chatapplication.model.conversationregister.server;
 
-import no.stonedstonar.chatapplication.backend.Server;
 import no.stonedstonar.chatapplication.model.conversation.*;
 import no.stonedstonar.chatapplication.model.conversationregister.personal.NormalPersonalConversationRegister;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotRemoveConversationException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
+import no.stonedstonar.chatapplication.model.member.Member;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,22 +33,22 @@ public class NormalConversationRegister implements ServerConversationRegister {
     @Override
     public List<ServerConversation> getAllConversationsOfUsername(String username){
         checkString(username, "username");
-        return conversationList.stream().filter(con -> con.getConversationMembers().checkIfUsernameIsMember(username)).toList();
+        return conversationList.stream().filter(con -> con.getMembers().checkIfUsernameIsMember(username)).toList();
     }
 
     @Override
     public NormalPersonalConversationRegister getAllConversationsUserHasAndMakePersonalRegister(String username){
         List<ServerConversation> conversations = getAllConversationsOfUsername(username);
         return new NormalPersonalConversationRegister(conversations, username);
-    };
+    }
 
     @Override
-    public ServerConversation addNewConversationWithUsernames(List<String> usernames, String nameOfConversation) throws CouldNotAddMemberException, CouldNotAddConversationException {
-        checkIfObjectIsNull(usernames, "usernames");
+    public ServerConversation addNewConversationWithUsernames(List<Member> members, String nameOfConversation) throws CouldNotAddMemberException, CouldNotAddConversationException {
+        checkIfObjectIsNull(members, "usernames");
         checkIfObjectIsNull(nameOfConversation, "name of conversation");
-        if (!usernames.isEmpty()){
+        if (!members.isEmpty()){
             makeNewConversationNumber();
-            ServerConversation conversation = new NormalServerConversation(lastConversationNumber, usernames);
+            ServerConversation conversation = new NormalServerConversation(lastConversationNumber, members);
             if (!nameOfConversation.isEmpty()){
                 conversation.setConversationName(nameOfConversation);
             }

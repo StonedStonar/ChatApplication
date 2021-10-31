@@ -1,4 +1,4 @@
-package no.stonedstonar.chatapplication.networktransport;
+package no.stonedstonar.chatapplication.network.transport;
 
 import no.stonedstonar.chatapplication.model.conversation.ObservableConversation;
 

@@ -1,6 +1,6 @@
-package no.stonedstonar.chatapplication.networktransport;
+package no.stonedstonar.chatapplication.network.requests;
 
-import no.stonedstonar.chatapplication.networktransport.builder.UserRequestBuilder;
+import no.stonedstonar.chatapplication.network.requests.builder.UserRequestBuilder;
 
 import java.io.Serializable;
 

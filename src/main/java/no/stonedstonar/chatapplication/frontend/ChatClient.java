@@ -16,11 +16,15 @@ import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserExcep
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
-import no.stonedstonar.chatapplication.model.user.EndUser;
 import no.stonedstonar.chatapplication.model.user.User;
-import no.stonedstonar.chatapplication.networktransport.*;
-import no.stonedstonar.chatapplication.networktransport.builder.ConversationRequestBuilder;
-import no.stonedstonar.chatapplication.networktransport.builder.UserRequestBuilder;
+import no.stonedstonar.chatapplication.network.requests.builder.ConversationRequestBuilder;
+import no.stonedstonar.chatapplication.network.requests.builder.UserRequestBuilder;
+import no.stonedstonar.chatapplication.network.requests.ConversationRequest;
+import no.stonedstonar.chatapplication.network.requests.MessageRequest;
+import no.stonedstonar.chatapplication.network.requests.SetKeepAliveRequest;
+import no.stonedstonar.chatapplication.network.requests.UserRequest;
+import no.stonedstonar.chatapplication.network.transport.LoginTransport;
+import no.stonedstonar.chatapplication.network.transport.PersonalConversationTransport;
 
 import java.io.*;
 import java.net.*;
@@ -40,7 +44,7 @@ import java.util.logging.Logger;
  */
 public class ChatClient {
 
-    private EndUser basicEndUser;
+    private User endUser;
 
     private volatile NormalPersonalConversationRegister personalConversationRegister;
 
@@ -80,7 +84,7 @@ public class ChatClient {
                 logWaringError(e);
             }
         }
-        basicEndUser = null;
+        endUser = null;
         personalConversationRegister = null;
     }
 
@@ -174,8 +178,8 @@ public class ChatClient {
      * @return the username of the logged in user.
      */
     public String getUsername(){
-        if (basicEndUser != null){
-            return basicEndUser.getUsername();
+        if (endUser != null){
+            return endUser.getUsername();
         }else {
             throw new IllegalArgumentException("The user cannot be null.");
         }
@@ -186,7 +190,7 @@ public class ChatClient {
      * @return the user of this application.
      */
     public User getUser(){
-        return basicEndUser;
+        return endUser;
     }
 
     /**
@@ -248,13 +252,13 @@ public class ChatClient {
         checkString(messageContents, "message");
         checkIfObjectIsNull(observableConversation, "message log");
         try (Socket socket = new Socket(host, portNumber)){
-            TextMessage textMessage = new TextMessage(messageContents, basicEndUser.getUsername());
+            TextMessage textMessage = new TextMessage(messageContents, endUser.getUsername());
             ArrayList<Message> textMessageList = new ArrayList<>();
             textMessageList.add(textMessage);
-            MessageTransport messageTransport = new MessageTransport(textMessageList, observableConversation, LocalDate.now());
-            sendObject(messageTransport, socket);
+            MessageRequest messageRequest = new MessageRequest(textMessageList, observableConversation, LocalDate.now());
+            sendObject(messageRequest, socket);
             Object object = getObject(socket);
-            if (object instanceof  MessageTransport transport){
+            if (object instanceof  MessageRequest transport){
 
             }else if (object instanceof CouldNotAddMessageException exception){
                 throw exception;
@@ -295,7 +299,7 @@ public class ChatClient {
             sendObject(userRequest, socket);
             Object object = getObject(socket);
             if (object instanceof LoginTransport loginTransport){
-                this.basicEndUser = loginTransport.getUser();
+                this.endUser = loginTransport.getUser();
                 personalConversationRegister = loginTransport.getPersonalConversationRegister();
             }else if (object instanceof CouldNotLoginToUserException exception){
                 throw exception;
@@ -330,6 +334,15 @@ public class ChatClient {
             if (!namesToRemove.isEmpty()){
                 addOrRemoveMembers(observableConversation, namesToRemove, true);
             }
+            //Todo:Fix this
+        } catch (CouldNotGetConversationException exception) {
+            exception.printStackTrace();
+        } catch (IOException exception) {
+            exception.printStackTrace();
+        } catch (InvalidResponseException e) {
+            e.printStackTrace();
+        } catch (CouldNotAddMemberException exception) {
+            exception.printStackTrace();
         }
     }
 
@@ -409,16 +422,16 @@ public class ChatClient {
         try {
             logger.log(Level.INFO, "Syncing message log " + observableConversation.getConversationNumber());
             LocalDate localDate = LocalDate.now();
-            long lastMessageNumber = observableConversation.getMessageLogForDate(localDate, basicEndUser.getUsername()).getLastMessageNumber();
+            long lastMessageNumber = observableConversation.getMessageLogForDate(localDate, endUser.getUsername()).getLastMessageNumber();
             long messageLogNumber = observableConversation.getConversationNumber();
             ArrayList<String> name = new ArrayList<>();
-            name.add(basicEndUser.getUsername());
+            name.add(endUser.getUsername());
             ConversationRequest conversationRequest = new ConversationRequestBuilder().setCheckForMessages(true).addLastMessageNumber(lastMessageNumber).addUsernames(name).addConversationNumber(messageLogNumber).addDate(LocalDate.now()).build();
             sendObject(conversationRequest, socket);
             Object object = getObject(socket);
-            if (object instanceof MessageTransport messageTransport) {
-                List<Message> textMessageList = messageTransport.getMessages();
-                System.out.println("List size:  " + messageTransport.getMessages().size());
+            if (object instanceof MessageRequest messageRequest) {
+                List<Message> textMessageList = messageRequest.getMessages();
+                System.out.println("List size:  " + messageRequest.getMessages().size());
                 if (!textMessageList.isEmpty()) {
                     //Todo: Se om denne kan endres slik at flere meldinger kan legges til fra forksjellig dato.
                     observableConversation.addAllMessagesWithSameDate(textMessageList);
@@ -446,7 +459,7 @@ public class ChatClient {
         try (Socket socket = new Socket(host, portNumber)){
             List<String> usernames = new ArrayList<>();
             List<Long> conversationNumbers = personalConversationRegister.getAllConversationNumbers();
-            usernames.add(basicEndUser.getUsername());
+            usernames.add(endUser.getUsername());
             ConversationRequest conversationRequest = new ConversationRequestBuilder().setCheckForNewConversations(true).addUsernames(usernames).addConversationNumberList(conversationNumbers).build();
             sendObject(conversationRequest, socket);
             Object object = getObject(socket);

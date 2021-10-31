@@ -1,9 +1,8 @@
-package no.stonedstonar.chatapplication.networktransport;
+package no.stonedstonar.chatapplication.network.requests;
 
-import no.stonedstonar.chatapplication.networktransport.builder.ConversationRequestBuilder;
+import no.stonedstonar.chatapplication.network.requests.builder.ConversationRequestBuilder;
 
 import java.io.Serializable;
-import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -15,23 +14,9 @@ public class ConversationRequest implements Serializable {
 
     private boolean deleteConversation;
 
-    private boolean removeMembers;
-
-    private boolean addMembers;
-
     private boolean newConversation;
 
-    private boolean checkForMessages;
-
     private String nameOfConversation;
-
-    private List<String> usernames;
-
-    private long lastMessage;
-    
-    private LocalDate date;
-
-    private long conversationNumber;
 
     private List<Long> conversationNumberList;
 
@@ -42,15 +27,8 @@ public class ConversationRequest implements Serializable {
       */
     public ConversationRequest(ConversationRequestBuilder conversationRequestBuilder){
         deleteConversation = conversationRequestBuilder.isDeleteConversation();
-        removeMembers = conversationRequestBuilder.isRemoveMembers();
-        addMembers = conversationRequestBuilder.isAddMembers();
         newConversation = conversationRequestBuilder.isNewConversation();
-        usernames = conversationRequestBuilder.getUsernames();
-        conversationNumber = conversationRequestBuilder.getConversationNumber();
-        checkForMessages = conversationRequestBuilder.isCheckForMessages();
-        lastMessage = conversationRequestBuilder.getLastMessage();
         nameOfConversation = conversationRequestBuilder.getNameOfConversation();
-        date = conversationRequestBuilder.getDate();
         checkForNewConversation = conversationRequestBuilder.isCheckForNewConversation();
         conversationNumberList = conversationRequestBuilder.getConversationNumberList();
     }
@@ -72,22 +50,6 @@ public class ConversationRequest implements Serializable {
         return checkForNewConversation;
     }
 
-    /**
-     * Says true if the request is a check for new messages.
-     * @return <code>true</code> if the request is about checking for new messages.
-     *         <code>false</code> if the request is not about checking for new messages.
-     */
-    public boolean isCheckForMessages(){
-        return checkForMessages;
-    }
-
-    /**
-     * Gets the size of the conversation that you want to check.
-     * @return the size of the conversation.
-     */
-    public long getLastMessage(){
-        return lastMessage;
-    }
 
     /**
      * Says true if the request is a remove conversation request.
@@ -98,23 +60,6 @@ public class ConversationRequest implements Serializable {
         return deleteConversation;
     }
 
-    /**
-     * Says true if the request is a removeMembers request.
-     * @return <code>true</code> if the members are supposed to be removed.
-     *         <code>false</code> if the members are not supposed to be removed.
-     */
-    public boolean isRemoveMembers() {
-        return removeMembers;
-    }
-
-    /**
-     * Says true if the request is an add members request.
-     * @return <code>true</code> if the members are supposed to be added.
-     *         <code>false</code> if the members are not supposed to be added.
-     */
-    public boolean isAddMembers() {
-        return addMembers;
-    }
 
     /**
      * Says true if this request is a new conversation.
@@ -125,36 +70,12 @@ public class ConversationRequest implements Serializable {
         return newConversation;
     }
 
-    /***
-     * Gets the list of all usernames.
-     * @return a list with all the usernames.
-     */
-    public List<String> getUsernames() {
-        return usernames;
-    }
-
-    /**
-     * Gets the conversation number.
-     * @return the conversation number.
-     */
-    public long getConversationNumber() {
-        return conversationNumber;
-    }
-
     /**
      * Gets the name of the conversation.
      * @return the name of the conversation.
      */
     public String getNameOfConversation() {
         return nameOfConversation;
-    }
-
-    /**
-     * Gets the date of the conversation.
-     * @return the date of the conversation.
-     */
-    public LocalDate getDate() {
-        return date;
     }
 
     /**

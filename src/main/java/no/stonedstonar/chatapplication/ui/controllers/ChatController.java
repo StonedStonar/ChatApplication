@@ -231,7 +231,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
         VBox vBox = new VBox();
         vBox.setMinWidth(Long.MAX_VALUE);
         String nameOfConversation = observableConversation.getConversationName();
-        String membersOfConversation = observableConversation.getConversationMembers().getAllMembersExceptUsernameAsString(ChatApplicationClient.getChatApplication().getChatClient().getUsername());
+        String membersOfConversation = observableConversation.getMembers().getAllMembersExceptUsernameAsString(ChatApplicationClient.getChatApplication().getChatClient().getUsername());
         Label membersLabel = new Label(membersOfConversation);
         membersLabel.setFont(Font.font(membersLabel.getFont().getName(), FontWeight.NORMAL, FontPosture.REGULAR, 14));
         long messageLogNumber = observableConversation.getConversationNumber();

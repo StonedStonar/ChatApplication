@@ -4,7 +4,6 @@ import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserExcep
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotGetUserException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotRemoveUserException;
-import no.stonedstonar.chatapplication.model.user.EndUser;
 import no.stonedstonar.chatapplication.model.user.User;
 
 import java.util.ArrayList;
@@ -16,45 +15,45 @@ import java.util.Optional;
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class NormalEndUserRegister implements EndUserRegister {
+public class NormalUserRegister implements UserRegister {
 
-    private final List<EndUser> basicEndUserList;
+    private final List<User> basicEndUserList;
 
     /**
       * Makes an instance of the UserRegister class.
       */
-    public NormalEndUserRegister(){
+    public NormalUserRegister(){
         basicEndUserList = new ArrayList<>();
     }
 
     @Override
-    public void addUser(EndUser endUser) throws CouldNotAddUserException {
-        checkIfObjectIsNull(endUser, "end user");
-        if (!checkIfUsernameIsTaken(endUser.getUsername())){
-            basicEndUserList.add(endUser);
+    public void addUser(User userToAdd) throws CouldNotAddUserException {
+        checkIfObjectIsNull(userToAdd, "end user");
+        if (!checkIfUsernameIsTaken(userToAdd.getUsername())){
+            basicEndUserList.add(userToAdd);
         }else {
-            throw new CouldNotAddUserException("The user by the username " + endUser.getUsername() + " is already in the system.");
+            throw new CouldNotAddUserException("The user by the username " + userToAdd.getUsername() + " is already in the system.");
         }
     }
 
     @Override
-    public void removeUser(EndUser endUser) throws CouldNotRemoveUserException {
-        checkIfObjectIsNull(endUser, "end user");
-        if (checkIfUsernameIsTaken(endUser.getUsername())){
-            basicEndUserList.remove(endUser);
+    public void removeUser(User userToRemove) throws CouldNotRemoveUserException {
+        checkIfObjectIsNull(userToRemove, "end user");
+        if (checkIfUsernameIsTaken(userToRemove.getUsername())){
+            basicEndUserList.remove(userToRemove);
         }else {
-            throw new CouldNotRemoveUserException("The user by the username " + endUser.getUsername() + " is already in the system.");
+            throw new CouldNotRemoveUserException("The user by the username " + userToRemove.getUsername() + " is already in the system.");
         }
     }
 
     //Todo: Kanskje denne skal fjernes og heller arves av en annen klasse så denne også kan holde på vanlige brukere.
 
     @Override
-    public EndUser login(String username, String password) throws CouldNotLoginToUserException {
+    public User login(String username, String password) throws CouldNotLoginToUserException {
         checkString(password, "password");
         checkString(username, "username");
         try {
-            EndUser basicEndUser = getUserByUsername(username);
+            User basicEndUser = getUserByUsername(username);
             if (basicEndUser.checkPassword(password)){
                 return basicEndUser;
             }else {
@@ -77,8 +76,8 @@ public class NormalEndUserRegister implements EndUserRegister {
      * @return the user that matches this username.
      * @throws CouldNotGetUserException gets thrown if the user could not be found.
      */
-    private EndUser getUserByUsername(String username) throws CouldNotGetUserException {
-        Optional<EndUser> opUser = basicEndUserList.stream().filter(name -> name.getUsername().equals(username)).findFirst();
+    private User getUserByUsername(String username) throws CouldNotGetUserException {
+        Optional<User> opUser = basicEndUserList.stream().filter(name -> name.getUsername().equals(username)).findFirst();
         if (opUser.isPresent()) {
             return opUser.get();
         } else{

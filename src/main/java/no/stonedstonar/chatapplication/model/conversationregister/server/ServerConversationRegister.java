@@ -8,6 +8,8 @@ import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddC
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
+import no.stonedstonar.chatapplication.model.member.Member;
+import no.stonedstonar.chatapplication.model.membersregister.Members;
 
 import java.util.List;
 
@@ -36,12 +38,12 @@ public interface ServerConversationRegister extends ConversationRegister {
 
     /**
      * Adds a new conversation based on a list of names that are in it.
-     * @param usernames list with all the usernames that wants to be in the conversation.
+     * @param members list with all the members of this conversation.
      * @param nameOfConversation the name the conversation should have.
      * @return the conversation that was just added to the register.
      * @throws CouldNotAddMessageLogException gets thrown if the conversation is already in the register.
      * @throws CouldNotAddMemberException gets thrown if a member could not be added.
      */
-    ServerConversation addNewConversationWithUsernames(List<String> usernames, String nameOfConversation) throws CouldNotAddMemberException, CouldNotAddConversationException;
+    ServerConversation addNewConversationWithUsernames(List<Member> members, String nameOfConversation) throws CouldNotAddMemberException, CouldNotAddConversationException;
 
 }

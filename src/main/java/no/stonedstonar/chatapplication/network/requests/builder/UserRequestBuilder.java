@@ -1,6 +1,6 @@
-package no.stonedstonar.chatapplication.networktransport.builder;
+package no.stonedstonar.chatapplication.network.requests.builder;
 
-import no.stonedstonar.chatapplication.networktransport.UserRequest;
+import no.stonedstonar.chatapplication.network.requests.UserRequest;
 
 /**
  * A builder that makes an user request. This can be used to make a new user or check a username.

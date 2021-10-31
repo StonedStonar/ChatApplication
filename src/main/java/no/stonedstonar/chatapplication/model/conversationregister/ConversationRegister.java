@@ -1,17 +1,13 @@
 package no.stonedstonar.chatapplication.model.conversationregister;
 
 import no.stonedstonar.chatapplication.model.conversation.Conversation;
-import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
-import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
-import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 
-import java.util.List;
 
 /**
  * Represents the basic methods a ConversationRegister should hold.
- * @version 0.1
+ * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public interface ConversationRegister {

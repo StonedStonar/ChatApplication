@@ -13,17 +13,25 @@ import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMes
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
+import no.stonedstonar.chatapplication.model.member.ConversationMember;
+import no.stonedstonar.chatapplication.model.member.Member;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
+import no.stonedstonar.chatapplication.model.user.User;
 import no.stonedstonar.chatapplication.model.user.EndUser;
-import no.stonedstonar.chatapplication.networktransport.*;
-import no.stonedstonar.chatapplication.model.user.BasicEndUser;
-import no.stonedstonar.chatapplication.model.userregister.NormalEndUserRegister;
+import no.stonedstonar.chatapplication.model.userregister.NormalUserRegister;
+import no.stonedstonar.chatapplication.network.requests.ConversationRequest;
+import no.stonedstonar.chatapplication.network.requests.MessageRequest;
+import no.stonedstonar.chatapplication.network.requests.SetKeepAliveRequest;
+import no.stonedstonar.chatapplication.network.requests.UserRequest;
+import no.stonedstonar.chatapplication.network.requests.builder.MessageRequestBuilder;
+import no.stonedstonar.chatapplication.network.transport.LoginTransport;
+import no.stonedstonar.chatapplication.network.transport.MessageTransport;
+import no.stonedstonar.chatapplication.network.transport.PersonalConversationTransport;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -40,7 +48,7 @@ public class Server{
 
     private ServerSocket welcomeSocket;
 
-    private volatile NormalEndUserRegister normalEndUserRegister;
+    private volatile NormalUserRegister normalUserRegister;
 
     private volatile NormalConversationRegister normalConversationRegister;
 
@@ -60,10 +68,10 @@ public class Server{
       */
     public Server(){
         logger = Logger.getLogger(getClass().toString());
-        normalEndUserRegister = new NormalEndUserRegister();
+        normalUserRegister = new NormalUserRegister();
         normalConversationRegister = new NormalConversationRegister();
         run = true;
-        executors = Executors.newFixedThreadPool(8);
+        executors = Executors.newFixedThreadPool(12);
         try {
             welcomeSocket = new ServerSocket(1380);
         }catch (IOException exception){
@@ -76,19 +84,19 @@ public class Server{
      */
     private void addTestData(){
         try {
-            BasicEndUser basicEndUser = new BasicEndUser("bjarne22", "passr");
-            BasicEndUser basicEndUser1 = new BasicEndUser("fjell", "passord");
-            BasicEndUser basicEndUser3 = new BasicEndUser("bass", "thepass");
-            normalEndUserRegister.addUser(basicEndUser);
-            normalEndUserRegister.addUser(basicEndUser1);
-            normalEndUserRegister.addUser(basicEndUser3);
-            List<String> twoMembers = new ArrayList<>();
-            twoMembers.add(basicEndUser.getUsername());
-            twoMembers.add(basicEndUser1.getUsername());
-            List<String> threeMembers = new ArrayList<>();
-            threeMembers.add(basicEndUser.getUsername());
-            threeMembers.add(basicEndUser1.getUsername());
-            threeMembers.add(basicEndUser3.getUsername());
+            EndUser endUser = new EndUser("bjarne22", "passr");
+            EndUser endUser1 = new EndUser("fjell", "passord");
+            EndUser endUser3 = new EndUser("bass", "thepass");
+            normalUserRegister.addUser(endUser);
+            normalUserRegister.addUser(endUser1);
+            normalUserRegister.addUser(endUser3);
+            List<Member> twoMembers = new ArrayList<>();
+            twoMembers.add(new ConversationMember(endUser.getUsername()));
+            twoMembers.add(new ConversationMember(endUser1.getUsername()));
+            List<Member> threeMembers = new ArrayList<>();
+            threeMembers.add(new ConversationMember(endUser.getUsername()));
+            threeMembers.add(new ConversationMember(endUser1.getUsername()));
+            threeMembers.add(new ConversationMember(endUser3.getUsername()));
             normalConversationRegister.addNewConversationWithUsernames(threeMembers, "");
             normalConversationRegister.addNewConversationWithUsernames(twoMembers, "");
             List<ServerConversation> normalMessageLogs = normalConversationRegister.getAllConversationsOfUsername("bjarne22");
@@ -157,8 +165,8 @@ public class Server{
     private void handleConnection(Socket socket) throws IOException, InvalidResponseException {
         do{
             Object object = getObject(socket);
-            if(object instanceof MessageTransport messageTransport){
-                handleIncomingMessage(messageTransport, socket);
+            if(object instanceof MessageRequest messageRequest){
+                handleIncomingMessage(messageRequest, socket);
             }else if (object instanceof UserRequest userRequest){
                 handleUserInteraction(userRequest, socket);
             }else if (object instanceof ConversationRequest conversationRequest){
@@ -173,23 +181,57 @@ public class Server{
 
     /**
      * Handles a message when it comes in.
-     * @param messageTransport the message transport the message comes in.
+     * @param messageRequest the message transport the message comes in.
      * @param socket the socket that gets the sends.
      * @throws IOException gets thrown if the socket closes or cannot finish its task.
      */
-    private void handleIncomingMessage(MessageTransport messageTransport, Socket socket) throws IOException {
-        System.out.println("New message to add to a conversation");
+    private void handleIncomingMessage(MessageRequest messageRequest, Socket socket) throws IOException {
         try {
-            Conversation conversations = normalConversationRegister.getConversationByNumber(messageTransport.getConversationNumber());
-            List<Message> newMessages = messageTransport.getMessages();
-            conversations.addAllMessagesWithSameDate(newMessages);
-            System.out.println("The message is now added.");
-            sendObject(messageTransport, socket);
-        }catch (CouldNotAddMessageException | CouldNotGetMessageLogException | CouldNotGetConversationException | UsernameNotPartOfConversationException exception){
-            String message = "Something went wrong in adding " + messageTransport.getMessages().size() + " with the exception " + exception.getMessage() + " and class " + exception.getClass();
+            if (messageRequest.isCheckForMessages()){
+                checkForNewMessages(messageRequest, socket);
+            }else {
+                addNewMessages(messageRequest, socket);
+            }
+        } catch (UsernameNotPartOfConversationException | CouldNotGetConversationException | CouldNotGetMessageLogException | CouldNotAddMessageException exception) {
+            String message = "Something went wrong in adding " + messageRequest.getMessageTransportList().size() + " with the exception " + exception.getMessage() + " and class " + exception.getClass();
             logEvent(Level.WARNING, message);
             sendObject(exception, socket);
         }
+    }
+
+    /**
+     * Adds new messages to the conversations they match.
+     * @param messageRequest the message request.
+     * @param socket the socket this communication is going over.
+     * @throws IOException gets thrown if something goes wrong with the communication.
+     * @throws CouldNotGetConversationException gets thrown if the conversation could not be located.
+     * @throws UsernameNotPartOfConversationException gets thrown if the user is not a part of that conversation.
+     * @throws CouldNotAddMessageException gets thrown if the messages is already in the conversation.
+     * @throws CouldNotGetMessageLogException gets thrown if the message log for that date could not be located.
+     */
+    private void addNewMessages(MessageRequest messageRequest, Socket socket) throws IOException, CouldNotGetConversationException, UsernameNotPartOfConversationException, CouldNotAddMessageException, CouldNotGetMessageLogException {
+        Conversation conversations = normalConversationRegister.getConversationByNumber(messageRequest.getConversationNumber());
+        List<MessageTransport> newMessages = messageRequest.getMessageTransportList();
+        conversations.addAllMessagesWithSameDate(newMessages.stream().map(MessageTransport::getMessage).toList());
+        sendObject(messageRequest, socket);
+    }
+
+    /**
+     * Checks if a conversation has new messages compared to the conversation request.
+     * @param messageRequest the request that wants messages for a conversation.
+     * @param socket socket that the communication is happening over.
+     * @throws CouldNotGetMessageLogException gets thrown if the conversation could not be found.
+     * @throws IOException gets thrown if something goes wrong with the communication.
+     * @throws CouldNotGetConversationException gets thrown if the conversation could not be found.
+     * @throws UsernameNotPartOfConversationException gets thrown if the username is not a part of the conversation.
+     */
+    private void checkForNewMessages(MessageRequest messageRequest, Socket socket) throws IOException, CouldNotGetConversationException, CouldNotGetMessageLogException, UsernameNotPartOfConversationException {
+        ServerConversation conversation = normalConversationRegister.getConversationByNumber(messageRequest.getConversationNumber());
+        List<Message> newMessages = conversation.checkForNewMessagesOnDate(messageRequest.getCheckMessageDate(),messageRequest.getLastMessage(), messageRequest.getUsername());
+        List<MessageTransport> messageTransportList = new ArrayList<>();
+        newMessages.forEach(message -> messageTransportList.add(new MessageTransport(message, true)));
+        MessageRequest responseRequest = new MessageRequestBuilder().addMessageTransportList(messageTransportList).build();
+        sendObject(responseRequest, socket);
     }
 
     /**
@@ -201,16 +243,16 @@ public class Server{
     private void handleUserInteraction(UserRequest userRequest, Socket socket) throws IOException{
         try {
             if (userRequest.isLogin()){
-                EndUser endUser = normalEndUserRegister.login(userRequest.getUsername(), userRequest.getPassword());
+                User endUser = normalUserRegister.login(userRequest.getUsername(), userRequest.getPassword());
                 NormalPersonalConversationRegister personalConversationRegister = normalConversationRegister.getAllConversationsUserHasAndMakePersonalRegister(userRequest.getUsername());
                 LoginTransport loginTransport = new LoginTransport(endUser, personalConversationRegister);
                 sendObject(loginTransport, socket);
             }else if (userRequest.isNewUser()){
-                BasicEndUser basicEndUser = new BasicEndUser(userRequest.getUsername(), userRequest.getPassword());
-                normalEndUserRegister.addUser(basicEndUser);
+                EndUser endUser = new EndUser(userRequest.getUsername(), userRequest.getPassword());
+                normalUserRegister.addUser(endUser);
                 sendObject(true, socket);
             } else if (userRequest.isCheckUsername()){
-                sendObject(normalEndUserRegister.checkIfUsernameIsTaken(userRequest.getUsername()), socket);
+                sendObject(normalUserRegister.checkIfUsernameIsTaken(userRequest.getUsername()), socket);
             }
         }catch (CouldNotLoginToUserException | IllegalArgumentException | CouldNotAddUserException exception){
             String message = "Something went wrong in the " + userRequest + " with the exception " + exception.getMessage() + " and class " + exception.getClass();
@@ -229,10 +271,6 @@ public class Server{
         try {
             if (conversationRequest.isNewConversation()){
                 makeNewConversation(conversationRequest, socket);
-            }else if (conversationRequest.isCheckForMessages()){
-                checkForNewConversation(conversationRequest, socket);
-            }else if (conversationRequest.isAddMembers()){
-                addNewMembersToConversation(conversationRequest, socket);
             }else if (conversationRequest.isCheckForNewConversation()){
                 handleCheckForNewConversations(conversationRequest, socket);
             }
@@ -296,29 +334,12 @@ public class Server{
      * @throws CouldNotAddMemberException gets thrown if one person in the request is already in the conversation.
      */
     private void addNewMembersToConversation(ConversationRequest conversationRequest, Socket socket) throws CouldNotGetConversationException, CouldNotAddMemberException, IOException {
-        List<String> newMembers = conversationRequest.getUsernames();
+        List<Member> newMembers = conversationRequest.getUsernames();
         ServerConversation serverConversation = normalConversationRegister.getConversationByNumber(conversationRequest.getConversationNumber());
-        serverConversation.addAllMembers(newMembers);
+        serverConversation.getMembers().addAllMembers(newMembers);
         Boolean bo = true;
         sendObject(bo, socket);
         //Todo: finn ut av hvordan du skal sjekke om det er nye medlemmer i en samtale.
-    }
-
-    /**
-     * Checks if a conversation has new messages compared to the conversation request.
-     * @param conversationRequest the request that wants messages for a conversation.
-     * @param socket socket that the communication is happening over.
-     * @throws CouldNotGetMessageLogException gets thrown if the conversation could not be found.
-     * @throws IOException gets thrown if something goes wrong with the communication.
-     * @throws CouldNotGetConversationException gets thrown if the conversation could not be found.
-     * @throws UsernameNotPartOfConversationException gets thrown if the username is not a part of the conversation.
-     */
-    private void checkForNewConversation(ConversationRequest conversationRequest, Socket socket) throws IOException, CouldNotGetConversationException, CouldNotGetMessageLogException, UsernameNotPartOfConversationException {
-        ServerConversation conversation = normalConversationRegister.getConversationByNumber(conversationRequest.getConversationNumber());
-        System.out.println("Last message " + conversationRequest.getLastMessage());
-        List<Message> newMessages = conversation.checkForNewMessagesOnDate(conversationRequest.getDate(),conversationRequest.getLastMessage(), conversationRequest.getUsernames().get(0));
-        MessageTransport messageTransport = new MessageTransport(newMessages, conversation, LocalDate.now());
-        sendObject(messageTransport, socket);
     }
 
     /**

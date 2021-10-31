@@ -5,6 +5,8 @@ import no.stonedstonar.chatapplication.model.conversation.NormalServerConversati
 import no.stonedstonar.chatapplication.model.conversation.ServerConversation;
 import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
+import no.stonedstonar.chatapplication.model.member.ConversationMember;
+import no.stonedstonar.chatapplication.model.member.Member;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
@@ -38,7 +40,7 @@ public class TestNormalServerConversation {
     @BeforeEach
     private void makeTestConversation(){
         try {
-            testConversation = new NormalServerConversation(301L, makeUsernames());
+            testConversation = new NormalServerConversation(301L, makeMembers());
             testConversation.addNewMessage(new TextMessage("Hello its me", "bjarne21"));
             testConversation.addNewMessage(new TextMessage("Hey bjarne21 its time to join the darkside.", "lordVader"));
         }catch (IllegalArgumentException exception){
@@ -59,12 +61,13 @@ public class TestNormalServerConversation {
      * Makes a basic list with members of a conversation.
      * @return a list with some usernames.
      */
-    private List<String> makeUsernames(){
-        List<String> usernames = new ArrayList<>();
-        username = "bjarne21";
-        usernames.add(username);
-        usernames.add("lordVader");
-        return usernames;
+    private List<Member> makeMembers(){
+        List<Member> members = new ArrayList<>();
+        Member member = new ConversationMember("bjarne21");
+        username = member.getUsername();
+        members.add(member);
+        members.add(new ConversationMember("lordVader"));
+        return members;
     }
 
     /**
@@ -94,7 +97,7 @@ public class TestNormalServerConversation {
     @DisplayName("Tests if the constructor works with a negative input.")
     public void testIfConstructorWorksWithNegativeInput(){
         try {
-            Conversation conversation = new NormalServerConversation(-1L, makeUsernames());
+            Conversation conversation = new NormalServerConversation(-1L, makeMembers());
             fail("Expected to get a exception since the input is negative.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -126,7 +129,7 @@ public class TestNormalServerConversation {
     @DisplayName("Tests if the constructor works as intended with valid input.")
     public void testIfConstructorWorksWithValidInput(){
         try {
-            Conversation conversation = new NormalServerConversation(1L, makeUsernames());
+            Conversation conversation = new NormalServerConversation(1L, makeMembers());
             assertTrue(true);
         }catch (IllegalArgumentException | CouldNotAddMemberException exception){
             fail("Expected to make a messagelog since the input is valid.");

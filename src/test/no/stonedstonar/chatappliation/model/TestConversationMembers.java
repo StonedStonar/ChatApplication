@@ -1,12 +1,18 @@
 package no.stonedstonar.chatappliation.model;
 
+import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
+import no.stonedstonar.chatapplication.model.member.ConversationMember;
+import no.stonedstonar.chatapplication.model.member.Member;
 import no.stonedstonar.chatapplication.model.membersregister.ConversationMembers;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemberException;
+import no.stonedstonar.chatapplication.model.membersregister.Members;
+import no.stonedstonar.chatapplication.model.user.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.sql.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,19 +27,51 @@ public class TestConversationMembers {
 
     private ConversationMembers conversationMembers;
 
+    private String memberUsername;
+
+    private Member removeMember;
+
     /**
      * Makes a MembersOfConversation that can be used for testing.
      */
     @BeforeEach
     private void makeMembersOfConversation(){
-        conversationMembers = new ConversationMembers();
+        List<Member> members = new ArrayList<>();
         try{
-            conversationMembers.addMember("bjarne21");
-            conversationMembers.addMember("ironman2019");
+            memberUsername = "bjarne21";
+            removeMember = new ConversationMember("ironman2019");
+            members.add(new ConversationMember("bjarne21"));
+            members.add(removeMember);
+            conversationMembers = new ConversationMembers(members);
         }catch (IllegalArgumentException exception){
             fail("Could not add two members since we get a format error.");
-        }catch (CouldNotAddMemberException exception){
-            fail("Could not add two members since the add method does not work.");
+        }
+    }
+
+    /**
+     * Makes a list with members used in testing.
+     * @return a list with members.
+     */
+    private List<Member> makeTestMembers(){
+        List<Member> list = new ArrayList<>();
+        list.add(new ConversationMember("lordVader"));
+        list.add(new ConversationMember("lordPoop"));
+        return list;
+    }
+
+    /**
+     * Tests if addMember works with invalid member.
+     */
+    @Test
+    @DisplayName("Tests if addMember works with invalid member.")
+    public void testIfAddMemberWorksWithInvalidMember(){
+        try {
+            conversationMembers.addMember(null, memberUsername);
+            fail("Expected to get a exception since the input is invalid.");
+        }catch (IllegalArgumentException exception){
+            assertTrue(true);
+        }catch (CouldNotAddMemberException | UsernameNotPartOfConversationException exception){
+            fail("Expected to get a IllegalArgumentException since the format is invalid and not a " + exception.getClass());
         }
     }
 
@@ -44,12 +82,13 @@ public class TestConversationMembers {
     @DisplayName("Tests if addMember works with invalid username.")
     public void testIfAddMemberWorksWithInvalidUsername(){
         try {
-            conversationMembers.addMember("");
-            fail("Expected to get a exception since the input is invalid.");
-        }catch (IllegalArgumentException exception){
-            assertTrue(true);
+            Member member = new ConversationMember("fjell");
+            conversationMembers.addMember(member, "fjart");
+            fail("Expected to get a CouldNotAddMemberException since the format is invalid.");
+        }catch (IllegalArgumentException | UsernameNotPartOfConversationException exception){
+            fail("Expected to get a CouldNotAddMemberException since the format is invalid and not a " + exception.getClass());
         }catch (CouldNotAddMemberException exception){
-            fail("Expected to get a IllegalArgumentException since the format is invalid and not a " + exception.getClass());
+            assertTrue(true);
         }
     }
 
@@ -60,10 +99,11 @@ public class TestConversationMembers {
     @DisplayName("Tests if addMember works with valid input.")
     public void testIfAddMemberWorksWithValidInput(){
         try {
-            conversationMembers.addMember("inge");
+            Member member = new ConversationMember("fjell");
+            conversationMembers.addMember(member, memberUsername);
             assertTrue(true);
-        }catch (IllegalArgumentException | CouldNotAddMemberException exception){
-            fail("Expected the user to be added since the input is valid and correct format.");
+        }catch (IllegalArgumentException | CouldNotAddMemberException | UsernameNotPartOfConversationException exception){
+            fail("Expected the user to be added since the input is valid and correct format. " + exception.getClass());
         }
     }
 
@@ -75,10 +115,11 @@ public class TestConversationMembers {
     @DisplayName("Tests if addMember works with user already in the object.")
     public void testIfAddMemberWorksWithDuplicate(){
         try {
-            conversationMembers.addMember("bjarne21");
+            Member member = new ConversationMember("ironman2019");
+            conversationMembers.addMember(member, memberUsername);
             fail("Expected to get a exception since bjarne21 is already in the register.");
-        }catch (IllegalArgumentException exception){
-            fail("Expected tog et a CouldNotAddMemberException since the format is valid.");
+        }catch (IllegalArgumentException | UsernameNotPartOfConversationException exception){
+            fail("Expected tog et a CouldNotAddMemberException since the format is valid and not a " + exception.getClass());
         }catch (CouldNotAddMemberException exception){
             assertTrue(true);
         }
@@ -91,14 +132,15 @@ public class TestConversationMembers {
     @DisplayName("Tests if addAllMembers works with invalid input.")
     public void testIfAddAllMembersWorksWithInvalidInput(){
         try {
-            conversationMembers.addAllMembers(null);
+            conversationMembers.addAllMembers(null, memberUsername);
             fail("Expected to get a exception since the input is null.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
-        }catch (CouldNotAddMemberException exception){
-            fail("Expected to get a IllegalArgumentException since the format is invalid.");
+        }catch (CouldNotAddMemberException | UsernameNotPartOfConversationException exception){
+            fail("Expected to get a IllegalArgumentException since the format is invalid and not a " + exception.getClass());
         }
     }
+
 
     /**
      * Tests if addAllMembers works with list size zero.
@@ -107,12 +149,44 @@ public class TestConversationMembers {
     @DisplayName("Tests if addAllMembers works with list size zero.")
     public void testIfAddAllMembersWorksWithListSizeZero(){
         try {
-            conversationMembers.addAllMembers(new ArrayList<>());
+            conversationMembers.addAllMembers(new ArrayList<>(), memberUsername);
             fail("Expected to get a exception since the input list is size zero.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
-        }catch (CouldNotAddMemberException exception){
-            fail("Expected to get a IllegalArgumentException since the format is invalid.");
+        }catch (CouldNotAddMemberException | UsernameNotPartOfConversationException exception){
+            fail("Expected to get a IllegalArgumentException since the format is invalid and not a " + exception.getClass());
+        }
+    }
+
+    /**
+     * Tests if addAllMembers works with invalid username.
+     */
+    @Test
+    @DisplayName("Tests if addAllMembers works with invalid username.")
+    public void testIfAddAllMembersWorksWithInvalidUsername(){
+        try {
+            conversationMembers.addAllMembers(makeTestMembers(), "");
+            fail("Expected to get a IllegalArgumentException since the input is invalid.");
+        }catch (IllegalArgumentException exception){
+            assertTrue(true);
+        }catch (CouldNotAddMemberException | UsernameNotPartOfConversationException exception){
+            fail("Expected to get a IllegalArgumentException since the input username is invalid.");
+        }
+    }
+
+    /**
+     * Tests if addAllMembers works with username not in object.
+     */
+    @Test
+    @DisplayName("Tests if addAllMembers works with username not in object.")
+    public void testIfAddAllMembersWorksWithUsernameNotInObject(){
+        try {
+            conversationMembers.addAllMembers(makeTestMembers(), "testman");
+            fail("Expected to get a UsernameNotPartOfConversationException since the input is invalid.");
+        }catch (UsernameNotPartOfConversationException exception){
+            assertTrue(true);
+        }catch (CouldNotAddMemberException | IllegalArgumentException exception){
+            fail("Expected to get a UsernameNotPartOfConversationException since the input username is invalid.");
         }
     }
 
@@ -123,13 +197,10 @@ public class TestConversationMembers {
     @DisplayName("Tests if addAllMembers works with valid input")
     public void testIfAddAllMembersWorksWithValidInput(){
         try {
-            List<String> list = new ArrayList<>();
-            list.add("lordVader");
-            list.add("lordPoop");
-            conversationMembers.addAllMembers(list);
+            conversationMembers.addAllMembers(makeTestMembers(), memberUsername);
             assertTrue(conversationMembers.getAmountOfMembers() == 4);
-        }catch (IllegalArgumentException | CouldNotAddMemberException exception){
-            fail("Expected the users to be added since the input is valid.");
+        }catch (IllegalArgumentException | CouldNotAddMemberException | UsernameNotPartOfConversationException exception){
+            fail("Expected the users to be added since the input is valid. " + exception.getClass());
         }
     }
 
@@ -140,15 +211,31 @@ public class TestConversationMembers {
     @DisplayName("Tests if addAllMembers works with one duplicate member.")
     public void testIfAddAllMembersWorksWithOneDuplicateMember(){
         try {
-            List<String> list = new ArrayList<>();
-            list.add("lordVader");
-            list.add("bjarne21");
-            conversationMembers.addAllMembers(list);
+            List<Member> list = new ArrayList<>();
+            list.add(new ConversationMember("lordVader"));
+            list.add(new ConversationMember("bjarne21"));
+            conversationMembers.addAllMembers(list, memberUsername);
             fail("Expected to get a exception since one member by the name bjarne21 is a part of this conversation already.");
-        }catch (IllegalArgumentException exception){
-            fail("Expected to get a CouldNotAddMemberException since the format is correct.");
+        }catch (IllegalArgumentException  | UsernameNotPartOfConversationException exception){
+            fail("Expected to get a CouldNotAddMemberException since the format is correct and not a " + exception.getClass());
         }catch (CouldNotAddMemberException exception){
             assertTrue(true);
+        }
+    }
+
+    /**
+     * Tests if removeMember works with invalid member.
+     */
+    @Test
+    @DisplayName("Tests if removeMember works with invalid member.")
+    public void testIfRemoveMemberWorksWithInvalidMember(){
+        try {
+            conversationMembers.removeMember(removeMember, memberUsername);
+            fail("Expected to get a execution since the input username is invalid format");
+        }catch (IllegalArgumentException exception){
+            assertTrue(true);
+        }catch (CouldNotRemoveMemberException | UsernameNotPartOfConversationException exception){
+            fail("Expected to get a IllegalArgumentException since the format is invalid and not a " + exception.getClass());
         }
     }
 
@@ -159,14 +246,31 @@ public class TestConversationMembers {
     @DisplayName("Tests if removeMember works with invalid username.")
     public void testIfRemoveMemberWorksWithInvalidUsername(){
         try {
-            conversationMembers.removeMember("");
-            fail("Expected to get a execption since the input username is invalid format");
+            conversationMembers.removeMember(removeMember, "");
+            fail("Expected to get a IllegalArgumentException since the input username is invalid.");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
-        }catch (CouldNotRemoveMemberException exception){
+        }catch (CouldNotRemoveMemberException | UsernameNotPartOfConversationException exception){
             fail("Expected to get a IllegalArgumentException since the format is invalid and not a " + exception.getClass());
         }
     }
+
+    /**
+     * Tests if removeMember works with username not in object.
+     */
+    @Test
+    @DisplayName("Tests if removeMember works with username not in object.")
+    public void testIfRemoveMemberWorksWithUsernameNotInObject(){
+        try {
+            conversationMembers.removeMember(removeMember, "testman");
+            fail("Expected to get a UsernameNotPartOfConversationException since the input username is not a part of this object.");
+        }catch (UsernameNotPartOfConversationException exception){
+            assertTrue(true);
+        }catch (CouldNotRemoveMemberException | IllegalArgumentException exception){
+            fail("Expected to get a UsernameNotPartOfConversationException since the useranme is not a part of this object. " + exception.getClass());
+        }
+    }
+
 
     /**
      * Tests if removeMember works with valid input.
@@ -175,12 +279,12 @@ public class TestConversationMembers {
     @DisplayName("Tests if removeMember works with valid input.")
     public void testIfRemoveMemberWorksWithValidInput(){
         try {
-            conversationMembers.removeMember("bjarne21");
+            conversationMembers.removeMember(removeMember, memberUsername);
             assertTrue(true);
         }catch (IllegalArgumentException  exception){
             fail("Expected the member to be removed since the format is valid.");
-        }catch (CouldNotRemoveMemberException exception){
-            fail("Expected the member to be removed since they are a part of this conversation.");
+        }catch (CouldNotRemoveMemberException | UsernameNotPartOfConversationException exception){
+            fail("Expected the member to be removed since they are a part of this conversation. " + exception.getClass());
         }
     }
 
@@ -191,10 +295,10 @@ public class TestConversationMembers {
     @DisplayName("Tests if removeMember works with member not in register.")
     public void testIfRemoveMemberWorksWithMemberNotInConversation(){
         try {
-            conversationMembers.removeMember("bjarne22");
+            conversationMembers.removeMember(removeMember, memberUsername);
             fail("Expected to get a exception since bjarne22 is not a part of the register.");
-        }catch (IllegalArgumentException exception){
-            fail("Expected to get a CouldNotRemoveMemberException since the format is valid.");
+        }catch (IllegalArgumentException | UsernameNotPartOfConversationException exception){
+            fail("Expected to get a CouldNotRemoveMemberException since the format is valid and not a " + exception.getClass());
         }catch (CouldNotRemoveMemberException exception){
             assertTrue(true);
         }

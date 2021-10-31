@@ -1,56 +1,66 @@
 package no.stonedstonar.chatapplication.model.membersregister;
 
+import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotGetMemberException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemberException;
 import no.stonedstonar.chatapplication.model.member.ConversationMember;
-import no.stonedstonar.chatapplication.model.user.User;
+import no.stonedstonar.chatapplication.model.member.Member;
 
 import java.io.Serializable;
 import java.util.*;
 
 /**
- * A object that holds all the members of a object.
+ * A class that represents a conversations members.
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */
 public class ConversationMembers implements Serializable, ServerMembers {
 
     //Todo: Endre denne til map slik at vi kan lagre hvem som var siste medlem.
-    private final Map<Long, ConversationMember> memberMap;
+    private final Map<Long, Member> memberMap;
 
     private long lastMember;
 
     /**
       * Makes an instance of the MembersOfConversation class.
       */
-    public ConversationMembers(){
+    public ConversationMembers(List<Member> conversationMembers){
         memberMap = new HashMap<>();
-    }
-
-    /**
-     * Gets all the members from the object if the username is a part of the group.
-     * @param user the user that is a member in the conversation.
-     * @return a list with all the members.
-     */
-    public List<String> getNameOfAllMembers(User user){
-        checkIfObjectIsNull(user, "user");
-        String username = user.getUsername();
-        if (checkIfUsernameIsMember(username)){
-            return memberMap.values().stream().map(ConversationMember::getUsername).toList();
-        }else {
-            throw new IllegalArgumentException("The user with the username " + username + " is not a part of this members object.");
-        }
+        lastMember = 0;
+        checkIfListIsValid(conversationMembers, "conversation members");
+        conversationMembers.forEach(this::addNewMember);
     }
 
     @Override
-    public void addMember(String username) throws CouldNotAddMemberException {
-        if (!checkIfUsernameIsMember(username)){
-            makeNewMemberNumber();
-            ConversationMember conversationMember = new ConversationMember(username, lastMember);
-            memberMap.put(conversationMember.getMemberNumber(), conversationMember);
+    public void addMember(Member userToAdd, String username) throws CouldNotAddMemberException, UsernameNotPartOfConversationException {
+        checkIfUserIsMemberIfNotThrowException(username);
+        if (!checkIfUsernameIsMember(userToAdd.getUsername())){
+            addNewMember(userToAdd);
         }else {
             throw new CouldNotAddMemberException("The user is already in the register.");
+        }
+    }
+
+    /**
+     * Adds a new member to the collection.
+     * @param memberToAdd the member you want to add.
+     */
+    private void addNewMember(Member memberToAdd){
+        makeNewMemberNumber();
+        Member member = new ConversationMember(memberToAdd.getUsername(), lastMember);
+        memberMap.put(member.getMemberNumber(), member);
+    }
+
+    /**
+     * Checks if the user is a member and if not throws an exception.
+     * @param username the username to check if they are member.
+     * @throws UsernameNotPartOfConversationException gets thrown if the username is not a part of this members object.
+     */
+    private void checkIfUserIsMemberIfNotThrowException(String username) throws UsernameNotPartOfConversationException {
+        checkString(username, "username");
+        if (!checkIfUsernameIsMember(username)){
+            throw new UsernameNotPartOfConversationException("The user by the username \"" + username  + "\" is not a part of this members object.");
         }
     }
 
@@ -62,14 +72,15 @@ public class ConversationMembers implements Serializable, ServerMembers {
     }
 
     @Override
-    public void addAllMembers(List<String> usernames) throws CouldNotAddMemberException{
-        checkIfListIsValid(usernames, "usernames");
-        if (!usernames.isEmpty()){
-            if (!checkIfNoneUsernamesAreInConversation(usernames)){
-                Iterator<String> it = usernames.iterator();
+    public void addAllMembers(List<Member> newMembers, String username) throws CouldNotAddMemberException, UsernameNotPartOfConversationException {
+        checkIfUserIsMemberIfNotThrowException(username);
+        checkIfListIsValid(newMembers, "new members");
+        if (!newMembers.isEmpty()){
+            if (!checkIfNoneUsernamesAreInConversation(newMembers)){
+                Iterator<Member> it = newMembers.iterator();
                 while (it.hasNext()){
-                    String name = it.next();
-                    addMember(name);
+                    Member member = it.next();
+                    addNewMember(member);
                 }
             }else {
                 throw new CouldNotAddMemberException("One person in the list is a member.");
@@ -80,18 +91,44 @@ public class ConversationMembers implements Serializable, ServerMembers {
     }
 
     @Override
+    public void removeAllMembers(List<Member> members, String username) throws CouldNotRemoveMemberException, UsernameNotPartOfConversationException, CouldNotGetMemberException {
+        checkIfUserIsMemberIfNotThrowException(username);
+        checkIfListIsValid(members, "members");
+        boolean valid = checkIfUsernamesAreInConversation(members.stream().map(Member::getUsername).toList());
+        if (valid){
+            Iterator<Member> it = members.iterator();
+            while (it.hasNext()){
+                Member member = it.next();
+                removeMemberFromMap(member.getUsername());
+            }
+        }else {
+            throw new CouldNotRemoveMemberException("The members in the list could not be removed since one or more of them is not a part of the conversation object.");
+        }
+    }
+
+    @Override
     public long getLastMemberNumber() {
         return lastMember;
     }
 
     @Override
-    public void removeMember(String username) throws CouldNotRemoveMemberException {
+    public void removeMember(Member member, String username) throws CouldNotRemoveMemberException, UsernameNotPartOfConversationException {
+        checkIfUserIsMemberIfNotThrowException(username);
         try {
-            ConversationMember conversationMember = getMemberByUsername(username);
-            memberMap.remove(conversationMember.getMemberNumber());
+            removeMemberFromMap(member.getUsername());
         }catch (CouldNotGetMemberException exception){
-            throw new CouldNotRemoveMemberException("The member by the username " + username + " is not a part of this conversation.");
+            throw new CouldNotRemoveMemberException("The member by the username " + member.getUsername() + " is not a part of this conversation.");
         }
+    }
+
+    /**
+     * Removes a member from the map if they are in it.
+     * @param usernameToRemove the username of the member to be removed.
+     * @throws CouldNotGetMemberException gets thrown if the member could not be found.
+     */
+    private void removeMemberFromMap(String usernameToRemove) throws CouldNotGetMemberException {
+        Member member = getMemberByUsername(usernameToRemove);
+        memberMap.remove(member.getMemberNumber());
     }
 
 
@@ -134,8 +171,8 @@ public class ConversationMembers implements Serializable, ServerMembers {
      * @return the member that matches that username.
      * @throws CouldNotGetMemberException gets thrown if there is no members with that username.
      */
-    private ConversationMember getMemberByUsername(String username) throws CouldNotGetMemberException {
-        Optional<ConversationMember> optionalMember = memberMap.values().stream().filter(mem -> mem.getUsername().equals(username)).findFirst();
+    private Member getMemberByUsername(String username) throws CouldNotGetMemberException {
+        Optional<Member> optionalMember = memberMap.values().stream().filter(mem -> mem.getUsername().equals(username)).findFirst();
         if (optionalMember.isPresent()){
             return optionalMember.get();
         }else {
@@ -145,18 +182,19 @@ public class ConversationMembers implements Serializable, ServerMembers {
 
     /**
      * Checks if one username is in the group already.
-     * @param usernames the list with all the usernames to be checked.
+     * @param members the list with all the members to be checked.
      * @return <code>true</code> if one of the usernames are in the register.
      *         <code>false</code> if none of the usernames are in the register.
      */
-    private boolean checkIfNoneUsernamesAreInConversation(List<String> usernames){
-        if (!usernames.isEmpty()){
-            return memberMap.values().stream().anyMatch(conversationMember -> usernames.stream().anyMatch(name -> name.equals(conversationMember.getUsername())));
+    private boolean checkIfNoneUsernamesAreInConversation(List<Member> members){
+        if (!members.isEmpty()){
+            return memberMap.values().stream().anyMatch(conversationMember -> members.stream().anyMatch(name -> name.equals(conversationMember.getUsername())));
         }else {
             throw new IllegalArgumentException("The list must have some usernames in it.");
         }
     }
 
+    //Todo: Slette denne siden det kan skje utenfor istedet?
     /**
      * Builds a string that contains the name of all members in the register except the input username.
      * @param username the username you don't want in the string.
@@ -168,27 +206,36 @@ public class ConversationMembers implements Serializable, ServerMembers {
             throw new IllegalArgumentException("The username " + username + " is not in the conversation.");
         }
         StringBuilder stringBuilder = new StringBuilder();
-        for (ConversationMember conversationMember : memberMap.values()){
-            if (!conversationMember.getUsername().equals(username)){
+        for (Member member : memberMap.values()){
+            if (!member.getUsername().equals(username)){
                 stringBuilder.append(" ");
-                stringBuilder.append(conversationMember);
+                stringBuilder.append(member);
             }
         }
         return stringBuilder.toString();
     }
 
     @Override
-    public List<ConversationMember> checkForNewUsers(long lastMember, String username){
+    public List<String> getNameOfAllMembers(String username) {
+        return memberMap.values().stream().map(Member::getUsername).toList();
+    }
+
+    @Override
+    public int getAmountOfMembers() {
+        return memberMap.size();
+    }
+
+    @Override
+    public List<Member> checkForNewUsers(long lastMember, String username) throws UsernameNotPartOfConversationException{
+        checkIfUserIsMemberIfNotThrowException(username);
         checkIfLongIsNegative(lastMember, "last member");
-        List<ConversationMember> newUsers = new ArrayList<>();
+        List<Member> newUsers = new ArrayList<>();
         if (lastMember < this.lastMember){
             List<Long> newKeys = memberMap.keySet().stream().filter(num -> num > lastMember).toList();
             newKeys.forEach(key -> newUsers.add(memberMap.get(key)));
         }
         return newUsers;
     }
-
-    /\\
     
     /**
      * Checks if a string is of a valid format or not.

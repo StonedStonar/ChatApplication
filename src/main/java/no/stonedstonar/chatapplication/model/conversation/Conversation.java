@@ -7,6 +7,7 @@ import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemb
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMessageException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
+import no.stonedstonar.chatapplication.model.membersregister.Members;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.messagelog.MessageLog;
 
@@ -25,12 +26,6 @@ public interface Conversation {
      * @return the name of the conversation.
      */
     String getConversationName();
-
-    /**
-     * Gets the conversations members.
-     * @return the conversations members.
-     */
-    ConversationMembers getConversationMembers();
 
     /**
      * Gets the date the conversation was made.
@@ -99,31 +94,8 @@ public interface Conversation {
     void addAllMessagesWithSameDate(List<Message> newMessageList) throws CouldNotAddMessageException, CouldNotGetMessageLogException, UsernameNotPartOfConversationException;
 
     /**
-     * Adds a user to the conversation.
-     * @param username the username.
-     * @throws CouldNotAddMemberException gets thrown if the member could not be added.
+     * Gets the conversations members.
+     * @return the conversations members.
      */
-    void addMember(String username) throws CouldNotAddMemberException;
-
-    /**
-     * Removes a user as a member.
-     * @param username the username.
-     * @throws CouldNotRemoveMemberException gets thrown if the member could not be removed.
-     */
-    void removeMember(String username) throws CouldNotRemoveMemberException;
-
-    /**
-     * Adds all the members to the conversation.
-     * @param usernames the usernames of all the members of the conversation.
-     * @throws CouldNotAddMemberException gets thrown if the member could not be added.
-     */
-    void addAllMembers(List<String> usernames) throws CouldNotAddMemberException;
-
-    /**
-     * Checks if the user is a part of this conversation.
-     * @param username the username.
-     * @return <code>true</code> if the user is part of this conversation.
-     *         <code>false</code> if the user is not a part of this conversation.
-     */
-    boolean checkIfUsernameIsMember(String username);
+    Members getMembers();
 }

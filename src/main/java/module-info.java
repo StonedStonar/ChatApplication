@@ -11,7 +11,6 @@ module no.stonedstonar.chatapplication {
 
   exports no.stonedstonar.chatapplication.backend;
   exports no.stonedstonar.chatapplication.model.message;
-  exports no.stonedstonar.chatapplication.model;
   exports no.stonedstonar.chatapplication.model.conversation;
   exports no.stonedstonar.chatapplication.ui;
   exports no.stonedstonar.chatapplication.ui.windows;
@@ -22,16 +21,16 @@ module no.stonedstonar.chatapplication {
   opens no.stonedstonar.chatapplication.model.messagelog to javafx.fxml, javafx.graphics;
   exports no.stonedstonar.chatapplication.model.conversationregister;
   opens no.stonedstonar.chatapplication.model.conversationregister to javafx.fxml, javafx.graphics;
-    exports no.stonedstonar.chatapplication.model.conversationregister.server;
-    opens no.stonedstonar.chatapplication.model.conversationregister.server to javafx.fxml, javafx.graphics;
+  exports no.stonedstonar.chatapplication.model.conversationregister.server;
+  opens no.stonedstonar.chatapplication.model.conversationregister.server to javafx.fxml, javafx.graphics;
   exports no.stonedstonar.chatapplication.model.conversationregister.personal;
   opens no.stonedstonar.chatapplication.model.conversationregister.personal to javafx.fxml, javafx.graphics;
-    exports no.stonedstonar.chatapplication.model.user;
-    opens no.stonedstonar.chatapplication.model.user to javafx.fxml, javafx.graphics;
-    exports no.stonedstonar.chatapplication.model.userregister;
-    opens no.stonedstonar.chatapplication.model.userregister to javafx.fxml, javafx.graphics;
-    exports no.stonedstonar.chatapplication.model.member;
-    opens no.stonedstonar.chatapplication.model.member to javafx.fxml, javafx.graphics;
-    exports no.stonedstonar.chatapplication.model.membersregister;
-    opens no.stonedstonar.chatapplication.model.membersregister to javafx.fxml, javafx.graphics;
+  exports no.stonedstonar.chatapplication.model.user;
+  opens no.stonedstonar.chatapplication.model.user to javafx.fxml, javafx.graphics;
+  exports no.stonedstonar.chatapplication.model.userregister;
+  opens no.stonedstonar.chatapplication.model.userregister to javafx.fxml, javafx.graphics;
+  exports no.stonedstonar.chatapplication.model.member;
+  opens no.stonedstonar.chatapplication.model.member to javafx.fxml, javafx.graphics;
+  exports no.stonedstonar.chatapplication.model.membersregister;
+  opens no.stonedstonar.chatapplication.model.membersregister to javafx.fxml, javafx.graphics;
 }
