@@ -107,7 +107,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
                 if (observableConversation.checkIfObjectIsObserver(this)){
                     observableConversation.removeObserver(this);
                 }
-                ChatApplicationClient.getChatApplication().setNewScene(NewConversationWindow.getNewUserWindow());
+                ChatApplicationClient.getChatApplication().setNewScene(NewConversationWindow.getNewConversationWindow());
             }catch (IOException exception){
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Loading window error.");
@@ -139,6 +139,15 @@ public class ChatController implements Controller, ConversationObserver, Convers
             }
         });
 
+        editConversationButton.setOnAction(event ->{
+            ConversationController controller = (ConversationController) NewConversationWindow.getNewConversationWindow().getController();
+            try {
+                controller.setEditMode(activeMessageLog);
+                ChatApplicationClient.getChatApplication().setNewScene(NewConversationWindow.getNewConversationWindow());
+            } catch (CouldNotGetConversationException | IOException e) {
+                e.printStackTrace();
+            }
+        });
         sendButton.setDefaultButton(true);
         logOutButton.setCancelButton(true);
     }

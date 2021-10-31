@@ -34,7 +34,7 @@ public class NewConversationWindow implements Window {
      * Gets the new conversation window.
      * @return gets the new conversation window.
      */
-    public static NewConversationWindow getNewUserWindow(){
+    public static NewConversationWindow getNewConversationWindow(){
         if (newConversationWindow == null){
             synchronized (NewUserWindow.class){
                 newConversationWindow = new NewConversationWindow();

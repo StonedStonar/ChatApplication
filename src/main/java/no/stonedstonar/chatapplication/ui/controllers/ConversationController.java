@@ -87,12 +87,18 @@ public class ConversationController implements Controller {
      * Sets all the fields to empty.
      */
     public void setAllFieldsEmpty(){
-        usernameField.textProperty().set("");
-        conversationField.textProperty().set("");
+        if (usernameField != null){
+            usernameField.textProperty().set("");
+        }
+        if (conversationField != null){
+            conversationField.textProperty().set("");
+        }
         removedUsernames.clear();
         if (!editConversation){
             usernames.clear();
-            membersBox.getChildren().clear();
+            if (membersBox != null){
+                membersBox.getChildren().clear();
+            }
         }
     }
 
@@ -295,7 +301,9 @@ public class ConversationController implements Controller {
         Text text = new Text();
         text.setText(username);
         membersBox.getChildren().add(text);
-        usernames.add(username);
+        if (!usernames.contains(username)){
+            usernames.add(username);
+        }
         if(removedUsernames.stream().anyMatch(name -> name.equals(username))){
             String usernameToRemove = removedUsernames.stream().filter(name -> name.equals(username)).findFirst().get();
             removedUsernames.remove(usernameToRemove);
@@ -339,20 +347,27 @@ public class ConversationController implements Controller {
     @Override
     public void updateContent() {
         emptyContent();
-        addUserLoggedInToConversation();
+        if (!editConversation){
+            addUserLoggedInToConversation();
+        }
         setButtonFunctions();
     }
 
     @Override
     public void emptyContent(){
-        setAllFieldsEmpty();
-        setAllValidFieldsToFalseAndDisableButtons();
-        if(editConversation){
-            usernames.forEach(this::addUsername);
-            conversationField.setText(conversationToEdit.getConversationName());
-            makeConversationButton.setText("Edit conversation");
-        }else {
-            makeConversationButton.setText("Make conversation");
+        if (cancelButton != null){
+            setAllFieldsEmpty();
+            setAllValidFieldsToFalseAndDisableButtons();
+            if(editConversation){
+                makeConversationButton.setText("Edit conversation");
+                usernames.forEach(this::addUsername);
+                conversationField.setText(conversationToEdit.getConversationName());
+            }else {
+                if (makeConversationButton != null){
+                    makeConversationButton.setText("Make conversation");
+                }
+            }
         }
+
     }
 }
