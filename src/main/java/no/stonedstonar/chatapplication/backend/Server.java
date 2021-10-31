@@ -197,8 +197,12 @@ public class Server{
                 List<Message> addMessages = messageRequest.getMessageTransportList().stream().filter(MessageTransport::isAddMessage).map(MessageTransport::getMessage).toList();
                 List<Message> removeMessages = messageRequest.getMessageTransportList().stream().filter(mess -> !mess.isAddMessage()).map(MessageTransport::getMessage).toList();
                 ServerConversation conversation = normalConversationRegister.getConversationByNumber(messageRequest.getConversationNumber());
-                addNewMessages(addMessages, conversation);
-                removeMessages(removeMessages, conversation);
+                if (!addMessages.isEmpty()){
+                    addNewMessages(addMessages, conversation);
+                }
+                if (!removeMessages.isEmpty()){
+                    removeMessages(removeMessages, conversation);
+                }
                 sendObject(messageRequest, socket);
             }
         } catch (UsernameNotPartOfConversationException | CouldNotGetConversationException | CouldNotGetMessageLogException | CouldNotAddMessageException | CouldNotRemoveMessageException exception) {

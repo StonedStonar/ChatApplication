@@ -96,6 +96,17 @@ public class MessageRequestBuilder {
     }
 
     /**
+     * Adds the conversation number
+     * @param conversationNumber the conversation number you need.
+     * @return this builder object.
+     */
+    public MessageRequestBuilder addConversationNumber(long conversationNumber){
+        checkIfLongIsAboveZero(conversationNumber, "conversation number");
+        this.conversationNumber = conversationNumber;
+        return this;
+    }
+
+    /**
      * Gets the username of the person in the request.
      * @return the username.
      */
@@ -181,7 +192,7 @@ public class MessageRequestBuilder {
      * @param prefix the prefix the error should have.
      */
     private void checkIfLongIsAboveZero(long number, String prefix){
-        if (number <= 0){
+        if (number > 0){
             throw new IllegalArgumentException("The " + prefix + " must be above 0.");
         }
     }

@@ -262,7 +262,7 @@ public class ChatClient {
             textMessageList.add(textMessage);
             List<MessageTransport> messageTransportList = new ArrayList<>();
             messageTransportList.add(new MessageTransport(textMessage, true));
-            MessageRequest messageRequest = new MessageRequestBuilder().addMessageTransportList(messageTransportList).build();
+            MessageRequest messageRequest = new MessageRequestBuilder().addMessageTransportList(messageTransportList).addConversationNumber(observableConversation.getConversationNumber()).build();
             sendObject(messageRequest, socket);
             Object object = getObject(socket);
             if (object instanceof  MessageRequest response){
@@ -428,10 +428,10 @@ public class ChatClient {
             logger.log(Level.INFO, "Syncing message log " + observableConversation.getConversationNumber());
             LocalDate localDate = LocalDate.now();
             long lastMessageNumber = observableConversation.getMessageLogForDate(localDate, endUser.getUsername()).getLastMessageNumber();
-            long messageLogNumber = observableConversation.getConversationNumber();
+            long conversationNumber = observableConversation.getConversationNumber();
             ArrayList<String> name = new ArrayList<>();
             name.add(endUser.getUsername());
-            MessageRequest messageRequest = new MessageRequestBuilder().addLastMessage(lastMessageNumber).addDate(LocalDate.now()).setUsername(getUsername()).build();
+            MessageRequest messageRequest = new MessageRequestBuilder().addLastMessage(lastMessageNumber).addDate(LocalDate.now()).setUsername(getUsername()).addConversationNumber(conversationNumber).setCheckForMessages(true).build();
             sendObject(messageRequest, socket);
             Object object = getObject(socket);
             if (object instanceof MessageRequest response) {

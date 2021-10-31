@@ -55,7 +55,7 @@ public class NormalServerMessageLog implements Serializable, ServerMessageLog {
         return messageList.stream().anyMatch(mess -> {
             boolean valid = false;
             if (mess instanceof TextMessage textMessage){
-                return textMessage.checkIfMessageContentsAreEqual(message);
+                valid = textMessage.checkIfMessageContentsAreEqual(message);
             }
             return valid;
         });
@@ -130,7 +130,7 @@ public class NormalServerMessageLog implements Serializable, ServerMessageLog {
 
     @Override
     public boolean checkIfAllMessagesAreNewMessages(List<Message> messageList){
-        return messageList.stream().noneMatch(this::checkIfMessageIsInMessageLog);
+        return messageList.stream().anyMatch(this::checkIfMessageIsInMessageLog);
     }
 
     @Override

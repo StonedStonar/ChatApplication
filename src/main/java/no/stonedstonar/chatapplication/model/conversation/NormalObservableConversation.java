@@ -85,6 +85,7 @@ public class NormalObservableConversation implements ObservableConversation, Ser
 
     @Override
     public void notifyObserversAboutNewMessage() {
+        System.out.println(conversationObservers.size());
         conversationObservers.forEach(obs -> obs.updateConversationMessage(newlyAddedMessage, removed));
     }
 
