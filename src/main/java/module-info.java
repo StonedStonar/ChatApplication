@@ -4,7 +4,6 @@ module no.stonedstonar.chatapplication {
   requires javafx.graphics;
   requires java.logging;
 
-  opens no.stonedstonar.chatapplication.model to javafx.fxml, javafx.graphics;
   opens no.stonedstonar.chatapplication.ui.controllers to javafx.fxml, javafx.graphics;
   opens no.stonedstonar.chatapplication.ui.windows to javafx.fxml, javafx.graphics;
   opens no.stonedstonar.chatapplication.ui to javafx.fxml, javafx.graphics;

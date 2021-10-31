@@ -4,6 +4,7 @@ import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotP
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.membersregister.ConversationMembers;
 import no.stonedstonar.chatapplication.model.membersregister.Members;
+import no.stonedstonar.chatapplication.model.membersregister.ServerMembers;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.messagelog.ServerMessageLog;
 
@@ -17,6 +18,9 @@ import java.util.List;
  */
 public interface ServerConversation extends Conversation {
 
+
+    @Override
+    ServerMembers getMembers();
 
     /**
      * Gets all the message logs of a conversation if the user is a part of it.

@@ -4,11 +4,11 @@ import no.stonedstonar.chatapplication.model.member.Member;
 import no.stonedstonar.chatapplication.model.membersregister.ConversationMembers;
 import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
-import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemberException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMessageException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.membersregister.Members;
+import no.stonedstonar.chatapplication.model.membersregister.ServerMembers;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.messagelog.MessageLog;
 import no.stonedstonar.chatapplication.model.messagelog.NormalServerMessageLog;
@@ -101,7 +101,7 @@ public class NormalServerConversation implements ServerConversation {
     }
 
     @Override
-    public Members getMembers() {
+    public ServerMembers getMembers() {
         return conversationMembers;
     }
 
@@ -196,6 +196,27 @@ public class NormalServerConversation implements ServerConversation {
             }
         }else {
             throw new CouldNotAddMessageException("The dates all of the messages are not the same.");
+        }
+    }
+
+    @Override
+    public void removeAllMessagesWithSameDate(List<Message> messagesToRemove) throws CouldNotRemoveMessageException, CouldNotGetMessageLogException, UsernameNotPartOfConversationException {
+        checkIfListIsValid(messagesToRemove, "messages to remove");
+        LocalDate testDateFromOneMessage = messagesToRemove.get(0).getDate();
+        boolean validDate = messagesToRemove.stream().allMatch(message -> message.getDate().isEqual(testDateFromOneMessage));
+        if (validDate){
+            ServerMessageLog serverMessageLog = getMessageLogByTheDate(testDateFromOneMessage);
+            if (serverMessageLog.checkIfAllMessagesAreInMessageLog(messagesToRemove)){
+                Iterator<Message> it = messagesToRemove.iterator();
+                while (it.hasNext()){
+                    Message message = it.next();
+                    removeMessage(message);
+                }
+            }else {
+                throw new CouldNotRemoveMessageException("One or more of the messages are missing from the message log.");
+            }
+        }else {
+            throw new CouldNotRemoveMessageException("The dates all of the messages are not the same.");
         }
     }
 

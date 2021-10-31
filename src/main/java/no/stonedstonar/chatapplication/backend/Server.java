@@ -9,6 +9,9 @@ import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddC
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
+import no.stonedstonar.chatapplication.model.exception.member.CouldNotGetMemberException;
+import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemberException;
+import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMessageException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserException;
@@ -20,12 +23,11 @@ import no.stonedstonar.chatapplication.model.message.TextMessage;
 import no.stonedstonar.chatapplication.model.user.User;
 import no.stonedstonar.chatapplication.model.user.EndUser;
 import no.stonedstonar.chatapplication.model.userregister.NormalUserRegister;
-import no.stonedstonar.chatapplication.network.requests.ConversationRequest;
-import no.stonedstonar.chatapplication.network.requests.MessageRequest;
-import no.stonedstonar.chatapplication.network.requests.SetKeepAliveRequest;
-import no.stonedstonar.chatapplication.network.requests.UserRequest;
+import no.stonedstonar.chatapplication.network.requests.*;
+import no.stonedstonar.chatapplication.network.requests.builder.MembersRequestBuilder;
 import no.stonedstonar.chatapplication.network.requests.builder.MessageRequestBuilder;
 import no.stonedstonar.chatapplication.network.transport.LoginTransport;
+import no.stonedstonar.chatapplication.network.transport.MemberTransport;
 import no.stonedstonar.chatapplication.network.transport.MessageTransport;
 import no.stonedstonar.chatapplication.network.transport.PersonalConversationTransport;
 
@@ -171,6 +173,8 @@ public class Server{
                 handleUserInteraction(userRequest, socket);
             }else if (object instanceof ConversationRequest conversationRequest){
                 handleConversationInteraction(conversationRequest, socket);
+            }else if (object instanceof MembersRequest membersRequest){
+                handleMembersRequest(membersRequest, socket);
             }else if (object instanceof SetKeepAliveRequest setKeepAliveRequest) {
                 socket.setKeepAlive(setKeepAliveRequest.isKeepAlive());
             }else {
@@ -190,9 +194,14 @@ public class Server{
             if (messageRequest.isCheckForMessages()){
                 checkForNewMessages(messageRequest, socket);
             }else {
-                addNewMessages(messageRequest, socket);
+                List<Message> addMessages = messageRequest.getMessageTransportList().stream().filter(MessageTransport::isAddMessage).map(MessageTransport::getMessage).toList();
+                List<Message> removeMessages = messageRequest.getMessageTransportList().stream().filter(mess -> !mess.isAddMessage()).map(MessageTransport::getMessage).toList();
+                ServerConversation conversation = normalConversationRegister.getConversationByNumber(messageRequest.getConversationNumber());
+                addNewMessages(addMessages, conversation);
+                removeMessages(removeMessages, conversation);
+                sendObject(messageRequest, socket);
             }
-        } catch (UsernameNotPartOfConversationException | CouldNotGetConversationException | CouldNotGetMessageLogException | CouldNotAddMessageException exception) {
+        } catch (UsernameNotPartOfConversationException | CouldNotGetConversationException | CouldNotGetMessageLogException | CouldNotAddMessageException | CouldNotRemoveMessageException exception) {
             String message = "Something went wrong in adding " + messageRequest.getMessageTransportList().size() + " with the exception " + exception.getMessage() + " and class " + exception.getClass();
             logEvent(Level.WARNING, message);
             sendObject(exception, socket);
@@ -201,19 +210,26 @@ public class Server{
 
     /**
      * Adds new messages to the conversations they match.
-     * @param messageRequest the message request.
-     * @param socket the socket this communication is going over.
-     * @throws IOException gets thrown if something goes wrong with the communication.
+     * @param messages the message request.
      * @throws CouldNotGetConversationException gets thrown if the conversation could not be located.
      * @throws UsernameNotPartOfConversationException gets thrown if the user is not a part of that conversation.
      * @throws CouldNotAddMessageException gets thrown if the messages is already in the conversation.
      * @throws CouldNotGetMessageLogException gets thrown if the message log for that date could not be located.
      */
-    private void addNewMessages(MessageRequest messageRequest, Socket socket) throws IOException, CouldNotGetConversationException, UsernameNotPartOfConversationException, CouldNotAddMessageException, CouldNotGetMessageLogException {
-        Conversation conversations = normalConversationRegister.getConversationByNumber(messageRequest.getConversationNumber());
-        List<MessageTransport> newMessages = messageRequest.getMessageTransportList();
-        conversations.addAllMessagesWithSameDate(newMessages.stream().map(MessageTransport::getMessage).toList());
-        sendObject(messageRequest, socket);
+    private void addNewMessages(List<Message> messages, ServerConversation conversation) throws IOException, CouldNotGetConversationException, UsernameNotPartOfConversationException, CouldNotAddMessageException, CouldNotGetMessageLogException {
+        conversation.addAllMessagesWithSameDate(messages);
+    }
+
+    /**
+     * Removes all the messages if every single one is in the conversation-
+     * @param messageList the message list you want to remove.
+     * @param conversation the conversation these messages are in.
+     * @throws UsernameNotPartOfConversationException gets thrown if the user is not a part of that conversation.
+     * @throws CouldNotRemoveMessageException gets thrown if one or more of the messages are not in the conversation.
+     * @throws CouldNotGetMessageLogException  gets thrown if the date of these messages don't have a message log.
+     */
+    private void removeMessages(List<Message> messageList, ServerConversation conversation) throws UsernameNotPartOfConversationException, CouldNotRemoveMessageException, CouldNotGetMessageLogException {
+        conversation.removeAllMessagesWithSameDate(messageList);
     }
 
     /**
@@ -274,7 +290,7 @@ public class Server{
             }else if (conversationRequest.isCheckForNewConversation()){
                 handleCheckForNewConversations(conversationRequest, socket);
             }
-        }catch (CouldNotAddMemberException | CouldNotAddConversationException | CouldNotGetConversationException | CouldNotGetMessageLogException | UsernameNotPartOfConversationException exception) {
+        }catch (CouldNotAddMemberException | CouldNotAddConversationException exception) {
             String message = "Something went wrong in the " + conversationRequest + " with the exception " + exception.getMessage() + " and class " + exception.getClass();
             logEvent(Level.WARNING, message);
             sendObject(exception, socket);
@@ -289,7 +305,7 @@ public class Server{
      */
     private void handleCheckForNewConversations(ConversationRequest conversationRequest, Socket socket) throws IOException {
         List<Long> conversationNumbers = conversationRequest.getConversationNumberList();
-        String username = conversationRequest.getUsernames().get(0);
+        String username = conversationRequest.getUsername();
         List<ServerConversation> list = normalConversationRegister.getAllConversationsOfUsername(username);
         List<ObservableConversation> observableConversations = new ArrayList<>();
         if (conversationNumbers.size() < list.size()){
@@ -317,29 +333,84 @@ public class Server{
      * @throws CouldNotAddMemberException gets thrown if a member could not be added.
      */
     private void makeNewConversation(ConversationRequest conversationRequest, Socket socket) throws IOException, CouldNotAddMemberException, CouldNotAddConversationException {
-        List<String> usernames = conversationRequest.getUsernames();
+        List<Member> usernames = conversationRequest.getMemberList();
         String nameOfMessageLog = conversationRequest.getNameOfConversation();
         ServerConversation conversation = normalConversationRegister.addNewConversationWithUsernames(usernames, nameOfMessageLog);
-        String username = usernames.get(0);
-        ObservableConversation observableConversation = new NormalObservableConversation(conversation, conversationRequest.getUsernames().get(0));
+        String username = usernames.get(0).getUsername();
+        ObservableConversation observableConversation = new NormalObservableConversation(conversation, username);
         sendObject(observableConversation, socket);
     }
 
     /**
-     * Adds new members to conversation if they are not in the conversation.
-     * @param conversationRequest the conversation request that wants to add new members.
-     * @param socket the socket that requests the new members to be added.
+     * Handles incoming members request.
+     * @param membersRequest the member request that was sent form the client side.
+     * @param socket the socket that sent this request.
      * @throws IOException gets thrown if the socket closes or cannot finish its task.
+     */
+    private void handleMembersRequest(MembersRequest membersRequest, Socket socket) throws IOException {
+        try {
+            if (membersRequest.isCheckForNewMembers()){
+                checkForNewMembers(membersRequest, socket);
+            }else {
+                ServerConversation serverConversation = normalConversationRegister.getConversationByNumber(membersRequest.getConversationNumber());
+                String username = membersRequest.getUsername();
+                List<Member> membersToAdd = membersRequest.getMembers().stream().filter(MemberTransport::isAddMember).map(MemberTransport::getMember).toList();
+                List<Member> membersToRemove = membersRequest.getMembers().stream().filter(mem -> !mem.isAddMember()).map(MemberTransport::getMember).toList();
+                addNewMembersToConversation(membersToAdd, serverConversation, username);
+                removeMembers(membersToRemove, serverConversation, username);
+                sendObject(membersRequest, socket);
+            }
+        }catch (CouldNotAddMemberException | CouldNotGetMemberException | CouldNotRemoveMemberException | CouldNotGetConversationException | UsernameNotPartOfConversationException exception){
+            String message = "Something went wrong in the " + membersRequest + " with the exception " + exception.getMessage() + " and class " + exception.getClass();
+            logEvent(Level.WARNING, message);
+            sendObject(exception, socket);
+        }
+    }
+
+    /**
+     * Checks if there are any new members in a conversation.
+     * @param membersRequest the conversation you want to check.
+     * @param socket the socket this conversation request came from.
+     * @throws IOException gets thrown if the socket closes or cannot finish its task.
+     * @throws UsernameNotPartOfConversationException gets thrown if the username is not a part of this conversation.
+     * @throws CouldNotGetConversationException gets thrown if the conversation could not be found.
+     */
+    private void checkForNewMembers(MembersRequest membersRequest, Socket socket) throws IOException, UsernameNotPartOfConversationException, CouldNotGetConversationException {
+        long lastMember = membersRequest.getLastMember();
+        long conversationNumber = membersRequest.getConversationNumber();
+        String username = membersRequest.getUsername();
+        ServerConversation serverConversation = normalConversationRegister.getConversationByNumber(conversationNumber);
+        List<Member> newMembers= serverConversation.getMembers().checkForNewUsers(lastMember, username);
+        List<MemberTransport> memberTransportList = new ArrayList<>();
+        newMembers.forEach(mem -> memberTransportList.add(new MemberTransport(mem, true)));
+        MembersRequest response = new MembersRequestBuilder().addMemberTransports(memberTransportList).build();
+        sendObject(response, socket);
+    }
+
+    /**
+     * Adds new members to conversation if they are not in the conversation.
+     * @param members the list with the new members.
+     * @param conversation the conversation these members are going to be added to.
+     * @param username the username of the end user who wants to add new members.
      * @throws CouldNotGetConversationException gets thrown if the conversation could not be located.
      * @throws CouldNotAddMemberException gets thrown if one person in the request is already in the conversation.
+     * @throws UsernameNotPartOfConversationException gets thrown if the username is not a part of this conversation.
      */
-    private void addNewMembersToConversation(ConversationRequest conversationRequest, Socket socket) throws CouldNotGetConversationException, CouldNotAddMemberException, IOException {
-        List<Member> newMembers = conversationRequest.getUsernames();
-        ServerConversation serverConversation = normalConversationRegister.getConversationByNumber(conversationRequest.getConversationNumber());
-        serverConversation.getMembers().addAllMembers(newMembers);
-        Boolean bo = true;
-        sendObject(bo, socket);
-        //Todo: finn ut av hvordan du skal sjekke om det er nye medlemmer i en samtale.
+    private void addNewMembersToConversation(List<Member> members, ServerConversation conversation, String username) throws CouldNotGetConversationException, CouldNotAddMemberException, UsernameNotPartOfConversationException {
+        conversation.getMembers().addAllMembers(members, username);
+    }
+
+    /**
+     * Removes all members if they are in the conversation.
+     * @param members the list with the members to remove.
+     * @param conversation the conversation these members are going to be removed from.
+     * @param username the username of the end user who wants to remove members.
+     * @throws UsernameNotPartOfConversationException gets thrown if the username is not a part of this conversation.
+     * @throws CouldNotGetMemberException gets thrown if a member could not be located.
+     * @throws CouldNotRemoveMemberException gets thrown if one or more members are missing form this object.
+     */
+    private void removeMembers(List<Member> members, ServerConversation conversation, String username) throws UsernameNotPartOfConversationException, CouldNotGetMemberException, CouldNotRemoveMemberException {
+        conversation.getMembers().removeAllMembers(members, username);
     }
 
     /**

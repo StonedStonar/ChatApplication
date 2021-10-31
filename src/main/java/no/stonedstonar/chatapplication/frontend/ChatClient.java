@@ -14,16 +14,19 @@ import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessag
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotGetMessageException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
+import no.stonedstonar.chatapplication.model.member.ConversationMember;
+import no.stonedstonar.chatapplication.model.member.Member;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
 import no.stonedstonar.chatapplication.model.user.User;
+import no.stonedstonar.chatapplication.network.requests.*;
 import no.stonedstonar.chatapplication.network.requests.builder.ConversationRequestBuilder;
+import no.stonedstonar.chatapplication.network.requests.builder.MembersRequestBuilder;
+import no.stonedstonar.chatapplication.network.requests.builder.MessageRequestBuilder;
 import no.stonedstonar.chatapplication.network.requests.builder.UserRequestBuilder;
-import no.stonedstonar.chatapplication.network.requests.ConversationRequest;
-import no.stonedstonar.chatapplication.network.requests.MessageRequest;
-import no.stonedstonar.chatapplication.network.requests.SetKeepAliveRequest;
-import no.stonedstonar.chatapplication.network.requests.UserRequest;
 import no.stonedstonar.chatapplication.network.transport.LoginTransport;
+import no.stonedstonar.chatapplication.network.transport.MemberTransport;
+import no.stonedstonar.chatapplication.network.transport.MessageTransport;
 import no.stonedstonar.chatapplication.network.transport.PersonalConversationTransport;
 
 import java.io.*;
@@ -154,7 +157,7 @@ public class ChatClient {
                     count = 0;
                 }else {
                     Socket socket = new Socket(host, portNumber);
-                    checkMessageLogForNewMessages(observableConversation, socket);
+                    checkConversationForNewMessages(observableConversation, socket);
                     count += 1;
                 }
                 Thread.sleep(2000);
@@ -216,8 +219,10 @@ public class ChatClient {
     public void makeNewConversation(List<String> usernames, String nameOfConversation) throws CouldNotAddMessageLogException, CouldNotAddMemberException, IOException, InvalidResponseException, CouldNotAddConversationException {
         checkIfListIsEmptyOrNull(usernames, "usernames");
         checkIfObjectIsNull(nameOfConversation, "name of conversation");
+        List<Member> members = new ArrayList<>();
+        usernames.forEach(name -> members.add(new ConversationMember(name)));
         try (Socket socket = new Socket("localhost", 1380)){
-            ConversationRequestBuilder conversationRequestBuilder = new ConversationRequestBuilder().setNewConversation(true).addUsernames(usernames);
+            ConversationRequestBuilder conversationRequestBuilder = new ConversationRequestBuilder().setNewConversation(true).addMembers(members);
             if (!nameOfConversation.isEmpty()){
                 conversationRequestBuilder.addConversationName(nameOfConversation);
             }
@@ -255,10 +260,12 @@ public class ChatClient {
             TextMessage textMessage = new TextMessage(messageContents, endUser.getUsername());
             ArrayList<Message> textMessageList = new ArrayList<>();
             textMessageList.add(textMessage);
-            MessageRequest messageRequest = new MessageRequest(textMessageList, observableConversation, LocalDate.now());
+            List<MessageTransport> messageTransportList = new ArrayList<>();
+            messageTransportList.add(new MessageTransport(textMessage, true));
+            MessageRequest messageRequest = new MessageRequestBuilder().addMessageTransportList(messageTransportList).build();
             sendObject(messageRequest, socket);
             Object object = getObject(socket);
-            if (object instanceof  MessageRequest transport){
+            if (object instanceof  MessageRequest response){
 
             }else if (object instanceof CouldNotAddMessageException exception){
                 throw exception;
@@ -328,13 +335,9 @@ public class ChatClient {
             if (!conversationName.isEmpty()){
                 editConversationName(observableConversation, conversationName);
             }
-            if (!namesToAdd.isEmpty()){
-                addOrRemoveMembers(observableConversation, namesToAdd, false);
+            if (!namesToAdd.isEmpty() || !namesToRemove.isEmpty()){
+                addOrRemoveMembers(observableConversation, namesToAdd, namesToRemove);
             }
-            if (!namesToRemove.isEmpty()){
-                addOrRemoveMembers(observableConversation, namesToRemove, true);
-            }
-            //Todo:Fix this
         } catch (CouldNotGetConversationException exception) {
             exception.printStackTrace();
         } catch (IOException exception) {
@@ -350,20 +353,25 @@ public class ChatClient {
 
     }
 
-    private void addOrRemoveMembers(ObservableConversation observableConversation, List<String> names, boolean remove) throws CouldNotGetConversationException, IOException, InvalidResponseException, CouldNotAddMemberException {
+    /**
+     * Sends a request to the server for adding and removing people from a conversation.
+     * @param observableConversation
+     * @param addNames
+     * @param removeNames
+     * @throws CouldNotGetConversationException
+     * @throws IOException
+     * @throws InvalidResponseException
+     * @throws CouldNotAddMemberException
+     */
+    private void addOrRemoveMembers(ObservableConversation observableConversation, List<String> addNames, List<String> removeNames) throws CouldNotGetConversationException, IOException, InvalidResponseException, CouldNotAddMemberException {
         try (Socket socket = new Socket(host, portNumber)){
-            ConversationRequestBuilder conversationRequestBuilder = new ConversationRequestBuilder().addConversationNumber(observableConversation.getConversationNumber()).addUsernames(names);
-            if (remove){
-                conversationRequestBuilder.setRemoveMembers(true);
-            }else {
-                conversationRequestBuilder.setAddMembers(true);
-            }
-            ConversationRequest conversationRequest = conversationRequestBuilder.build();
-            sendObject(conversationRequest, socket);
+            List<MemberTransport> memberTransportList = new ArrayList<>();
+            addNames.forEach(name -> memberTransportList.add(new MemberTransport(new ConversationMember(name), true)));
+            removeNames.forEach(name -> memberTransportList.add(new MemberTransport(new ConversationMember(name), false)));
+            MembersRequest membersRequest = new MembersRequestBuilder().addMemberTransports(memberTransportList).addConversationNumber(observableConversation.getConversationNumber()).addUsername(getUsername()).build();
+            sendObject(membersRequest, socket);
             Object object = getObject(socket);
-            if (object instanceof Boolean valid){
-                //Todo: finn ut av hvordan du skal sjekke om det er nye medlemmer i en samtale.
-                // det samme med navnet. Sjekke at det ikke har endra seg.
+            if (object instanceof MembersRequest response){
 
             }else if (object instanceof CouldNotAddMemberException exception){
                 throw exception;
@@ -386,9 +394,6 @@ public class ChatClient {
      * @throws CouldNotGetMessageLogException gets thrown if the server can't find the message log.
      * @throws UsernameNotPartOfConversationException gets thrown if the user is not a part of the specified conversation.
      */
-    //Todo: Finn en berdre måte å synkronisere meldinger på. De kan sende meldinger likt og da burde man kanskje ta basis i den siste meldingen som ble sendt fra lista?
-    // Det som kan funke er å ha en liste for hver person i samtalen. Så de er separate.
-    // Da er det dermed umulig at to meldinger kommer likt og ingen av dem får oppdateringen. 
     private void checkForNewMessages() throws CouldNotAddMessageException, IOException, InvalidResponseException, CouldNotGetMessageLogException, UsernameNotPartOfConversationException {
         try (Socket socket = new Socket(host, portNumber)){
             socket.setKeepAlive(true);
@@ -398,7 +403,7 @@ public class ChatClient {
             Iterator<ObservableConversation> it = messageLogList.iterator();
             while(it.hasNext()) {
                 ObservableConversation log = it.next();
-                checkMessageLogForNewMessages(log, socket);
+                checkConversationForNewMessages(log, socket);
             }
             SetKeepAliveRequest notKeepAlive = new SetKeepAliveRequest(false);
             sendObject(notKeepAlive, socket);
@@ -418,7 +423,7 @@ public class ChatClient {
      * @throws CouldNotGetMessageLogException gets thrown if the server can't find the message log.
      * @throws UsernameNotPartOfConversationException gets thrown if the user is not a part of the specified conversation.
      */
-    private synchronized void checkMessageLogForNewMessages(ObservableConversation observableConversation, Socket socket) throws IOException, CouldNotAddMessageException, CouldNotGetMessageLogException, InvalidResponseException, UsernameNotPartOfConversationException {
+    private synchronized void checkConversationForNewMessages(ObservableConversation observableConversation, Socket socket) throws IOException, CouldNotAddMessageException, CouldNotGetMessageLogException, InvalidResponseException, UsernameNotPartOfConversationException {
         try {
             logger.log(Level.INFO, "Syncing message log " + observableConversation.getConversationNumber());
             LocalDate localDate = LocalDate.now();
@@ -426,12 +431,11 @@ public class ChatClient {
             long messageLogNumber = observableConversation.getConversationNumber();
             ArrayList<String> name = new ArrayList<>();
             name.add(endUser.getUsername());
-            ConversationRequest conversationRequest = new ConversationRequestBuilder().setCheckForMessages(true).addLastMessageNumber(lastMessageNumber).addUsernames(name).addConversationNumber(messageLogNumber).addDate(LocalDate.now()).build();
-            sendObject(conversationRequest, socket);
+            MessageRequest messageRequest = new MessageRequestBuilder().addLastMessage(lastMessageNumber).addDate(LocalDate.now()).setUsername(getUsername()).build();
+            sendObject(messageRequest, socket);
             Object object = getObject(socket);
-            if (object instanceof MessageRequest messageRequest) {
-                List<Message> textMessageList = messageRequest.getMessages();
-                System.out.println("List size:  " + messageRequest.getMessages().size());
+            if (object instanceof MessageRequest response) {
+                List<Message> textMessageList = messageRequest.getMessageTransportList().stream().map(trans -> trans.getMessage()).toList();
                 if (!textMessageList.isEmpty()) {
                     //Todo: Se om denne kan endres slik at flere meldinger kan legges til fra forksjellig dato.
                     observableConversation.addAllMessagesWithSameDate(textMessageList);
@@ -460,7 +464,7 @@ public class ChatClient {
             List<String> usernames = new ArrayList<>();
             List<Long> conversationNumbers = personalConversationRegister.getAllConversationNumbers();
             usernames.add(endUser.getUsername());
-            ConversationRequest conversationRequest = new ConversationRequestBuilder().setCheckForNewConversations(true).addUsernames(usernames).addConversationNumberList(conversationNumbers).build();
+            ConversationRequest conversationRequest = new ConversationRequestBuilder().setCheckForNewConversations(true).addUsername(getUsername()).addConversationNumberList(conversationNumbers).build();
             sendObject(conversationRequest, socket);
             Object object = getObject(socket);
             if(object instanceof PersonalConversationTransport personalConversationTransport){

@@ -283,6 +283,28 @@ public class NormalObservableConversation implements ObservableConversation, Ser
         return messages;
     }
 
+    @Override
+    public void removeAllMessagesWithSameDate(List<Message> messagesToRemove) throws CouldNotRemoveMessageException, CouldNotGetMessageLogException, UsernameNotPartOfConversationException {
+        checkIfListIsValid(messagesToRemove, "messages to remove");
+        Message message = messagesToRemove.get(0);
+        LocalDate testDateFromOneMessage = message.getDate();
+        boolean validDate = messagesToRemove.stream().allMatch(mess -> mess.getDate().isEqual(testDateFromOneMessage));
+        if (validDate){
+            PersonalMessageLog personalMessageLog = getMessageLogByTheDate(testDateFromOneMessage, message.getFromUsername());
+            if (personalMessageLog.checkIfAllMessagesAreInMessageLog(messagesToRemove)){
+                Iterator<Message> it = messagesToRemove.iterator();
+                while (it.hasNext()){
+                    Message mess = it.next();
+                    removeMessage(mess);
+                }
+            }else {
+                throw new CouldNotRemoveMessageException("One or more of the messages are missing from the message log.");
+            }
+        }else {
+            throw new CouldNotRemoveMessageException("The dates all of the messages are not the same.");
+        }
+    }
+
     /**
      * Checks if the current date is in the message log.
      * @return <code>true</code> if the current date is in the message log.

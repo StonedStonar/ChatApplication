@@ -1,5 +1,6 @@
 package no.stonedstonar.chatapplication.network.requests.builder;
 
+import no.stonedstonar.chatapplication.model.member.Member;
 import no.stonedstonar.chatapplication.network.requests.ConversationRequest;
 
 import java.util.ArrayList;
@@ -22,6 +23,10 @@ public class ConversationRequestBuilder {
 
     private boolean checkForNewConversation;
 
+    private String username;
+
+    private List<Member> memberList;
+
     /**
      * Makes an instance of the MessageLogRequest class.
      */
@@ -31,6 +36,8 @@ public class ConversationRequestBuilder {
         checkForNewConversation = false;
         nameOfConversation = "";
         conversationNumberList = new ArrayList<>();
+        username = "";
+        memberList = new ArrayList<>();
     }
 
     /**
@@ -106,6 +113,44 @@ public class ConversationRequestBuilder {
         checkIfObjectIsNull(conversationNumberList, "conversation number list");
         this.conversationNumberList = conversationNumberList;
         return this;
+    }
+
+    /**
+     * Adds the username of the end user.
+     * @param username the username
+     * @return this builder object.
+     */
+    public ConversationRequestBuilder addUsername(String username){
+        checkString(username, "username");
+        this.username = username;
+        return this;
+    }
+
+    /**
+     * Adds the members list to the builder.
+     * @param members the list with members.
+     * @return this builder object.
+     */
+    public ConversationRequestBuilder addMembers(List<Member> members){
+        checkIfObjectIsNull(members, "members");
+        this.memberList = members;
+        return this;
+    }
+
+    /**
+     * Gets the username of the end user.
+     * @return the username of the end user.
+     */
+    public String getUsername(){
+        return username;
+    }
+
+    /**
+     * The list with all the first members if this is a new conversation.
+     * @return the member list.
+     */
+    public List<Member> getMemberList(){
+        return memberList;
     }
 
     /**

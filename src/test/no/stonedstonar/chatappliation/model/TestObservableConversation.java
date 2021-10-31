@@ -9,6 +9,8 @@ import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberE
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMessageException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
+import no.stonedstonar.chatapplication.model.member.ConversationMember;
+import no.stonedstonar.chatapplication.model.member.Member;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
 import org.junit.jupiter.api.BeforeEach;
@@ -75,11 +77,11 @@ public class TestObservableConversation {
      * Makes a basic list with members of a conversation.
      * @return a list with some usernames.
      */
-    private List<String> makeUsernames(){
-        List<String> usernames = new ArrayList<>();
+    private List<Member> makeUsernames(){
+        List<Member> usernames = new ArrayList<>();
         username = "bjarne21";
-        usernames.add(username);
-        usernames.add("lordVader");
+        usernames.add(new ConversationMember(username));
+        usernames.add(new ConversationMember("lordVader"));
         return usernames;
     }
     /**

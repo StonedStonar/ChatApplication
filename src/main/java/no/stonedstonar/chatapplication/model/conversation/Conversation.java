@@ -94,6 +94,15 @@ public interface Conversation {
     void addAllMessagesWithSameDate(List<Message> newMessageList) throws CouldNotAddMessageException, CouldNotGetMessageLogException, UsernameNotPartOfConversationException;
 
     /**
+     * Removes all the messages in the list from the conversation.
+     * @param messagesToRemove the list with all the messages to remove.
+     * @throws CouldNotRemoveMessageException gets thrown if one or more messages are not in this conversation.
+     * @throws CouldNotGetMessageLogException gets thrown if the message log for that date cannot be found.
+     * @throws UsernameNotPartOfConversationException gets thrown if one or more of the messages' comes from a user that are not in the conversation
+     */
+    void removeAllMessagesWithSameDate(List<Message> messagesToRemove) throws CouldNotRemoveMessageException, CouldNotGetMessageLogException, UsernameNotPartOfConversationException;
+
+    /**
      * Gets the conversations members.
      * @return the conversations members.
      */

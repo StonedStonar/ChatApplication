@@ -130,6 +130,11 @@ public class NormalServerMessageLog implements Serializable, ServerMessageLog {
 
     @Override
     public boolean checkIfAllMessagesAreNewMessages(List<Message> messageList){
-        return messageList.stream().anyMatch(this::checkIfMessageIsInMessageLog);
+        return messageList.stream().noneMatch(this::checkIfMessageIsInMessageLog);
+    }
+
+    @Override
+    public boolean checkIfAllMessagesAreInMessageLog(List<Message> messageList) {
+        return messageList.stream().allMatch(this::checkIfMessageIsInMessageLog);
     }
 }

@@ -1,6 +1,8 @@
 package no.stonedstonar.chatapplication.network.requests;
 
+import no.stonedstonar.chatapplication.model.member.Member;
 import no.stonedstonar.chatapplication.network.requests.builder.ConversationRequestBuilder;
+import no.stonedstonar.chatapplication.network.transport.MemberTransport;
 
 import java.io.Serializable;
 import java.util.List;
@@ -22,6 +24,10 @@ public class ConversationRequest implements Serializable {
 
     private boolean checkForNewConversation;
 
+    private String username;
+
+    private List<Member> memberList;
+
     /**
       * Makes an instance of the MessageLogRequest class.
       */
@@ -31,6 +37,24 @@ public class ConversationRequest implements Serializable {
         nameOfConversation = conversationRequestBuilder.getNameOfConversation();
         checkForNewConversation = conversationRequestBuilder.isCheckForNewConversation();
         conversationNumberList = conversationRequestBuilder.getConversationNumberList();
+        username = conversationRequestBuilder.getUsername();
+        memberList = conversationRequestBuilder.getMemberList();
+    }
+
+    /**
+     * Gets the username of the end user.
+     * @return the username of the end user.
+     */
+    public String getUsername(){
+        return username;
+    }
+
+    /**
+     * The list with all the first members if this is a new conversation.
+     * @return the member list.
+     */
+    public List<Member> getMemberList(){
+        return memberList;
     }
 
     /**

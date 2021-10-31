@@ -53,4 +53,12 @@ public interface MessageLog {
      *         <code>false</code> if none of the input messages are in the message log.
      */
     boolean checkIfAllMessagesAreNewMessages(List<Message> messageList);
+
+    /**
+     * Checks if all the messages in the list is in the message log.
+     * @param messageList the message list.
+     * @return <code>true</code> if all messages are in the message log.
+     *         <code>false</code> if not all messages are in the register.
+     */
+    boolean checkIfAllMessagesAreInMessageLog(List<Message> messageList);
 }

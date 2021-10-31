@@ -38,10 +38,12 @@ public class MessageRequestBuilder {
     /**
      * Sets the username of the person that wants to check for new messages.
      * @param username the username of the user.
+     * @return this builder object.
      */
-    public void setUsername(String username){
+    public MessageRequestBuilder setUsername(String username){
         checkString(username, "username");
         this.username = username;
+        return this;
     }
 
     /**

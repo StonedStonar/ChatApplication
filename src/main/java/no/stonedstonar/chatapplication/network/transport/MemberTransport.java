@@ -12,19 +12,39 @@ import java.io.Serializable;
  */
 public class MemberTransport implements Serializable {
 
-    private boolean addMember;
+    private final boolean addMember;
 
-    private Member member;
+    private final Member member;
 
     /**
       * Makes an instance of the MemberTransport class.
+      * @param member the member you want to transport.
+      * @param addMember <code>true</code> if the member is going to be added.
+      *                  <code>false</code> if the member is going to be removed.
       */
     public MemberTransport(Member member, boolean addMember){
         checkIfObjectIsNull(member, "member");
         this.member = member;
         this.addMember = addMember;
     }
-    
+
+    /**
+     * Gets the member.
+     * @return the member.
+     */
+    public Member getMember() {
+        return member;
+    }
+
+    /**
+     * Gets if the member transport is adding a member.
+     * @return <code>true</code> if the member is going to be added.
+     *         <code>false</code> if the member is going to be removed.
+     */
+    public boolean isAddMember(){
+        return addMember;
+    }
+
     /**
      * Checks if an object is null.
      * @param object the object you want to check.

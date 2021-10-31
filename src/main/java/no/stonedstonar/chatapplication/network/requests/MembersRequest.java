@@ -19,6 +19,10 @@ public class MembersRequest implements Serializable {
 
     private final List<MemberTransport> memberTransportList;
 
+    private final String username;
+
+    private final long lastMember;
+
     /**
       * Makes an instance of the MembersRequest class.
       */
@@ -27,6 +31,16 @@ public class MembersRequest implements Serializable {
         checkForNewMembers = membersRequestBuilder.isCheckForNewMembers();
         conversationNumber = membersRequestBuilder.getConversationNumber();
         memberTransportList = membersRequestBuilder.getMembers();
+        username = membersRequestBuilder.getUsername();
+        lastMember = membersRequestBuilder.getLastMember();
+    }
+
+    /**
+     * Gets the username that sent this request.
+     * @return username of the end user.
+     */
+    public String getUsername(){
+        return username;
     }
 
     /**
@@ -35,6 +49,14 @@ public class MembersRequest implements Serializable {
      */
     public long getConversationNumber(){
         return conversationNumber;
+    }
+
+    /**
+     * Gets the last member long.
+     * @return the last member long.
+     */
+    public long getLastMember(){
+        return lastMember;
     }
 
     /**

@@ -17,4 +17,5 @@ public interface ServerMessageLog extends MessageLog{
      * @return a list with the new messages.
      */
     List<Message> checkForNewMessages(long lastMessageNumber);
+
 }

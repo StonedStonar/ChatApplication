@@ -19,12 +19,17 @@ public class MembersRequestBuilder {
 
     private List<MemberTransport> memberList;
 
+    private String username;
+
+    private long lastMember;
+
     /**
       * Makes an instance of the MembersRequestBuilder class.
       */
     public MembersRequestBuilder(){
         checkForNewMembers = false;
         memberList = new ArrayList<>();
+        username = "";
     }
 
     /**
@@ -63,6 +68,44 @@ public class MembersRequestBuilder {
         checkIfLongIsAboveZero(conversationNumber, "messagelog number", false);
         this.conversationNumber = conversationNumber;
         return this;
+    }
+
+    /**
+     * Adds the last member long.
+     * @param lastMember the last member.
+     * @return this builder object.
+     */
+    public MembersRequestBuilder addLastMember(long lastMember){
+        checkIfLongIsAboveZero(lastMember, "last member", false);
+        this.lastMember = lastMember;
+        return this;
+    }
+
+    /**
+     * Adds the username of the end user to the request.
+     * @param username the username.
+     * @return this builder object.
+     */
+    public MembersRequestBuilder addUsername(String username){
+        checkString(username, "username");
+        this.username = username;
+        return this;
+    }
+
+    /**
+     * Gets the username that sent this request.
+     * @return username of the end user.
+     */
+    public String getUsername(){
+        return username;
+    }
+
+    /**
+     * Gets the last member long.
+     * @return the last member long.
+     */
+    public long getLastMember(){
+        return lastMember;
     }
 
     /**
@@ -109,6 +152,18 @@ public class MembersRequestBuilder {
        if (object == null){
            throw new IllegalArgumentException("The " + error + " cannot be null.");
        }
+    }
+
+    /**
+     * Checks if a string is of a valid format or not.
+     * @param stringToCheck the string you want to check.
+     * @param errorPrefix the error the exception should have if the string is invalid.
+     */
+    public void checkString(String stringToCheck, String errorPrefix){
+        checkIfObjectIsNull(stringToCheck, errorPrefix);
+        if (stringToCheck.isEmpty()){
+            throw new IllegalArgumentException("The " + errorPrefix + " cannot be empty.");
+        }
     }
 
     /**
