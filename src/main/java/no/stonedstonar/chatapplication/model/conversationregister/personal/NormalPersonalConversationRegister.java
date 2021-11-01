@@ -46,7 +46,7 @@ public class NormalPersonalConversationRegister implements PersonalConversationR
      * Gets all the conversations.
      * @return a list with all the conversations.
      */
-    public List<ObservableConversation> getMessageLogList() {
+    public List<ObservableConversation> getConversationList() {
         return observableConversations;
     }
 

@@ -12,10 +12,9 @@ import no.stonedstonar.chatapplication.ui.windows.Window;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 /**
- * Represents the backbone of the application. Loads windows and manages loading of the scenes.
+ * Represents the backbone of the application. Loads the windows and manages loading of the scenes.
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */
@@ -132,11 +131,11 @@ public class ChatApplicationClient extends Application {
 
     @Override
     public void stop() throws Exception {
-        super.stop();
         chatClient.stopAllThreads();
         while (!chatClient.checkIfThreadIsStopped()){
             Thread.sleep(50);
         }
+        super.stop();
     }
 
     /**

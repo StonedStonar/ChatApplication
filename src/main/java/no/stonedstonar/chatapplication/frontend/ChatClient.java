@@ -177,7 +177,7 @@ public class ChatClient {
      * @return the personal message log of the user.
      */
     public List<ObservableConversation> getMessageLogs(){
-        return personalConversationRegister.getMessageLogList();
+        return personalConversationRegister.getConversationList();
     }
 
     /**
@@ -401,7 +401,7 @@ public class ChatClient {
             socket.setKeepAlive(true);
             SetKeepAliveRequest setKeepAliveRequest = new SetKeepAliveRequest(true);
             sendObject(setKeepAliveRequest, socket);
-            List<ObservableConversation> messageLogList = personalConversationRegister.getMessageLogList();
+            List<ObservableConversation> messageLogList = personalConversationRegister.getConversationList();
             Iterator<ObservableConversation> it = messageLogList.iterator();
             while(it.hasNext()) {
                 ObservableConversation log = it.next();
@@ -605,6 +605,41 @@ public class ChatClient {
     private synchronized void checkIfObjectIsNull(Object object, String error){
         if (object == null){
             throw new IllegalArgumentException("The " + error + " cannot be null.");
+        }
+    }
+
+    /**
+     *
+     */
+    public void checkForNewMembers() throws UsernameNotPartOfConversationException, CouldNotGetConversationException, IOException, InvalidResponseException {
+        List<ObservableConversation> observableConversations = personalConversationRegister.getConversationList();
+        Iterator<ObservableConversation> it = observableConversations.iterator();
+        while (it.hasNext()){
+            ObservableConversation observableConversation = it.next();
+            checkConversationForNewOrDeletedMembers(observableConversation);
+        }
+    }
+
+    private void checkConversationForNewOrDeletedMembers(ObservableConversation observableConversation) throws UsernameNotPartOfConversationException, CouldNotGetConversationException, IOException, InvalidResponseException {
+        try (Socket socket = new Socket(host, portNumber)){
+            MembersRequest membersRequest = new MembersRequestBuilder().addConversationNumber(observableConversation.getConversationNumber()).addUsername(getUsername()).addLastMember(observableConversation.getMembers().getLastMemberNumber()).build();
+            sendObject(membersRequest, socket);
+            Object object = getObject(socket);
+            if (object instanceof MembersRequest response){
+
+            }else if (object instanceof UsernameNotPartOfConversationException exception){
+                throw exception;
+            }else if (object instanceof CouldNotGetConversationException exception){
+                throw exception;
+            }else if(object instanceof IllegalArgumentException exception){
+                throw exception;
+            }else {
+                throw new InvalidResponseException("The response from the server is invalid.");
+            }
+
+        }catch (IOException | InvalidResponseException | UsernameNotPartOfConversationException | CouldNotGetConversationException exception){
+            logWaringError(exception);
+            throw exception;
         }
     }
 }

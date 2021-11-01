@@ -21,4 +21,13 @@ public interface ServerMembers extends Members {
      * @throws UsernameNotPartOfConversationException gets thrown if the input username is not a part of this members object.
      */
     List<Member> checkForNewUsers(long lastMember, String username) throws UsernameNotPartOfConversationException;
+
+    /**
+     * Checks for new deleted members.
+     * @param lastDeletedMember the last member that was deleted. The number starts with 1.
+     * @param username the user's username that wants to check for deleted messages.
+     * @return
+     * @throws UsernameNotPartOfConversationException
+     */
+    List<Member> checkForDeletedMembers(long lastDeletedMember,String username) throws UsernameNotPartOfConversationException;
 }

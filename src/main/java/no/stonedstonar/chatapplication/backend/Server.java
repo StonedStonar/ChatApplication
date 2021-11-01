@@ -34,6 +34,7 @@ import no.stonedstonar.chatapplication.network.transport.PersonalConversationTra
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -86,25 +87,7 @@ public class Server{
      */
     private void addTestData(){
         try {
-            EndUser endUser = new EndUser("bjarne22", "passr");
-            EndUser endUser1 = new EndUser("fjell", "passord");
-            EndUser endUser3 = new EndUser("bass", "thepass");
-            normalUserRegister.addUser(endUser);
-            normalUserRegister.addUser(endUser1);
-            normalUserRegister.addUser(endUser3);
-            List<Member> twoMembers = new ArrayList<>();
-            twoMembers.add(new ConversationMember(endUser.getUsername()));
-            twoMembers.add(new ConversationMember(endUser1.getUsername()));
-            List<Member> threeMembers = new ArrayList<>();
-            threeMembers.add(new ConversationMember(endUser.getUsername()));
-            threeMembers.add(new ConversationMember(endUser1.getUsername()));
-            threeMembers.add(new ConversationMember(endUser3.getUsername()));
-            normalConversationRegister.addNewConversationWithUsernames(threeMembers, "");
-            normalConversationRegister.addNewConversationWithUsernames(twoMembers, "");
-            List<ServerConversation> normalMessageLogs = normalConversationRegister.getAllConversationsOfUsername("bjarne22");
-            normalMessageLogs.get(0).addNewMessage(new TextMessage("Haha", "bjarne22"));
-            normalMessageLogs.get(0).addNewMessage(new TextMessage("Nope", "fjell"));
-            normalMessageLogs.get(0).addNewMessage(new TextMessage("So funny bjarne", "bass"));
+            ServerTestData.makeTestDataForServer(normalConversationRegister, normalUserRegister);
         }catch (Exception exception){
             String message = "The test data could not be added " + exception.getClass() + " exception message: " + exception.getMessage();
             logEvent(Level.SEVERE, message);
@@ -178,7 +161,7 @@ public class Server{
             }else if (object instanceof SetKeepAliveRequest setKeepAliveRequest) {
                 socket.setKeepAlive(setKeepAliveRequest.isKeepAlive());
             }else {
-                throw new IllegalArgumentException("NONE IS A VALID OBJECT");
+                throw new InvalidResponseException("NONE IS A VALID OBJECT");
             }
         }while ((socket.getKeepAlive()) && (!socket.isClosed()));
     }
@@ -215,6 +198,7 @@ public class Server{
     /**
      * Adds new messages to the conversations they match.
      * @param messages the message request.
+     * @throws IOException gets thrown if the socket closes or cannot finish its task.
      * @throws CouldNotGetConversationException gets thrown if the conversation could not be located.
      * @throws UsernameNotPartOfConversationException gets thrown if the user is not a part of that conversation.
      * @throws CouldNotAddMessageException gets thrown if the messages is already in the conversation.
@@ -313,7 +297,7 @@ public class Server{
         List<ServerConversation> list = normalConversationRegister.getAllConversationsOfUsername(username);
         List<ObservableConversation> observableConversations = new ArrayList<>();
         if (conversationNumbers.size() < list.size()){
-            List<Long> notMatchingNumbers = list.stream().map(convo -> convo.getConversationNumber()).filter(number -> {
+            List<Long> notMatchingNumbers = list.stream().map(Conversation::getConversationNumber).filter(number -> {
                 boolean valid = false;
                 if (!conversationNumbers.contains(number)){
                     valid = true;
@@ -346,6 +330,7 @@ public class Server{
     }
 
     /**
+     * Handles incoming members request.
      * Handles incoming members request.
      * @param membersRequest the member request that was sent form the client side.
      * @param socket the socket that sent this request.
@@ -382,10 +367,13 @@ public class Server{
     private void checkForNewMembers(MembersRequest membersRequest, Socket socket) throws IOException, UsernameNotPartOfConversationException, CouldNotGetConversationException {
         long lastMember = membersRequest.getLastMember();
         long conversationNumber = membersRequest.getConversationNumber();
+        long lastDeletedMember = membersRequest.getLastDeletedMember();
         String username = membersRequest.getUsername();
         ServerConversation serverConversation = normalConversationRegister.getConversationByNumber(conversationNumber);
-        List<Member> newMembers= serverConversation.getMembers().checkForNewUsers(lastMember, username);
+        List<Member> newMembers = serverConversation.getMembers().checkForNewUsers(lastMember, username);
+        List<Member> removedMembers = serverConversation.getMembers().checkForDeletedMembers(lastDeletedMember, username);
         List<MemberTransport> memberTransportList = new ArrayList<>();
+        removedMembers.forEach(mem -> memberTransportList.add(new MemberTransport(mem, false)));
         newMembers.forEach(mem -> memberTransportList.add(new MemberTransport(mem, true)));
         MembersRequest response = new MembersRequestBuilder().addMemberTransports(memberTransportList).build();
         sendObject(response, socket);

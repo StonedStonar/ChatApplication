@@ -133,6 +133,7 @@
                   <Font size="14.0" />
                </font>
             </Button>
+            <Button fx:id="testButton" mnemonicParsing="false" text="Test button" />
          </children>
       </GridPane>
    </top>

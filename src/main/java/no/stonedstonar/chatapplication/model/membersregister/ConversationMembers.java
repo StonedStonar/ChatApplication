@@ -20,6 +20,10 @@ public class ConversationMembers implements Serializable, ServerMembers {
     //Todo: Endre denne til map slik at vi kan lagre hvem som var siste medlem.
     private final Map<Long, Member> memberMap;
 
+    private final Map<Long, Member> deletedMap;
+
+    private long lastDeletedMember;
+
     private long lastMember;
 
     /**
@@ -27,6 +31,7 @@ public class ConversationMembers implements Serializable, ServerMembers {
       */
     public ConversationMembers(List<Member> conversationMembers){
         memberMap = new HashMap<>();
+        deletedMap = new HashMap<>();
         lastMember = 0;
         checkIfListIsValid(conversationMembers, "conversation members");
         conversationMembers.forEach(this::addNewMember);
@@ -129,6 +134,8 @@ public class ConversationMembers implements Serializable, ServerMembers {
     private void removeMemberFromMap(String usernameToRemove) throws CouldNotGetMemberException {
         Member member = getMemberByUsername(usernameToRemove);
         memberMap.remove(member.getMemberNumber());
+        lastDeletedMember += 1;
+        deletedMap.put(lastDeletedMember, member);
     }
 
 
@@ -236,7 +243,20 @@ public class ConversationMembers implements Serializable, ServerMembers {
         }
         return newUsers;
     }
-    
+
+    @Override
+    public List<Member> checkForDeletedMembers(long lastDeletedMember, String username) throws UsernameNotPartOfConversationException {
+        List<Member> deletedMembers = new ArrayList<>();
+        if (this.lastDeletedMember > lastDeletedMember){
+            long firstLong = lastDeletedMember;
+            do {
+                deletedMembers.add(deletedMap.get(firstLong));
+                firstLong += 1;
+            }while (this.lastDeletedMember < firstLong);
+        }
+        return deletedMembers;
+    }
+
     /**
      * Checks if a string is of a valid format or not.
      * @param stringToCheck the string you want to check.

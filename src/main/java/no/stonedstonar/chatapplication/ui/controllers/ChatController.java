@@ -69,6 +69,9 @@ public class ChatController implements Controller, ConversationObserver, Convers
     @FXML
     private Button editConversationButton;
 
+    @FXML
+    private Button testButton;
+
     private long activeMessageLog;
 
     private Map<Node, Boolean> validFields;
@@ -148,6 +151,10 @@ public class ChatController implements Controller, ConversationObserver, Convers
             } catch (CouldNotGetConversationException | IOException e) {
                 e.printStackTrace();
             }
+        });
+
+        testButton.setOnAction(event -> {
+            chatClient.checkForNewMembers();
         });
         sendButton.setDefaultButton(true);
         logOutButton.setCancelButton(true);

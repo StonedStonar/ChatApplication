@@ -23,6 +23,8 @@ public class MembersRequestBuilder {
 
     private long lastMember;
 
+    private long lastDeletedMember;
+
     /**
       * Makes an instance of the MembersRequestBuilder class.
       */
@@ -45,6 +47,17 @@ public class MembersRequestBuilder {
         }else {
             checkForNewMembers = false;
         }
+        return this;
+    }
+
+    /**
+     * Sets the last deleted member number.
+     * @param lastDeletedMember the last member that was deleted.
+     * @return this builder object.
+     */
+    public MembersRequestBuilder setLastDeletedMember(long lastDeletedMember){
+        checkIfLongIsAboveZero(lastDeletedMember, "last deleted member", false);
+        this.lastDeletedMember = lastDeletedMember;
         return this;
     }
 
@@ -100,6 +113,13 @@ public class MembersRequestBuilder {
         return username;
     }
 
+    /**
+     * Gets the last deleted member.
+     * @return gets the last deleted member.
+     */
+    public long getLastDeletedMember(){
+        return lastDeletedMember;
+    }
     /**
      * Gets the last member long.
      * @return the last member long.

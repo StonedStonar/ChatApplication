@@ -23,6 +23,8 @@ public class MembersRequest implements Serializable {
 
     private final long lastMember;
 
+    private final long lastDeletedMember;
+
     /**
       * Makes an instance of the MembersRequest class.
       */
@@ -33,6 +35,15 @@ public class MembersRequest implements Serializable {
         memberTransportList = membersRequestBuilder.getMembers();
         username = membersRequestBuilder.getUsername();
         lastMember = membersRequestBuilder.getLastMember();
+        lastDeletedMember = membersRequestBuilder.getLastDeletedMember();
+    }
+
+    /**
+     * Gets the last deleted member.
+     * @return gets the last deleted member.
+     */
+    public long getLastDeletedMember(){
+        return lastDeletedMember;
     }
 
     /**
