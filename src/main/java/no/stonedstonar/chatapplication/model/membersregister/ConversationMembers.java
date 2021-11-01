@@ -117,6 +117,11 @@ public class ConversationMembers implements Serializable, ServerMembers {
     }
 
     @Override
+    public long getLastDeletedMember() {
+        return lastDeletedMember;
+    }
+
+    @Override
     public void removeMember(Member member, String username) throws CouldNotRemoveMemberException, UsernameNotPartOfConversationException {
         checkIfUserIsMemberIfNotThrowException(username);
         try {
@@ -155,17 +160,14 @@ public class ConversationMembers implements Serializable, ServerMembers {
      * 9/10 names can be correct but the 1/10 will result in a false return value.
      * So this method requires all the names to match one person in the conversation.
      * @param usernames the usernames of the users.
-     * @return <code>true</code> if all the names matches everyone in the group.
+     * @return <code>true</code> if all the names matches someone in the group.
      *         <code>false</code> if one name or all of the names does not match any in the conversation.
      */
     public boolean checkIfUsernamesAreInConversation(List<String> usernames){
         boolean valid = false;
         checkIfObjectIsNull(usernames, "usernames");
         if (!usernames.isEmpty()){
-            long amount = memberMap.values().stream().filter(conversationMember -> usernames.stream().anyMatch(username -> username.equals(conversationMember.getUsername()))).count();
-            if ((amount == usernames.size()) && (memberMap.size() == amount)){
-                valid = true;
-            }
+            valid = usernames.stream().allMatch(this::checkIfUsernameIsMember);
         }else {
             throw new IllegalArgumentException("The list must have some usernames in it.");
         }

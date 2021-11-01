@@ -382,6 +382,8 @@ public class ChatClient {
                 throw exception;
             }else if (object instanceof CouldNotGetConversationException exception){
                 throw exception;
+            }else if (object instanceof CouldNotRemoveMemberException exception){
+
             }else {
                 throw new InvalidResponseException("The response from the server was invalid format.");
             }
@@ -643,7 +645,7 @@ public class ChatClient {
      */
     private void checkConversationForNewOrDeletedMembers(ObservableConversation observableConversation) throws UsernameNotPartOfConversationException, CouldNotGetConversationException, IOException, InvalidResponseException, CouldNotGetMemberException, CouldNotRemoveMemberException, CouldNotAddMemberException {
         try (Socket socket = new Socket(host, portNumber)){
-            MembersRequest membersRequest = new MembersRequestBuilder().addConversationNumber(observableConversation.getConversationNumber()).addUsername(getUsername()).addLastMember(observableConversation.getMembers().getLastMemberNumber()).build();
+            MembersRequest membersRequest = new MembersRequestBuilder().addConversationNumber(observableConversation.getConversationNumber()).addUsername(getUsername()).addLastMember(observableConversation.getMembers().getLastMemberNumber()).setLastDeletedMember(observableConversation.getMembers().getLastDeletedMember()).build();
             sendObject(membersRequest, socket);
             Object object = getObject(socket);
             if (object instanceof MembersRequest response){

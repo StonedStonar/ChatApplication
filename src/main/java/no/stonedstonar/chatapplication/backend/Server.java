@@ -342,8 +342,12 @@ public class Server{
                 String username = membersRequest.getUsername();
                 List<Member> membersToAdd = membersRequest.getMembers().stream().filter(MemberTransport::isAddMember).map(MemberTransport::getMember).toList();
                 List<Member> membersToRemove = membersRequest.getMembers().stream().filter(mem -> !mem.isAddMember()).map(MemberTransport::getMember).toList();
-                addNewMembersToConversation(membersToAdd, serverConversation, username);
-                removeMembers(membersToRemove, serverConversation, username);
+                if (!membersToAdd.isEmpty()){
+                    addNewMembersToConversation(membersToAdd, serverConversation, username);
+                }
+                if (!membersToRemove.isEmpty()){
+                    removeMembers(membersToRemove, serverConversation, username);
+                }
                 sendObject(membersRequest, socket);
             }
         }catch (CouldNotAddMemberException | CouldNotGetMemberException | CouldNotRemoveMemberException | CouldNotGetConversationException | UsernameNotPartOfConversationException exception){

@@ -22,6 +22,12 @@ public interface Members {
     long getLastMemberNumber();
 
     /**
+     * Gets the last member that was removed.
+     * @return the last member that was removed.
+     */
+    long getLastDeletedMember();
+
+    /**
      * Adds a user to the conversation.
      * @param member the new member to add.
      * @param username the username of the person in the group that's adding a new member.
