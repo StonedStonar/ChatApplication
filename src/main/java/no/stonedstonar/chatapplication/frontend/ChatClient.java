@@ -8,6 +8,8 @@ import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddC
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
+import no.stonedstonar.chatapplication.model.exception.member.CouldNotGetMemberException;
+import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemberException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
@@ -16,6 +18,7 @@ import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserExcep
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.model.member.ConversationMember;
 import no.stonedstonar.chatapplication.model.member.Member;
+import no.stonedstonar.chatapplication.model.membersregister.Members;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
 import no.stonedstonar.chatapplication.model.user.User;
@@ -609,9 +612,16 @@ public class ChatClient {
     }
 
     /**
-     *
+     * Checks all the conversations for new members.
+     * @throws UsernameNotPartOfConversationException gets thrown if this user is not a part of that conversation.
+     * @throws CouldNotGetConversationException gets thrown if the conversation could not be found.
+     * @throws IOException gets thrown if the socket closes before everything was done.
+     * @throws InvalidResponseException gets thrown if the server responds with wrong object.
+     * @throws CouldNotGetMemberException gets thrown if a member could not be found.
+     * @throws CouldNotRemoveMemberException gets thrown if a member could not be removed.
+     * @throws CouldNotAddMemberException gets thrown if a member could not be added.
      */
-    public void checkForNewMembers() throws UsernameNotPartOfConversationException, CouldNotGetConversationException, IOException, InvalidResponseException {
+    public void checkForNewMembers() throws UsernameNotPartOfConversationException, CouldNotGetConversationException, IOException, InvalidResponseException, CouldNotGetMemberException, CouldNotRemoveMemberException, CouldNotAddMemberException {
         List<ObservableConversation> observableConversations = personalConversationRegister.getConversationList();
         Iterator<ObservableConversation> it = observableConversations.iterator();
         while (it.hasNext()){
@@ -620,13 +630,35 @@ public class ChatClient {
         }
     }
 
-    private void checkConversationForNewOrDeletedMembers(ObservableConversation observableConversation) throws UsernameNotPartOfConversationException, CouldNotGetConversationException, IOException, InvalidResponseException {
+    /**
+     * Checks if the input conversation has new members.
+     * @param observableConversation the conversation to check for new members.
+     * @throws UsernameNotPartOfConversationException gets thrown if this user is not a part of that conversation.
+     * @throws CouldNotGetConversationException gets thrown if the conversation could not be found.
+     * @throws IOException gets thrown if the socket closes before everything was done.
+     * @throws InvalidResponseException gets thrown if the server responds with wrong object.
+     * @throws CouldNotGetMemberException gets thrown if a member could not be found.
+     * @throws CouldNotRemoveMemberException gets thrown if a member could not be removed.
+     * @throws CouldNotAddMemberException gets thrown if a member could not be added.
+     */
+    private void checkConversationForNewOrDeletedMembers(ObservableConversation observableConversation) throws UsernameNotPartOfConversationException, CouldNotGetConversationException, IOException, InvalidResponseException, CouldNotGetMemberException, CouldNotRemoveMemberException, CouldNotAddMemberException {
         try (Socket socket = new Socket(host, portNumber)){
             MembersRequest membersRequest = new MembersRequestBuilder().addConversationNumber(observableConversation.getConversationNumber()).addUsername(getUsername()).addLastMember(observableConversation.getMembers().getLastMemberNumber()).build();
             sendObject(membersRequest, socket);
             Object object = getObject(socket);
             if (object instanceof MembersRequest response){
-
+                List<MemberTransport> membersTransport = response.getMembers();
+                if (!membersTransport.isEmpty()){
+                    List<Member> membersToRemove = membersTransport.stream().filter(member -> !member.isAddMember()).map(MemberTransport::getMember).toList();
+                    List<Member> membersToAdd = membersTransport.stream().filter(MemberTransport::isAddMember).map(MemberTransport::getMember).toList();
+                    Members members = observableConversation.getMembers();
+                    if (!membersToRemove.isEmpty()){
+                        members.removeAllMembers(membersToRemove, getUsername());
+                    }
+                    if (!membersToAdd.isEmpty()){
+                        members.addAllMembers(membersToAdd, getUsername());
+                    }
+                }
             }else if (object instanceof UsernameNotPartOfConversationException exception){
                 throw exception;
             }else if (object instanceof CouldNotGetConversationException exception){
@@ -637,7 +669,7 @@ public class ChatClient {
                 throw new InvalidResponseException("The response from the server is invalid.");
             }
 
-        }catch (IOException | InvalidResponseException | UsernameNotPartOfConversationException | CouldNotGetConversationException exception){
+        }catch (IOException | CouldNotGetMemberException | CouldNotRemoveMemberException | InvalidResponseException | UsernameNotPartOfConversationException | CouldNotGetConversationException | CouldNotAddMemberException exception){
             logWaringError(exception);
             throw exception;
         }

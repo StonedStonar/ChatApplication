@@ -18,6 +18,9 @@ import no.stonedstonar.chatapplication.model.conversationregister.personal.Perso
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
+import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
+import no.stonedstonar.chatapplication.model.exception.member.CouldNotGetMemberException;
+import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemberException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.conversationregister.personal.ConversationRegisterObserver;
@@ -154,7 +157,23 @@ public class ChatController implements Controller, ConversationObserver, Convers
         });
 
         testButton.setOnAction(event -> {
-            chatClient.checkForNewMembers();
+            try {
+                chatClient.checkForNewMembers();
+            } catch (UsernameNotPartOfConversationException e) {
+                e.printStackTrace();
+            } catch (CouldNotGetConversationException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (InvalidResponseException e) {
+                e.printStackTrace();
+            } catch (CouldNotGetMemberException e) {
+                e.printStackTrace();
+            } catch (CouldNotRemoveMemberException e) {
+                e.printStackTrace();
+            } catch (CouldNotAddMemberException e) {
+                e.printStackTrace();
+            }
         });
         sendButton.setDefaultButton(true);
         logOutButton.setCancelButton(true);

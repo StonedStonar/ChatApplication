@@ -16,10 +16,8 @@ import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMes
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
-import no.stonedstonar.chatapplication.model.member.ConversationMember;
 import no.stonedstonar.chatapplication.model.member.Member;
 import no.stonedstonar.chatapplication.model.message.Message;
-import no.stonedstonar.chatapplication.model.message.TextMessage;
 import no.stonedstonar.chatapplication.model.user.User;
 import no.stonedstonar.chatapplication.model.user.EndUser;
 import no.stonedstonar.chatapplication.model.userregister.NormalUserRegister;
@@ -34,7 +32,6 @@ import no.stonedstonar.chatapplication.network.transport.PersonalConversationTra
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -339,7 +336,7 @@ public class Server{
     private void handleMembersRequest(MembersRequest membersRequest, Socket socket) throws IOException {
         try {
             if (membersRequest.isCheckForNewMembers()){
-                checkForNewMembers(membersRequest, socket);
+                checkForNewAndRemovedMembers(membersRequest, socket);
             }else {
                 ServerConversation serverConversation = normalConversationRegister.getConversationByNumber(membersRequest.getConversationNumber());
                 String username = membersRequest.getUsername();
@@ -364,7 +361,7 @@ public class Server{
      * @throws UsernameNotPartOfConversationException gets thrown if the username is not a part of this conversation.
      * @throws CouldNotGetConversationException gets thrown if the conversation could not be found.
      */
-    private void checkForNewMembers(MembersRequest membersRequest, Socket socket) throws IOException, UsernameNotPartOfConversationException, CouldNotGetConversationException {
+    private void checkForNewAndRemovedMembers(MembersRequest membersRequest, Socket socket) throws IOException, UsernameNotPartOfConversationException, CouldNotGetConversationException {
         long lastMember = membersRequest.getLastMember();
         long conversationNumber = membersRequest.getConversationNumber();
         long lastDeletedMember = membersRequest.getLastDeletedMember();
@@ -375,7 +372,7 @@ public class Server{
         List<MemberTransport> memberTransportList = new ArrayList<>();
         removedMembers.forEach(mem -> memberTransportList.add(new MemberTransport(mem, false)));
         newMembers.forEach(mem -> memberTransportList.add(new MemberTransport(mem, true)));
-        MembersRequest response = new MembersRequestBuilder().addMemberTransports(memberTransportList).build();
+        MembersRequest response = new MembersRequestBuilder().addMemberTransports(memberTransportList).addConversationNumber(conversationNumber).build();
         sendObject(response, socket);
     }
 
