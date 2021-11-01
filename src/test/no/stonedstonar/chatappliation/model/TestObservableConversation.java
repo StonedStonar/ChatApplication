@@ -308,7 +308,7 @@ public class TestObservableConversation {
             observableConversation.addAllMessagesWithSameDate(messageList);
             assertTrue(true);
         }catch (IllegalArgumentException | CouldNotAddMessageException | UsernameNotPartOfConversationException | CouldNotGetMessageLogException exception){
-            fail("Expected the messages to be added since the input is valid.");
+            fail("Expected the messages to be added since the input is valid " + exception.getClass());
         }
     }
 

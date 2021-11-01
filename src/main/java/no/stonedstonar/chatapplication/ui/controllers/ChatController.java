@@ -17,6 +17,7 @@ import no.stonedstonar.chatapplication.model.conversation.ObservableConversation
 import no.stonedstonar.chatapplication.model.conversationregister.personal.PersonalConversationRegister;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
+import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.conversationregister.personal.ConversationRegisterObserver;
@@ -217,10 +218,10 @@ public class ChatController implements Controller, ConversationObserver, Convers
     private void addAllConversations(){
         contactsBox.getChildren().clear();
         ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
-        List<ObservableConversation> messageLogList = chatClient.getMessageLogs();
-        if (!messageLogList.isEmpty()){
-            messageLogList.forEach(this::addNewConversation);
-            ObservableConversation observableConversation = messageLogList.get(0);
+        List<ObservableConversation> conversationList = chatClient.getMessageLogs();
+        if (!conversationList.isEmpty()){
+            conversationList.forEach(this::addNewConversation);
+            ObservableConversation observableConversation = conversationList.get(0);
             showMessagesFromConversation(observableConversation);
         } else {
             VBox vBox = new VBox();
@@ -236,7 +237,6 @@ public class ChatController implements Controller, ConversationObserver, Convers
      * @param observableConversation the message log this conversation is about.
      */
     private void addNewConversation(ObservableConversation observableConversation){
-        System.out.println("Making conversation for " + observableConversation.getConversationNumber());
         VBox vBox = new VBox();
         vBox.setMinWidth(Long.MAX_VALUE);
         String nameOfConversation = observableConversation.getConversationName();

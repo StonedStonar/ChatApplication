@@ -80,7 +80,7 @@ public class TextMessage implements Serializable, Message{
     @Override
     public void setMessageNumber(long messageNumber) {
         checkIfLongIsNegative(messageNumber, "message number");
-        if (this.messageNumber >= 0){
+        if (this.messageNumber >= -1){
             this.messageNumber = messageNumber;
             receivedByServerDate = LocalDate.now();
             receivedByServerTime = LocalTime.now();

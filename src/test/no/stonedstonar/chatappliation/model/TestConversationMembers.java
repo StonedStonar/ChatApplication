@@ -66,12 +66,12 @@ public class TestConversationMembers {
     @DisplayName("Tests if addMember works with invalid member.")
     public void testIfAddMemberWorksWithInvalidMember(){
         try {
-            conversationMembers.addMember(null, memberUsername);
-            fail("Expected to get a exception since the input is invalid.");
-        }catch (IllegalArgumentException exception){
+            conversationMembers.addMember(new ConversationMember("bjarne21"), memberUsername);
+            fail("Expected to get a exception since the member is already in the register.");
+        }catch (CouldNotAddMemberException exception){
             assertTrue(true);
-        }catch (CouldNotAddMemberException | UsernameNotPartOfConversationException exception){
-            fail("Expected to get a IllegalArgumentException since the format is invalid and not a " + exception.getClass());
+        }catch (IllegalArgumentException | UsernameNotPartOfConversationException exception){
+            fail("Expected to get a CouldNotAddMemberException since the format is invalid and not a " + exception.getClass());
         }
     }
 
@@ -84,10 +84,10 @@ public class TestConversationMembers {
         try {
             Member member = new ConversationMember("fjell");
             conversationMembers.addMember(member, "fjart");
-            fail("Expected to get a CouldNotAddMemberException since the format is invalid.");
-        }catch (IllegalArgumentException | UsernameNotPartOfConversationException exception){
-            fail("Expected to get a CouldNotAddMemberException since the format is invalid and not a " + exception.getClass());
-        }catch (CouldNotAddMemberException exception){
+            fail("Expected to get a UsernameNotPartOfConversationException since the format is invalid.");
+        }catch (IllegalArgumentException | CouldNotAddMemberException exception){
+            fail("Expected to get a UsernameNotPartOfConversationException since the format is invalid and not a " + exception.getClass());
+        }catch (UsernameNotPartOfConversationException exception){
             assertTrue(true);
         }
     }
@@ -230,7 +230,7 @@ public class TestConversationMembers {
     @DisplayName("Tests if removeMember works with invalid member.")
     public void testIfRemoveMemberWorksWithInvalidMember(){
         try {
-            conversationMembers.removeMember(removeMember, memberUsername);
+            conversationMembers.removeMember(new ConversationMember(null), memberUsername);
             fail("Expected to get a execution since the input username is invalid format");
         }catch (IllegalArgumentException exception){
             assertTrue(true);
@@ -295,7 +295,7 @@ public class TestConversationMembers {
     @DisplayName("Tests if removeMember works with member not in register.")
     public void testIfRemoveMemberWorksWithMemberNotInConversation(){
         try {
-            conversationMembers.removeMember(removeMember, memberUsername);
+            conversationMembers.removeMember(new ConversationMember("asdasd"), memberUsername);
             fail("Expected to get a exception since bjarne22 is not a part of the register.");
         }catch (IllegalArgumentException | UsernameNotPartOfConversationException exception){
             fail("Expected to get a CouldNotRemoveMemberException since the format is valid and not a " + exception.getClass());

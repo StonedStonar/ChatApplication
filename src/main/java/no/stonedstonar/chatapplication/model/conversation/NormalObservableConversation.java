@@ -217,7 +217,7 @@ public class NormalObservableConversation implements ObservableConversation, Ser
         boolean validDate = newMessageList.stream().allMatch(message -> message.getDate().isEqual(testDateFromOneMessage));
         if (validDate && allAreMembers){
             PersonalMessageLog messageLog = getMessageLogByTheDate(testDateFromOneMessage, username);
-            if (!messageLog.checkIfAllMessagesAreNewMessages(newMessageList)){
+            if (messageLog.checkIfAllMessagesAreNewMessages(newMessageList)){
                 Iterator<Message> it = newMessageList.iterator();
                 while (it.hasNext()){
                     Message message = it.next();

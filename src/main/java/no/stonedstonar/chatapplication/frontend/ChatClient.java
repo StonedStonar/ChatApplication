@@ -67,7 +67,7 @@ public class ChatClient {
       * Makes an instance of the ChatClient class.
       */
     public ChatClient(){
-        executors = Executors.newFixedThreadPool(2);
+        executors = Executors.newFixedThreadPool(3);
         logger = Logger.getLogger(getClass().toString());
         host = "localhost";
         portNumber = 1380;
@@ -104,7 +104,6 @@ public class ChatClient {
      * @param messageLogNumber the message log you want to listen for new messages on.
      */
     public void setMessageLogFocus(long messageLogNumber) {
-        System.out.println("Setting log number.");
         stopCheckingForMessages();
         messageLogFocus = messageLogNumber;
 
@@ -156,8 +155,7 @@ public class ChatClient {
                     checkForNewConversations();
                     count = 0;
                 }else {
-                    Socket socket = new Socket(host, portNumber);
-                    checkConversationForNewMessages(observableConversation, socket);
+                    checkIfCurrentMessageLogHasNewMessages(observableConversation);
                     count += 1;
                 }
                 Thread.sleep(2000);
@@ -166,6 +164,12 @@ public class ChatClient {
                 stopCheckingForMessages();
             }
         } while(runCheckForMessageThread);
+    }
+
+
+    private void checkIfCurrentMessageLogHasNewMessages(ObservableConversation observableConversation) throws UsernameNotPartOfConversationException, IOException, CouldNotAddMessageException, InvalidResponseException, CouldNotGetMessageLogException {
+        Socket socket = new Socket(host, portNumber);
+        checkConversationForNewMessages(observableConversation, socket);
     }
 
     /**
@@ -258,15 +262,13 @@ public class ChatClient {
         checkIfObjectIsNull(observableConversation, "message log");
         try (Socket socket = new Socket(host, portNumber)){
             TextMessage textMessage = new TextMessage(messageContents, endUser.getUsername());
-            ArrayList<Message> textMessageList = new ArrayList<>();
-            textMessageList.add(textMessage);
             List<MessageTransport> messageTransportList = new ArrayList<>();
             messageTransportList.add(new MessageTransport(textMessage, true));
             MessageRequest messageRequest = new MessageRequestBuilder().addMessageTransportList(messageTransportList).addConversationNumber(observableConversation.getConversationNumber()).build();
             sendObject(messageRequest, socket);
             Object object = getObject(socket);
             if (object instanceof  MessageRequest response){
-
+                System.out.println("Message is now added.");
             }else if (object instanceof CouldNotAddMessageException exception){
                 throw exception;
             }else if (object instanceof CouldNotGetMessageLogException exception){
@@ -423,7 +425,7 @@ public class ChatClient {
      * @throws CouldNotGetMessageLogException gets thrown if the server can't find the message log.
      * @throws UsernameNotPartOfConversationException gets thrown if the user is not a part of the specified conversation.
      */
-    private synchronized void checkConversationForNewMessages(ObservableConversation observableConversation, Socket socket) throws IOException, CouldNotAddMessageException, CouldNotGetMessageLogException, InvalidResponseException, UsernameNotPartOfConversationException {
+    public synchronized void checkConversationForNewMessages(ObservableConversation observableConversation, Socket socket) throws IOException, CouldNotAddMessageException, CouldNotGetMessageLogException, InvalidResponseException, UsernameNotPartOfConversationException {
         try {
             logger.log(Level.INFO, "Syncing message log " + observableConversation.getConversationNumber());
             LocalDate localDate = LocalDate.now();
@@ -435,7 +437,7 @@ public class ChatClient {
             sendObject(messageRequest, socket);
             Object object = getObject(socket);
             if (object instanceof MessageRequest response) {
-                List<Message> textMessageList = messageRequest.getMessageTransportList().stream().map(trans -> trans.getMessage()).toList();
+                List<Message> textMessageList = response.getMessageTransportList().stream().map(trans -> trans.getMessage()).toList();
                 if (!textMessageList.isEmpty()) {
                     //Todo: Se om denne kan endres slik at flere meldinger kan legges til fra forksjellig dato.
                     observableConversation.addAllMessagesWithSameDate(textMessageList);

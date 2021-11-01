@@ -73,11 +73,11 @@ public class NormalServerMessageLog implements Serializable, ServerMessageLog {
 
     /**
      * Finds all the messages that are over a certain message number.
-     * @param numberOfMessage the message number.
+     * @param lastMessageNumber the message number.
      * @return a list with all the messages that are over the input message number.
      */
-    private List<Message> getMessagesOverMessageNumber(long numberOfMessage){
-        return messageList.stream().filter(mess -> mess.getMessageNumber() > numberOfMessage).toList();
+    private List<Message> getMessagesOverMessageNumber(long lastMessageNumber){
+        return messageList.stream().filter(message -> message.getMessageNumber() > lastMessageNumber).toList();
     }
     
     /**

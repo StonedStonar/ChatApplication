@@ -351,6 +351,7 @@ public class ConversationController implements Controller {
             addUserLoggedInToConversation();
         }
         setButtonFunctions();
+        addListeners();
     }
 
     @Override

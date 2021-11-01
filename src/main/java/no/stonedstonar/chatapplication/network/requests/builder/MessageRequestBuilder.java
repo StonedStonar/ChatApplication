@@ -192,7 +192,7 @@ public class MessageRequestBuilder {
      * @param prefix the prefix the error should have.
      */
     private void checkIfLongIsAboveZero(long number, String prefix){
-        if (number > 0){
+        if (number < 0){
             throw new IllegalArgumentException("The " + prefix + " must be above 0.");
         }
     }

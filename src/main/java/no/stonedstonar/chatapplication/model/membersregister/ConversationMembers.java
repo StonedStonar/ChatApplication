@@ -188,7 +188,7 @@ public class ConversationMembers implements Serializable, ServerMembers {
      */
     private boolean checkIfNoneUsernamesAreInConversation(List<Member> members){
         if (!members.isEmpty()){
-            return memberMap.values().stream().anyMatch(conversationMember -> members.stream().anyMatch(name -> name.equals(conversationMember.getUsername())));
+            return members.stream().anyMatch(mem -> memberMap.values().stream().anyMatch(mem2 -> mem2.getUsername().equals(mem.getUsername())));
         }else {
             throw new IllegalArgumentException("The list must have some usernames in it.");
         }
@@ -209,7 +209,7 @@ public class ConversationMembers implements Serializable, ServerMembers {
         for (Member member : memberMap.values()){
             if (!member.getUsername().equals(username)){
                 stringBuilder.append(" ");
-                stringBuilder.append(member);
+                stringBuilder.append(member.getUsername());
             }
         }
         return stringBuilder.toString();
