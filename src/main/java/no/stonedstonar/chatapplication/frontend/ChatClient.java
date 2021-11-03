@@ -18,7 +18,7 @@ import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserExcep
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.model.member.ConversationMember;
 import no.stonedstonar.chatapplication.model.member.Member;
-import no.stonedstonar.chatapplication.model.membersregister.Members;
+import no.stonedstonar.chatapplication.model.membersregister.MembersRegister;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
 import no.stonedstonar.chatapplication.model.user.User;
@@ -330,28 +330,23 @@ public class ChatClient {
      * @param namesToAdd
      * @param namesToRemove
      * @param conversationName
+     * @param observableConversation
+     * @throws CouldNotGetConversationException
+     * @throws IOException
+     * @throws InvalidResponseException
+     * @throws CouldNotAddMemberException
+     * @throws CouldNotRemoveMemberException
      */
-    public void editConversation(List<String> namesToAdd, List<String> namesToRemove, String conversationName, ObservableConversation observableConversation){
+    public void editConversation(List<String> namesToAdd, List<String> namesToRemove, String conversationName, ObservableConversation observableConversation) throws CouldNotGetConversationException, IOException, InvalidResponseException, CouldNotAddMemberException, CouldNotRemoveMemberException {
         checkIfObjectIsNull(conversationName, "conversation name");
         checkIfObjectIsNull(namesToAdd, "names to add");
         checkIfObjectIsNull(namesToRemove, "names to remove");
         checkIfObjectIsNull(observableConversation, "personal conversation");
-        try {
-            if (!conversationName.isEmpty()){
-                editConversationName(observableConversation, conversationName);
-            }
-            if (!namesToAdd.isEmpty() || !namesToRemove.isEmpty()){
-                addOrRemoveMembers(observableConversation, namesToAdd, namesToRemove);
-            }
-        } catch (CouldNotGetConversationException exception) {
-            exception.printStackTrace();
-        } catch (IOException exception) {
-            exception.printStackTrace();
-        } catch (InvalidResponseException e) {
-            e.printStackTrace();
-        } catch (CouldNotAddMemberException exception) {
-            exception.printStackTrace();
+
+        if (!conversationName.isEmpty()){
+            editConversationName(observableConversation, conversationName);
         }
+        addOrRemoveMembers(observableConversation, namesToAdd, namesToRemove);
     }
 
     private void editConversationName(ObservableConversation observableConversation, String newName){
@@ -359,7 +354,7 @@ public class ChatClient {
     }
 
     /**
-     * Sends a request to the server for adding and removing people from a conversation.
+     *
      * @param observableConversation
      * @param addNames
      * @param removeNames
@@ -367,30 +362,38 @@ public class ChatClient {
      * @throws IOException
      * @throws InvalidResponseException
      * @throws CouldNotAddMemberException
+     * @throws CouldNotRemoveMemberException
      */
-    private void addOrRemoveMembers(ObservableConversation observableConversation, List<String> addNames, List<String> removeNames) throws CouldNotGetConversationException, IOException, InvalidResponseException, CouldNotAddMemberException {
-        try (Socket socket = new Socket(host, portNumber)){
-            List<MemberTransport> memberTransportList = new ArrayList<>();
-            addNames.forEach(name -> memberTransportList.add(new MemberTransport(new ConversationMember(name), true)));
-            removeNames.forEach(name -> memberTransportList.add(new MemberTransport(new ConversationMember(name), false)));
-            MembersRequest membersRequest = new MembersRequestBuilder().addMemberTransports(memberTransportList).addConversationNumber(observableConversation.getConversationNumber()).addUsername(getUsername()).build();
-            sendObject(membersRequest, socket);
-            Object object = getObject(socket);
-            if (object instanceof MembersRequest response){
-
-            }else if (object instanceof CouldNotAddMemberException exception){
+    private void addOrRemoveMembers(ObservableConversation observableConversation, List<String> addNames, List<String> removeNames) throws CouldNotGetConversationException, IOException, InvalidResponseException, CouldNotAddMemberException, CouldNotRemoveMemberException {
+        if (!addNames.isEmpty() || !removeNames.isEmpty()){
+            try (Socket socket = new Socket(host, portNumber)){
+                List<MemberTransport> memberTransportList = new ArrayList<>();
+                if (!addNames.isEmpty()){
+                    addNames.forEach(name -> memberTransportList.add(new MemberTransport(new ConversationMember(name), true)));
+                }
+                if(!removeNames.isEmpty()){
+                    removeNames.forEach(name -> memberTransportList.add(new MemberTransport(new ConversationMember(name), false)));
+                }
+                MembersRequest membersRequest = new MembersRequestBuilder().addMemberTransports(memberTransportList).addConversationNumber(observableConversation.getConversationNumber()).addUsername(getUsername()).build();
+                sendObject(membersRequest, socket);
+                Object object = getObject(socket);
+                if (object instanceof MembersRequest response){
+                    System.out.println("Response is gotten.");
+                }else if (object instanceof CouldNotAddMemberException exception){
+                    throw exception;
+                }else if (object instanceof CouldNotGetConversationException exception){
+                    throw exception;
+                }else if (object instanceof CouldNotRemoveMemberException exception){
+                    throw exception;
+                }else {
+                    throw new InvalidResponseException("The response from the server was invalid format.");
+                }
+            }catch (IOException | InvalidResponseException | CouldNotGetConversationException | CouldNotAddMemberException | CouldNotRemoveMemberException exception){
+                logWaringError(exception);
                 throw exception;
-            }else if (object instanceof CouldNotGetConversationException exception){
-                throw exception;
-            }else if (object instanceof CouldNotRemoveMemberException exception){
-
-            }else {
-                throw new InvalidResponseException("The response from the server was invalid format.");
             }
-        }catch (IOException | InvalidResponseException | CouldNotGetConversationException | CouldNotAddMemberException exception){
-            logWaringError(exception);
-            throw exception;
         }
+
     }
 
     /**
@@ -653,12 +656,12 @@ public class ChatClient {
                 if (!membersTransport.isEmpty()){
                     List<Member> membersToRemove = membersTransport.stream().filter(member -> !member.isAddMember()).map(MemberTransport::getMember).toList();
                     List<Member> membersToAdd = membersTransport.stream().filter(MemberTransport::isAddMember).map(MemberTransport::getMember).toList();
-                    Members members = observableConversation.getMembers();
+                    MembersRegister membersRegister = observableConversation.getMembers();
                     if (!membersToRemove.isEmpty()){
-                        members.removeAllMembers(membersToRemove, getUsername());
+                        membersRegister.removeAllMembers(membersToRemove, getUsername());
                     }
                     if (!membersToAdd.isEmpty()){
-                        members.addAllMembers(membersToAdd, getUsername());
+                        membersRegister.addAllMembers(membersToAdd, getUsername());
                     }
                 }
             }else if (object instanceof UsernameNotPartOfConversationException exception){

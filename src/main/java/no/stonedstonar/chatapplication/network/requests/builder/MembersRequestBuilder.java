@@ -56,7 +56,7 @@ public class MembersRequestBuilder {
      * @return this builder object.
      */
     public MembersRequestBuilder setLastDeletedMember(long lastDeletedMember){
-        checkIfLongIsAboveZero(lastDeletedMember, "last deleted member", false);
+        checkIfLongIsAboveZero(lastDeletedMember, "last deleted member");
         this.lastDeletedMember = lastDeletedMember;
         return this;
     }
@@ -78,7 +78,7 @@ public class MembersRequestBuilder {
      * @return this builder object.
      */
     public MembersRequestBuilder addConversationNumber(long conversationNumber){
-        checkIfLongIsAboveZero(conversationNumber, "messagelog number", false);
+        checkIfLongIsAboveZero(conversationNumber, "messagelog number");
         this.conversationNumber = conversationNumber;
         return this;
     }
@@ -89,7 +89,7 @@ public class MembersRequestBuilder {
      * @return this builder object.
      */
     public MembersRequestBuilder addLastMember(long lastMember){
-        checkIfLongIsAboveZero(lastMember, "last member", false);
+        checkIfLongIsAboveZero(lastMember, "last member");
         this.lastMember = lastMember;
         return this;
     }
@@ -187,19 +187,13 @@ public class MembersRequestBuilder {
     }
 
     /**
-     * Checks if the long is above zero.
+     * Checks if the long is above or equal to zero.
      * @param logNumber the log number you want to check.
      * @param prefix the error the exception should mention.
      */
-    private void checkIfLongIsAboveZero(long logNumber, String prefix, boolean equalZero){
-        if (equalZero){
-            if (logNumber < 0){
-                throw new IllegalArgumentException("The " + prefix + " cannot be negative or null.");
-            }
-        }else {
-            if(logNumber <= 0){
-                throw new IllegalArgumentException("The " + prefix + " cannot be negative or null.");
-            }
+    private void checkIfLongIsAboveZero(long logNumber, String prefix){
+        if (logNumber < 0){
+            throw new IllegalArgumentException("The " + prefix + " cannot be negative or null.");
         }
     }
 }

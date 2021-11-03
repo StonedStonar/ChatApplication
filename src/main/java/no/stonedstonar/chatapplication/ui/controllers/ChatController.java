@@ -471,7 +471,11 @@ public class ChatController implements Controller, ConversationObserver, Convers
     @Override
     public void updateConversation(ObservableConversation observableConversation, boolean removed) {
         Platform.runLater(() -> {
-            addNewConversation(observableConversation);
+            if (removed){
+                contactsBox.getChildren().clear();
+            }else{
+                addNewConversation(observableConversation);
+            }
         });
     }
 }

@@ -1,7 +1,6 @@
 package no.stonedstonar.chatapplication.model.membersregister;
 
 import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
-import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.member.Member;
 
 import java.util.List;
@@ -11,7 +10,7 @@ import java.util.List;
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public interface ServerMembers extends Members {
+public interface ServerMembersRegister extends MembersRegister {
 
     /**
      * Checks if there are any new users in the members object.

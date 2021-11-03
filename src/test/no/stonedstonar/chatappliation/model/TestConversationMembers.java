@@ -3,16 +3,13 @@ package no.stonedstonar.chatappliation.model;
 import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
 import no.stonedstonar.chatapplication.model.member.ConversationMember;
 import no.stonedstonar.chatapplication.model.member.Member;
-import no.stonedstonar.chatapplication.model.membersregister.ConversationMembers;
+import no.stonedstonar.chatapplication.model.membersregister.ConversationMembersRegister;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemberException;
-import no.stonedstonar.chatapplication.model.membersregister.Members;
-import no.stonedstonar.chatapplication.model.user.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class TestConversationMembers {
 
-    private ConversationMembers conversationMembers;
+    private ConversationMembersRegister conversationMembers;
 
     private String memberUsername;
 
@@ -42,7 +39,7 @@ public class TestConversationMembers {
             removeMember = new ConversationMember("ironman2019");
             members.add(new ConversationMember("bjarne21"));
             members.add(removeMember);
-            conversationMembers = new ConversationMembers(members);
+            conversationMembers = new ConversationMembersRegister(members);
         }catch (IllegalArgumentException exception){
             fail("Could not add two members since we get a format error.");
         }

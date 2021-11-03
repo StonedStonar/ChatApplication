@@ -2,9 +2,7 @@ package no.stonedstonar.chatapplication.model.conversation;
 
 import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
-import no.stonedstonar.chatapplication.model.membersregister.ConversationMembers;
-import no.stonedstonar.chatapplication.model.membersregister.Members;
-import no.stonedstonar.chatapplication.model.membersregister.ServerMembers;
+import no.stonedstonar.chatapplication.model.membersregister.ServerMembersRegister;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.messagelog.ServerMessageLog;
 
@@ -20,7 +18,7 @@ public interface ServerConversation extends Conversation {
 
 
     @Override
-    ServerMembers getMembers();
+    ServerMembersRegister getMembers();
 
     /**
      * Gets all the message logs of a conversation if the user is a part of it.

@@ -6,6 +6,7 @@ import no.stonedstonar.chatapplication.model.exception.member.CouldNotGetMemberE
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemberException;
 import no.stonedstonar.chatapplication.model.member.Member;
 
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -13,7 +14,7 @@ import java.util.List;
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public interface Members {
+public interface MembersRegister {
 
     /**
      * Gets the last member that was added.
@@ -91,4 +92,10 @@ public interface Members {
      * @return the amount of members stored.
      */
     int getAmountOfMembers();
+
+    /**
+     * Gets the iterator of the members.
+     * @return iterator over the members in this object.
+     */
+    Iterator<Member> getIterator();
 }

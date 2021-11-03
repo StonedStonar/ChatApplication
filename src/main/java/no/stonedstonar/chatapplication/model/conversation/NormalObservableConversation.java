@@ -1,13 +1,10 @@
 package no.stonedstonar.chatapplication.model.conversation;
 
-import no.stonedstonar.chatapplication.model.membersregister.ConversationMembers;
 import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
-import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
-import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemberException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMessageException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
-import no.stonedstonar.chatapplication.model.membersregister.Members;
+import no.stonedstonar.chatapplication.model.membersregister.MembersRegister;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.messagelog.MessageLog;
 import no.stonedstonar.chatapplication.model.messagelog.PersonalMessageLog;
@@ -35,7 +32,7 @@ public class NormalObservableConversation implements ObservableConversation, Ser
 
     private long conversationNumber;
 
-    private Members members;
+    private MembersRegister membersRegister;
 
     private final List<ConversationObserver> conversationObservers;
 
@@ -56,7 +53,7 @@ public class NormalObservableConversation implements ObservableConversation, Ser
         this.conversationNumber = serverConversation.getConversationNumber();
         this.dateMade = serverConversation.getDateMade();
         this.personalMessageLogs = new ArrayList<>();
-        this.members = serverConversation.getMembers();
+        this.membersRegister = serverConversation.getMembers();
         List<ServerMessageLog> messageLogList = serverConversation.getMessageLogs(username);
         messageLogList.forEach(messageLog -> {
             PersonalMessageLog personalMessageLog = new PersonalMessageLog(messageLog);
@@ -180,7 +177,7 @@ public class NormalObservableConversation implements ObservableConversation, Ser
      * @throws UsernameNotPartOfConversationException gets thrown if the user is not a part of this conversation.
      */
     private void checkIfUsernameIsMemberAndThrowExceptionIfNot(String username) throws UsernameNotPartOfConversationException {
-        if (!members.checkIfUsernameIsMember(username)){
+        if (!membersRegister.checkIfUsernameIsMember(username)){
             throw new UsernameNotPartOfConversationException("The user by the useranme " + username + " is not a part of this conversation.");
         }
     }
@@ -213,7 +210,7 @@ public class NormalObservableConversation implements ObservableConversation, Ser
         LocalDate testDateFromOneMessage = newMessageList.get(0).getDate();
         newMessageList.forEach(message -> checkIfDateIsValid(message.getDate()));
         String username = newMessageList.get(0).getFromUsername();
-        boolean allAreMembers = newMessageList.stream().allMatch(message -> members.checkIfUsernameIsMember(message.getFromUsername()));
+        boolean allAreMembers = newMessageList.stream().allMatch(message -> membersRegister.checkIfUsernameIsMember(message.getFromUsername()));
         boolean validDate = newMessageList.stream().allMatch(message -> message.getDate().isEqual(testDateFromOneMessage));
         if (validDate && allAreMembers){
             PersonalMessageLog messageLog = getMessageLogByTheDate(testDateFromOneMessage, username);
@@ -239,8 +236,8 @@ public class NormalObservableConversation implements ObservableConversation, Ser
     }
 
     @Override
-    public Members getMembers() {
-        return members;
+    public MembersRegister getMembers() {
+        return membersRegister;
     }
 
     /**

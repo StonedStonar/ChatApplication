@@ -1,6 +1,5 @@
 package no.stonedstonar.chatapplication.model.conversationregister.server;
 
-import no.stonedstonar.chatapplication.model.conversation.Conversation;
 import no.stonedstonar.chatapplication.model.conversation.ServerConversation;
 import no.stonedstonar.chatapplication.model.conversationregister.ConversationRegister;
 import no.stonedstonar.chatapplication.model.conversationregister.personal.NormalPersonalConversationRegister;
@@ -9,7 +8,6 @@ import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetC
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
 import no.stonedstonar.chatapplication.model.member.Member;
-import no.stonedstonar.chatapplication.model.membersregister.Members;
 
 import java.util.List;
 

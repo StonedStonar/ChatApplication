@@ -15,7 +15,7 @@ import java.util.*;
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class ConversationMembers implements Serializable, ServerMembers {
+public class ConversationMembersRegister implements Serializable, ServerMembersRegister {
 
     //Todo: Endre denne til map slik at vi kan lagre hvem som var siste medlem.
     private final Map<Long, Member> memberMap;
@@ -29,7 +29,7 @@ public class ConversationMembers implements Serializable, ServerMembers {
     /**
       * Makes an instance of the MembersOfConversation class.
       */
-    public ConversationMembers(List<Member> conversationMembers){
+    public ConversationMembersRegister(List<Member> conversationMembers){
         memberMap = new HashMap<>();
         deletedMap = new HashMap<>();
         lastMember = 0;
@@ -232,6 +232,11 @@ public class ConversationMembers implements Serializable, ServerMembers {
     @Override
     public int getAmountOfMembers() {
         return memberMap.size();
+    }
+
+    @Override
+    public Iterator<Member> getIterator() {
+        return memberMap.values().iterator();
     }
 
     @Override

@@ -1,13 +1,10 @@
 package no.stonedstonar.chatapplication.model.conversation;
 
-import no.stonedstonar.chatapplication.model.membersregister.ConversationMembers;
 import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
-import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
-import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemberException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMessageException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
-import no.stonedstonar.chatapplication.model.membersregister.Members;
+import no.stonedstonar.chatapplication.model.membersregister.MembersRegister;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.messagelog.MessageLog;
 
@@ -106,5 +103,5 @@ public interface Conversation {
      * Gets the conversations members.
      * @return the conversations members.
      */
-    Members getMembers();
+    MembersRegister getMembers();
 }

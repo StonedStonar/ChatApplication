@@ -15,6 +15,7 @@ import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
+import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemberException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
 import no.stonedstonar.chatapplication.ui.windows.AlertTemplates;
@@ -187,6 +188,10 @@ public class ConversationController implements Controller {
                 AlertTemplates.makeAndShowInvalidResponseFromTheServer();
             } catch (CouldNotAddConversationException exception) {
                 AlertTemplates.makeAndShowCouldNotGetConversationAlert();
+            } catch (CouldNotGetConversationException exception) {
+                exception.printStackTrace();
+            } catch (CouldNotRemoveMemberException e) {
+                e.printStackTrace();
             }
         });
 
