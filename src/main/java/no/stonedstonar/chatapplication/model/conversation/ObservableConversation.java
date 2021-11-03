@@ -2,6 +2,7 @@ package no.stonedstonar.chatapplication.model.conversation;
 
 import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
+import no.stonedstonar.chatapplication.model.membersregister.ObservableMemberRegister;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.messagelog.PersonalMessageLog;
 
@@ -14,9 +15,6 @@ import java.util.List;
  * @author Steinar Hjelle Midthus
  */
 public interface ObservableConversation extends Conversation{
-
-    @Override
-    PersonalMessageLog getMessageLogForDate(LocalDate localDate, String username) throws CouldNotGetMessageLogException, UsernameNotPartOfConversationException;
 
     /**
      * Gets all the messages of the conversation as a list.
@@ -42,15 +40,16 @@ public interface ObservableConversation extends Conversation{
     void notifyObserversAboutNewMessage();
 
     /**
-     * Notifies all the observers that a new member is added.
-     */
-    void notifyObserversAboutNewMember();
-
-    /**
      * Checks if the object is a observer.
      * @param conversationObserver the message observer you want to check.
      * @return <code>true</code> if the object is an observer.
      *         <code>false</code> if the object is not a observer.
      */
     boolean checkIfObjectIsObserver(ConversationObserver conversationObserver);
+
+    @Override
+    ObservableMemberRegister getMembers();
+
+    @Override
+    PersonalMessageLog getMessageLogForDate(LocalDate localDate, String username) throws CouldNotGetMessageLogException, UsernameNotPartOfConversationException;
 }

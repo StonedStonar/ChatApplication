@@ -16,9 +16,4 @@ public interface ConversationObserver {
      *                <code>false</code> if the message log was added.
      */
     void updateConversationMessage(Message message, boolean removed);
-
-    /**
-     * Tells the observer that there is new members in the conversation.
-     */
-    void updateConversationMembers();
 }

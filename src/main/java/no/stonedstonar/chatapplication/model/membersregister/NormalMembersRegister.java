@@ -15,7 +15,7 @@ import java.util.*;
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class ConversationMembersRegister implements Serializable, ServerMembersRegister {
+public class NormalMembersRegister implements Serializable, ServerMemberRegister {
 
     //Todo: Endre denne til map slik at vi kan lagre hvem som var siste medlem.
     private final Map<Long, Member> memberMap;
@@ -29,7 +29,7 @@ public class ConversationMembersRegister implements Serializable, ServerMembersR
     /**
       * Makes an instance of the MembersOfConversation class.
       */
-    public ConversationMembersRegister(List<Member> conversationMembers){
+    public NormalMembersRegister(List<Member> conversationMembers){
         memberMap = new HashMap<>();
         deletedMap = new HashMap<>();
         lastMember = 0;
@@ -203,35 +203,10 @@ public class ConversationMembersRegister implements Serializable, ServerMembersR
         }
     }
 
-    //Todo: Slette denne siden det kan skje utenfor istedet?
-    /**
-     * Builds a string that contains the name of all members in the register except the input username.
-     * @param username the username you don't want in the string.
-     * @return all the usernames that does not match the input username in a string.
-     */
-    public String getAllMembersExceptUsernameAsString(String username){
-        checkString(username, "username");
-        if (!checkIfUsernameIsMember(username)){
-            throw new IllegalArgumentException("The username " + username + " is not in the conversation.");
-        }
-        StringBuilder stringBuilder = new StringBuilder();
-        for (Member member : memberMap.values()){
-            if (!member.getUsername().equals(username)){
-                stringBuilder.append(" ");
-                stringBuilder.append(member.getUsername());
-            }
-        }
-        return stringBuilder.toString();
-    }
 
     @Override
-    public List<String> getNameOfAllMembers(String username) {
+    public List<String> getNameOfAllMembers() {
         return memberMap.values().stream().map(Member::getUsername).toList();
-    }
-
-    @Override
-    public int getAmountOfMembers() {
-        return memberMap.size();
     }
 
     @Override
@@ -254,6 +229,7 @@ public class ConversationMembersRegister implements Serializable, ServerMembersR
     @Override
     public List<Member> checkForDeletedMembers(long lastDeletedMember, String username) throws UsernameNotPartOfConversationException {
         List<Member> deletedMembers = new ArrayList<>();
+        checkIfUserIsMemberIfNotThrowException(username);
         if (this.lastDeletedMember > lastDeletedMember){
             long firstLong = lastDeletedMember;
             do {

@@ -10,7 +10,7 @@ import java.util.List;
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public interface ServerMembersRegister extends MembersRegister {
+public interface ServerMemberRegister extends MemberRegister {
 
     /**
      * Checks if there are any new users in the members object.

@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  * @version 0.1
  * @author Steinar Hjelle Midthus
  */
-public class TestObservableConversation {
+public class TestNormalObservableConversation {
 
 
     private ObservableConversation observableConversation;

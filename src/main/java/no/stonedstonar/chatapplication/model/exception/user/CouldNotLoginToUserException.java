@@ -5,9 +5,8 @@ import java.io.Serializable;
 /**
  * CouldNotLoginToUserException represents an exception that gets thrown when the password or username does not match
  * a user or the values of the user.
- *
  * @author Steinar Hjelle Midthus
- * @version 0.1
+ * @version 0.2
  */
 public class CouldNotLoginToUserException extends Exception implements Serializable {
 

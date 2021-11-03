@@ -236,17 +236,18 @@ public class ChatController implements Controller, ConversationObserver, Convers
         });
     }
 
-
-
     /**
      * Adds all the conversations to the conversation panel.
+     * @throws UsernameNotPartOfConversationException gets thrown if the username is not a part of this conversation.
      */
-    private void addAllConversations(){
+    private void addAllConversations() throws UsernameNotPartOfConversationException {
         contactsBox.getChildren().clear();
         ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
         List<ObservableConversation> conversationList = chatClient.getMessageLogs();
         if (!conversationList.isEmpty()){
-            conversationList.forEach(this::addNewConversation);
+            for (ObservableConversation conversation : conversationList) {
+                addNewConversation(conversation);
+            }
             ObservableConversation observableConversation = conversationList.get(0);
             showMessagesFromConversation(observableConversation);
         } else {
@@ -261,8 +262,9 @@ public class ChatController implements Controller, ConversationObserver, Convers
     /**
      * Makes a new conversation to select on the left side.
      * @param observableConversation the message log this conversation is about.
+     * @throws UsernameNotPartOfConversationException gets thrown if the username is not a part of this conversation.
      */
-    private void addNewConversation(ObservableConversation observableConversation){
+    private void addNewConversation(ObservableConversation observableConversation) throws UsernameNotPartOfConversationException {
         VBox vBox = new VBox();
         vBox.setMinWidth(Long.MAX_VALUE);
         String nameOfConversation = observableConversation.getConversationName();
@@ -461,20 +463,17 @@ public class ChatController implements Controller, ConversationObserver, Convers
     }
 
     @Override
-    public void updateConversationMembers() {
-        Platform.runLater(() -> {
-            contactsBox.getChildren().clear();
-            addAllConversations();
-        });
-    }
-
-    @Override
     public void updateConversation(ObservableConversation observableConversation, boolean removed) {
         Platform.runLater(() -> {
             if (removed){
                 contactsBox.getChildren().clear();
             }else{
-                addNewConversation(observableConversation);
+                try {
+                    addNewConversation(observableConversation);
+                } catch (UsernameNotPartOfConversationException e) {
+                    //Todo: Fix this
+                    e.printStackTrace();
+                }
             }
         });
     }

@@ -14,7 +14,7 @@ import java.util.List;
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public interface MembersRegister {
+public interface MemberRegister {
 
     /**
      * Gets the last member that was added.
@@ -74,24 +74,10 @@ public interface MembersRegister {
     boolean checkIfUsernameIsMember(String username);
 
     /**
-     * Builds a string that contains the name of all members in the register except the input username.
-     * @param username the username you don't want in the string.
-     * @return all the usernames that does not match the input username in a string.
-     */
-    String getAllMembersExceptUsernameAsString(String username);
-
-    /**
      * Gets the name of all members in a list.
-     * @param username the username of a member.
      * @return a list with all the usernames of the members.
      */
-    List<String> getNameOfAllMembers(String username);
-
-    /**
-     * Gets the amount of members stored.
-     * @return the amount of members stored.
-     */
-    int getAmountOfMembers();
+    List<String> getNameOfAllMembers();
 
     /**
      * Gets the iterator of the members.

@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * CouldNotGetMessageLogException represents an exception that gets thrown when a message log could not be located.
  * @author Steinar Hjelle Midthus
- * @version 0.1
+ * @version 0.2
  */
 public class CouldNotGetMessageLogException extends Exception implements Serializable {
 

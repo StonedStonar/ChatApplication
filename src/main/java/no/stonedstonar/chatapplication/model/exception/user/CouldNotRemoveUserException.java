@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * CouldNotRemoveUserException represents an exception that gets thrown when a user could not be removed.
  * @author Steinar Hjelle Midthus
- * @version 0.1
+ * @version 0.2
  */
 public class CouldNotRemoveUserException extends Exception implements Serializable {
 

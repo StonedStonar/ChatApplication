@@ -4,7 +4,8 @@ import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotP
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMessageException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
-import no.stonedstonar.chatapplication.model.membersregister.MembersRegister;
+import no.stonedstonar.chatapplication.model.membersregister.NormalObservableMemberRegister;
+import no.stonedstonar.chatapplication.model.membersregister.ObservableMemberRegister;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.messagelog.MessageLog;
 import no.stonedstonar.chatapplication.model.messagelog.PersonalMessageLog;
@@ -32,7 +33,7 @@ public class NormalObservableConversation implements ObservableConversation, Ser
 
     private long conversationNumber;
 
-    private MembersRegister membersRegister;
+    private ObservableMemberRegister observableMembersRegister;
 
     private final List<ConversationObserver> conversationObservers;
 
@@ -53,7 +54,7 @@ public class NormalObservableConversation implements ObservableConversation, Ser
         this.conversationNumber = serverConversation.getConversationNumber();
         this.dateMade = serverConversation.getDateMade();
         this.personalMessageLogs = new ArrayList<>();
-        this.membersRegister = serverConversation.getMembers();
+        this.observableMembersRegister = new NormalObservableMemberRegister(serverConversation.getMembers());
         List<ServerMessageLog> messageLogList = serverConversation.getMessageLogs(username);
         messageLogList.forEach(messageLog -> {
             PersonalMessageLog personalMessageLog = new PersonalMessageLog(messageLog);
@@ -84,11 +85,6 @@ public class NormalObservableConversation implements ObservableConversation, Ser
     public void notifyObserversAboutNewMessage() {
         System.out.println(conversationObservers.size());
         conversationObservers.forEach(obs -> obs.updateConversationMessage(newlyAddedMessage, removed));
-    }
-
-    @Override
-    public void notifyObserversAboutNewMember() {
-        conversationObservers.forEach(ConversationObserver::updateConversationMembers);
     }
 
     @Override
@@ -177,7 +173,7 @@ public class NormalObservableConversation implements ObservableConversation, Ser
      * @throws UsernameNotPartOfConversationException gets thrown if the user is not a part of this conversation.
      */
     private void checkIfUsernameIsMemberAndThrowExceptionIfNot(String username) throws UsernameNotPartOfConversationException {
-        if (!membersRegister.checkIfUsernameIsMember(username)){
+        if (!observableMembersRegister.checkIfUsernameIsMember(username)){
             throw new UsernameNotPartOfConversationException("The user by the useranme " + username + " is not a part of this conversation.");
         }
     }
@@ -210,7 +206,7 @@ public class NormalObservableConversation implements ObservableConversation, Ser
         LocalDate testDateFromOneMessage = newMessageList.get(0).getDate();
         newMessageList.forEach(message -> checkIfDateIsValid(message.getDate()));
         String username = newMessageList.get(0).getFromUsername();
-        boolean allAreMembers = newMessageList.stream().allMatch(message -> membersRegister.checkIfUsernameIsMember(message.getFromUsername()));
+        boolean allAreMembers = newMessageList.stream().allMatch(message -> observableMembersRegister.checkIfUsernameIsMember(message.getFromUsername()));
         boolean validDate = newMessageList.stream().allMatch(message -> message.getDate().isEqual(testDateFromOneMessage));
         if (validDate && allAreMembers){
             PersonalMessageLog messageLog = getMessageLogByTheDate(testDateFromOneMessage, username);
@@ -236,8 +232,8 @@ public class NormalObservableConversation implements ObservableConversation, Ser
     }
 
     @Override
-    public MembersRegister getMembers() {
-        return membersRegister;
+    public ObservableMemberRegister getMembers() {
+        return observableMembersRegister;
     }
 
     /**

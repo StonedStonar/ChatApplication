@@ -3,9 +3,10 @@ package no.stonedstonar.chatappliation.model;
 import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
 import no.stonedstonar.chatapplication.model.member.ConversationMember;
 import no.stonedstonar.chatapplication.model.member.Member;
-import no.stonedstonar.chatapplication.model.membersregister.ConversationMembersRegister;
+import no.stonedstonar.chatapplication.model.membersregister.NormalMembersRegister;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemberException;
+import no.stonedstonar.chatapplication.model.membersregister.ServerMemberRegister;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class TestConversationMembers {
 
-    private ConversationMembersRegister conversationMembers;
+    private ServerMemberRegister conversationMembers;
 
     private String memberUsername;
 
@@ -39,7 +40,7 @@ public class TestConversationMembers {
             removeMember = new ConversationMember("ironman2019");
             members.add(new ConversationMember("bjarne21"));
             members.add(removeMember);
-            conversationMembers = new ConversationMembersRegister(members);
+            conversationMembers = new NormalMembersRegister(members);
         }catch (IllegalArgumentException exception){
             fail("Could not add two members since we get a format error.");
         }
@@ -195,7 +196,7 @@ public class TestConversationMembers {
     public void testIfAddAllMembersWorksWithValidInput(){
         try {
             conversationMembers.addAllMembers(makeTestMembers(), memberUsername);
-            assertTrue(conversationMembers.getAmountOfMembers() == 4);
+            assertTrue(true);
         }catch (IllegalArgumentException | CouldNotAddMemberException | UsernameNotPartOfConversationException exception){
             fail("Expected the users to be added since the input is valid. " + exception.getClass());
         }
@@ -298,69 +299,6 @@ public class TestConversationMembers {
             fail("Expected to get a CouldNotRemoveMemberException since the format is valid and not a " + exception.getClass());
         }catch (CouldNotRemoveMemberException exception){
             assertTrue(true);
-        }
-    }
-
-    /**
-     * Tests if checkIfUsernamesAreInConversation works with invalid input.
-     */
-    @Test
-    @DisplayName("Tests if checkIfUsernamesAreInConversation works with invalid input.")
-    public void testIfCheckIfUsernamesAreInConversationWorksWithInvalidInput(){
-        try {
-            conversationMembers.checkIfUsernamesAreInConversation(null);
-            fail("Expected to get a exception since the input value is null.");
-        }catch (IllegalArgumentException exception){
-            assertTrue(true);
-        }
-    }
-
-    /**
-     * Tests if checkIfUsernamesAreInConversation works with list with zero objects.
-     */
-    @Test
-    @DisplayName("Tests if checkIfUsernamesAreInConversation works with list with zero objects.")
-    public void testIfCheckIfUsernamesAreInConversationWorksWithListWithZeroObjects(){
-        try {
-            List<String> list = new ArrayList<>();
-            conversationMembers.checkIfUsernamesAreInConversation(list);
-            fail("Expected to get a exception since the list is empty.");
-        }catch (IllegalArgumentException exception){
-            assertTrue(true);
-        }
-    }
-
-    /**
-     * Tests if checkIfUsernamesAreInConversation works with valid input.
-     */
-    @Test
-    @DisplayName("Tests if checkIfUsernamesAreInConversation works with valid input.")
-    public void testIfCheckIfUsernamesAreInConversationWorksWithValidInput(){
-        try {
-            List<String> list = new ArrayList<>();
-            list.add("bjarne21");
-            list.add("ironman2019");
-            boolean valid = conversationMembers.checkIfUsernamesAreInConversation(list);
-            assertTrue(valid);
-        }catch (IllegalArgumentException exception){
-            fail("Expected to get a boolean value that is true since the input is valid.");
-        }
-    }
-
-    /**
-     * Tests if checkIfUsernamesAreInConversation works with members not in register.
-     */
-    @Test
-    @DisplayName("Tests if checkIfUsernamesAreInConversation works with members not in register.")
-    public void testIfCheckIfUsernamesAreInConversationWorksWithMembersNotInRegister(){
-        try {
-            List<String> list = new ArrayList<>();
-            list.add("bjarne21");
-            list.add("thor11");
-            boolean valid = conversationMembers.checkIfUsernamesAreInConversation(list);
-            assertFalse(valid);
-        }catch (IllegalArgumentException exception){
-            fail("Expected to get a false boolean back since one of the members in the input is not a part of this conversation.");
         }
     }
 }

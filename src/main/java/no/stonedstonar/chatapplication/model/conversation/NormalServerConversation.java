@@ -1,13 +1,13 @@
 package no.stonedstonar.chatapplication.model.conversation;
 
 import no.stonedstonar.chatapplication.model.member.Member;
-import no.stonedstonar.chatapplication.model.membersregister.ConversationMembersRegister;
+import no.stonedstonar.chatapplication.model.membersregister.NormalMembersRegister;
 import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMessageException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
-import no.stonedstonar.chatapplication.model.membersregister.ServerMembersRegister;
+import no.stonedstonar.chatapplication.model.membersregister.ServerMemberRegister;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.messagelog.MessageLog;
 import no.stonedstonar.chatapplication.model.messagelog.NormalServerMessageLog;
@@ -31,7 +31,7 @@ public class NormalServerConversation implements ServerConversation {
 
     private long conversationNumber;
 
-    private ConversationMembersRegister conversationMembers;
+    private NormalMembersRegister conversationMembers;
 
     //Todo: Lag metoder så vi kan spørre etter de siste 100 meldingene eller lignende.
     // Kanskje heller lage metoder som ser på en dato.
@@ -46,7 +46,7 @@ public class NormalServerConversation implements ServerConversation {
         checkIfListIsValid(members, "usernames");
         conversationDateMade = LocalDate.now();
         messageLogList = new ArrayList<>();
-        conversationMembers = new ConversationMembersRegister(members);
+        conversationMembers = new NormalMembersRegister(members);
         this.conversationNumber = conversationNumber;
         conversationName = "";
     }
@@ -58,7 +58,7 @@ public class NormalServerConversation implements ServerConversation {
      * @param dateMade the date this class was made.
      * @param conversationName the name of the conversation.
      */
-    protected NormalServerConversation(long conversationNumber, ConversationMembersRegister conversationMembers, LocalDate dateMade, String conversationName){
+    protected NormalServerConversation(long conversationNumber, NormalMembersRegister conversationMembers, LocalDate dateMade, String conversationName){
         checkIfLongIsNegative(conversationNumber, "conversation number");
         checkIfObjectIsNull(conversationMembers, "members");
         checkIfDateIsValid(dateMade);
@@ -74,7 +74,7 @@ public class NormalServerConversation implements ServerConversation {
      * @param conversationName the name of the conversation.
      * @param conversationNumber the number this conversation is.
      */
-    public NormalServerConversation(String conversationName, long conversationNumber, ConversationMembersRegister conversationMembers) {
+    public NormalServerConversation(String conversationName, long conversationNumber, NormalMembersRegister conversationMembers) {
         checkString(conversationName, "conversation name");
         checkIfLongIsNegative(conversationNumber, "conversation number");
         checkIfObjectIsNull(conversationMembers, "members");
@@ -100,7 +100,7 @@ public class NormalServerConversation implements ServerConversation {
     }
 
     @Override
-    public ServerMembersRegister getMembers() {
+    public ServerMemberRegister getMembers() {
         return conversationMembers;
     }
 

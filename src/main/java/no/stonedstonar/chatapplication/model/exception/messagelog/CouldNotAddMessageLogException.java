@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * CouldNotAddMessageLogException represents an exception that gets thrown when a message log could not be added.
  * @author Steinar Hjelle Midthus
- * @version 0.1
+ * @version 0.2
  */
 public class CouldNotAddMessageLogException extends Exception implements Serializable {
 

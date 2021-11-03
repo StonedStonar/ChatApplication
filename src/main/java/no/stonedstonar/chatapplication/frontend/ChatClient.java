@@ -18,7 +18,7 @@ import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserExcep
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.model.member.ConversationMember;
 import no.stonedstonar.chatapplication.model.member.Member;
-import no.stonedstonar.chatapplication.model.membersregister.MembersRegister;
+import no.stonedstonar.chatapplication.model.membersregister.MemberRegister;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
 import no.stonedstonar.chatapplication.model.user.User;
@@ -656,12 +656,12 @@ public class ChatClient {
                 if (!membersTransport.isEmpty()){
                     List<Member> membersToRemove = membersTransport.stream().filter(member -> !member.isAddMember()).map(MemberTransport::getMember).toList();
                     List<Member> membersToAdd = membersTransport.stream().filter(MemberTransport::isAddMember).map(MemberTransport::getMember).toList();
-                    MembersRegister membersRegister = observableConversation.getMembers();
+                    MemberRegister memberRegister = observableConversation.getMembers();
                     if (!membersToRemove.isEmpty()){
-                        membersRegister.removeAllMembers(membersToRemove, getUsername());
+                        memberRegister.removeAllMembers(membersToRemove, getUsername());
                     }
                     if (!membersToAdd.isEmpty()){
-                        membersRegister.addAllMembers(membersToAdd, getUsername());
+                        memberRegister.addAllMembers(membersToAdd, getUsername());
                     }
                 }
             }else if (object instanceof UsernameNotPartOfConversationException exception){

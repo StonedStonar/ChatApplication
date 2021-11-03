@@ -1,6 +1,6 @@
 package no.stonedstonar.chatapplication.model.member;
 /**
- *
+ * Represents the basic methods a member should have.
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */

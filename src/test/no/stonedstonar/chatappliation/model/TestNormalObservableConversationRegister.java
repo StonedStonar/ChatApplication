@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class TestObservableConversationRegister {
+public class TestNormalObservableConversationRegister {
 
     private PersonalConversationRegister personalConversationRegister;
 

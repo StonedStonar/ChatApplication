@@ -11,7 +11,6 @@ public class CouldNotGetConversationException extends Exception implements Seria
 
     /**
      * Makes an instance of the CouldNotGetConversationException class.
-     *
      * @param message the error message.
      */
     public CouldNotGetConversationException(String message) {

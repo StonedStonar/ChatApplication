@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * CouldNotGetUserException represents an exception that gets thrown when a user could not be located.
  * @author Steinar Hjelle Midthus
- * @version 0.1
+ * @version 0.2
  */
 public class CouldNotGetUserException extends Exception implements Serializable {
 
