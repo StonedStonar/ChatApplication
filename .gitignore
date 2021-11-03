@@ -1,18 +1,3 @@
-# Eclipse
-.classpath
-.project
-.settings/
-
-# Intelij
 .idea/
-*.iml
-*.iws
 
-# Mac
-.DS_Store
-
-# Maven
-log/
 target/
-
-*src/main/resources/newPatients.csv
