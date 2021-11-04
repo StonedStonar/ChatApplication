@@ -92,6 +92,7 @@ public class NormalObservableMemberRegister implements ObservableMemberRegister,
     private void addNewMember(Member memberToAdd){
         memberMap.put(memberToAdd.getMemberNumber(), memberToAdd);
         lastMemberNumber = memberToAdd.getMemberNumber();
+        notifyObservers(memberToAdd, false);
     }
 
     /**
@@ -102,6 +103,7 @@ public class NormalObservableMemberRegister implements ObservableMemberRegister,
         memberMap.remove(member.getMemberNumber());
         //Todo: Kan være lurt at denne settes og ikke plusses på.
         lastDeletedMember += 1;
+        notifyObservers(member, true);
     }
 
     @Override
@@ -152,7 +154,9 @@ public class NormalObservableMemberRegister implements ObservableMemberRegister,
         checkIfListIsValid(members, "members to remove");
         checkIfUserIsMemberIfNotThrowException(username);
         if (checkIfUsernamesAreInConversation(members.stream().map(member -> member.getUsername()).toList())){
-            members.forEach(this::removeMember);
+            for (Member member : members) {
+                removeMember(member);
+            }
         }else {
             throw new CouldNotRemoveMemberException("There are one or more members that are not in the register.");
         }
@@ -162,23 +166,6 @@ public class NormalObservableMemberRegister implements ObservableMemberRegister,
     public boolean checkIfUsernameIsMember(String username) {
         checkString(username, "username");
         return memberMap.values().stream().anyMatch(member -> member.getUsername().equals(username));
-    }
-
-    @Override
-    public String getAllMembersExceptUsernameAsString(String username) throws UsernameNotPartOfConversationException {
-        checkString(username, "username");
-        checkIfUserIsMemberIfNotThrowException(username);
-        if (!checkIfUsernameIsMember(username)){
-            throw new IllegalArgumentException("The username " + username + " is not in the conversation.");
-        }
-        StringBuilder stringBuilder = new StringBuilder();
-        for (Member member : memberMap.values()){
-            if (!member.getUsername().equals(username)){
-                stringBuilder.append(" ");
-                stringBuilder.append(member.getUsername());
-            }
-        }
-        return stringBuilder.toString();
     }
 
     @Override

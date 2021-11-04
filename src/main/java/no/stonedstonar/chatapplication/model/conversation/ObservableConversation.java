@@ -2,6 +2,7 @@ package no.stonedstonar.chatapplication.model.conversation;
 
 import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
+import no.stonedstonar.chatapplication.model.member.Member;
 import no.stonedstonar.chatapplication.model.membersregister.ObservableMemberRegister;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.messagelog.PersonalMessageLog;
@@ -38,6 +39,14 @@ public interface ObservableConversation extends Conversation{
      * Notifies all the observers that a new message has come.
      */
     void notifyObserversAboutNewMessage();
+
+    /**
+     * Notifies the observers about a change.
+     * @param member the member that has been added or removed.
+     * @param removed <code>true</code> if the member has been removed.
+     *                <code>false</code> if the member has been added.
+     */
+    void notifyObserversOfNewMember(Member member, boolean removed);
 
     /**
      * Checks if the object is a observer.

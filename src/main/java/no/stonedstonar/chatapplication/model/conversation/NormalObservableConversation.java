@@ -4,6 +4,8 @@ import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotP
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMessageException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
+import no.stonedstonar.chatapplication.model.member.Member;
+import no.stonedstonar.chatapplication.model.membersregister.MembersRegisterObserver;
 import no.stonedstonar.chatapplication.model.membersregister.NormalObservableMemberRegister;
 import no.stonedstonar.chatapplication.model.membersregister.ObservableMemberRegister;
 import no.stonedstonar.chatapplication.model.message.Message;
@@ -23,7 +25,7 @@ import java.util.Optional;
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class NormalObservableConversation implements ObservableConversation, Serializable {
+public class NormalObservableConversation implements ObservableConversation, Serializable, MembersRegisterObserver {
 
     private LocalDate dateMade;
 
@@ -60,6 +62,7 @@ public class NormalObservableConversation implements ObservableConversation, Ser
             PersonalMessageLog personalMessageLog = new PersonalMessageLog(messageLog);
             personalMessageLogs.add(personalMessageLog);
         });
+        observableMembersRegister.addObserver(this);
     }
 
 
@@ -83,8 +86,12 @@ public class NormalObservableConversation implements ObservableConversation, Ser
 
     @Override
     public void notifyObserversAboutNewMessage() {
-        System.out.println(conversationObservers.size());
-        conversationObservers.forEach(obs -> obs.updateConversationMessage(newlyAddedMessage, removed));
+        conversationObservers.forEach(obs -> obs.updateConversationMessage(newlyAddedMessage, removed, this.conversationNumber));
+    }
+
+    @Override
+    public void notifyObserversOfNewMember(Member member, boolean removed) {
+        conversationObservers.forEach(listener -> listener.updateMemberInConversation(this.conversationNumber));
     }
 
     @Override
@@ -318,5 +325,10 @@ public class NormalObservableConversation implements ObservableConversation, Ser
         if (localDate.isAfter(LocalDate.now())){
             throw new IllegalArgumentException("The input date must be before or at this current date.");
         }
+    }
+
+    @Override
+    public void updateMember(Member member, boolean removed) {
+        conversationObservers.forEach(listener -> listener.updateMemberInConversation(this.conversationNumber));
     }
 }

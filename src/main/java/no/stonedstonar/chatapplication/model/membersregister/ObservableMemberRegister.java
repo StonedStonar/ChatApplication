@@ -43,12 +43,4 @@ public interface ObservableMemberRegister extends MemberRegister {
      * @return the amount of members stored.
      */
     int getAmountOfMembers();
-
-    /**
-     * Builds a string that contains the name of all members in the register except the input username.
-     * @param username the username you don't want in the string.
-     * @return all the usernames that does not match the input username in a string.
-     * @throws UsernameNotPartOfConversationException gets thrown if the input username is not a part of this members object.
-     */
-    String getAllMembersExceptUsernameAsString(String username) throws UsernameNotPartOfConversationException;
 }

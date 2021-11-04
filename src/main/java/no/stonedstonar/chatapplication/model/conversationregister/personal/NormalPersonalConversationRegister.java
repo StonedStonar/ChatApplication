@@ -8,6 +8,7 @@ import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddC
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
@@ -107,6 +108,11 @@ public class NormalPersonalConversationRegister implements PersonalConversationR
     public boolean checkIfObjectIsObserver(ConversationRegisterObserver conversationRegisterObserver) {
         checkIfObjectIsNull(conversationRegisterObserver, "conversation observer");
         return conversationRegisterObservers.stream().anyMatch(obs -> obs.equals(conversationRegisterObserver));
+    }
+
+    @Override
+    public Iterator<ObservableConversation> getIterator() {
+        return observableConversations.iterator();
     }
 
     /**

@@ -1,11 +1,13 @@
 package no.stonedstonar.chatapplication.model.conversationregister.personal;
 
+import javafx.beans.Observable;
 import no.stonedstonar.chatapplication.model.conversation.ObservableConversation;
 import no.stonedstonar.chatapplication.model.conversationregister.ConversationRegister;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
 
 import java.io.Serializable;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -55,4 +57,10 @@ public interface PersonalConversationRegister extends ConversationRegister, Seri
      *         <code>false</code> if the object is not a observer.
      */
     boolean checkIfObjectIsObserver(ConversationRegisterObserver conversationRegisterObserver);
+
+    /**
+     * Gets the iterator of this personal register.
+     * @return the iterator of this register.
+     */
+    Iterator<ObservableConversation> getIterator();
 }

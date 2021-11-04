@@ -231,11 +231,11 @@ public class NormalMembersRegister implements Serializable, ServerMemberRegister
         List<Member> deletedMembers = new ArrayList<>();
         checkIfUserIsMemberIfNotThrowException(username);
         if (this.lastDeletedMember > lastDeletedMember){
-            long firstLong = lastDeletedMember;
+            long firstLong = lastDeletedMember + 1;
             do {
                 deletedMembers.add(deletedMap.get(firstLong));
                 firstLong += 1;
-            }while (this.lastDeletedMember < firstLong);
+            }while (this.lastDeletedMember > firstLong);
         }
         return deletedMembers;
     }

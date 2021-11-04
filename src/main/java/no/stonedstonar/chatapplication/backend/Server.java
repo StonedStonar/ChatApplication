@@ -374,7 +374,11 @@ public class Server{
         List<Member> newMembers = serverConversation.getMembers().checkForNewUsers(lastMember, username);
         List<Member> removedMembers = serverConversation.getMembers().checkForDeletedMembers(lastDeletedMember, username);
         List<MemberTransport> memberTransportList = new ArrayList<>();
-        removedMembers.forEach(mem -> memberTransportList.add(new MemberTransport(mem, false)));
+        try {
+            removedMembers.forEach(mem -> memberTransportList.add(new MemberTransport(mem, false)));
+        }catch (Exception exception){
+            System.out.println(exception.getMessage());
+        }
         newMembers.forEach(mem -> memberTransportList.add(new MemberTransport(mem, true)));
         MembersRequest response = new MembersRequestBuilder().addMemberTransports(memberTransportList).addConversationNumber(conversationNumber).build();
         sendObject(response, socket);

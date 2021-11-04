@@ -110,11 +110,11 @@ public class ConversationController implements Controller {
         ChatApplicationClient chatApplicationClient = ChatApplicationClient.getChatApplication();
         ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
 
-        ExecutorService executorService = ChatApplicationClient.getChatApplication().getExecutor();
         cancelButton.setOnAction(event -> {
             try {
                 editConversation = false;
                 conversationToEdit = null;
+                setAllFieldsEmpty();
                 ChatApplicationClient.getChatApplication().setNewScene(ChatWindow.getChatWindow());
             } catch (IOException e) {
                 AlertTemplates.makeAndShowCouldNotConnectToServerAlert();
@@ -166,18 +166,17 @@ public class ConversationController implements Controller {
             String nameOfConversation = conversationField.textProperty().get();
             try {
                 if (editConversation){
-                    //Todo: Fix it so that a conversation can change name and add/remove members.
+                    //Todo: Fix it so that a conversation can change name.
                     List<String> originalMembers = conversationToEdit.getMembers().getNameOfAllMembers();
                     List<String> newMembers = usernames.stream().filter(name -> originalMembers.stream().noneMatch(user -> user.equals(name))).toList();
                     chatClient.editConversation(newMembers, removedUsernames, conversationField.getText(), conversationToEdit);
                 }else {
                     chatClient.makeNewConversation(usernames, nameOfConversation);
-                    //usernames.clear();
-                    //membersBox.getChildren().clear();
                     editConversation = false;
                     conversationToEdit = null;
-                    chatApplicationClient.setNewScene(ChatWindow.getChatWindow());
                 }
+                emptyContent();
+                chatApplicationClient.setNewScene(ChatWindow.getChatWindow());
             } catch (CouldNotAddMessageLogException exception) {
                 AlertTemplates.makeAndShowCouldNotGetMessageLogExceptionAlert();
             } catch (IOException exception) {
@@ -365,6 +364,7 @@ public class ConversationController implements Controller {
         if (cancelButton != null){
             setAllFieldsEmpty();
             setAllValidFieldsToFalseAndDisableButtons();
+            membersBox.getChildren().clear();
             if(editConversation){
                 makeConversationButton.setText("Edit conversation");
                 usernames.forEach(this::addUsername);

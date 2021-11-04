@@ -25,7 +25,7 @@ import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMes
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.conversationregister.personal.ConversationRegisterObserver;
 import no.stonedstonar.chatapplication.model.member.Member;
-import no.stonedstonar.chatapplication.model.membersregister.MembersRegisterObserver;
+import no.stonedstonar.chatapplication.model.membersregister.ObservableMemberRegister;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
@@ -35,9 +35,7 @@ import no.stonedstonar.chatapplication.ui.windows.NewConversationWindow;
 
 import java.io.IOException;
 import java.time.LocalTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -45,7 +43,7 @@ import java.util.concurrent.ExecutorService;
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class ChatController implements Controller, ConversationObserver, ConversationRegisterObserver, MembersRegisterObserver {
+public class ChatController implements Controller, ConversationObserver, ConversationRegisterObserver {
 
     @FXML
     private Label loggedInLabel;
@@ -113,6 +111,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
         newContactButton.setOnAction(event -> {
             try {
                 ObservableConversation observableConversation = chatClient.getConversationByNumber(activeMessageLog);
+                chatClient.stopAllThreads();
                 if (observableConversation.checkIfObjectIsObserver(this)){
                     removeObservers(observableConversation);
                 }
@@ -154,6 +153,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
                 controller.setEditMode(activeMessageLog);
                 ObservableConversation observableConversation = chatClient.getConversationByNumber(activeMessageLog);
                 removeObservers(observableConversation);
+                chatClient.stopAllThreads();
                 ChatApplicationClient.getChatApplication().setNewScene(NewConversationWindow.getNewConversationWindow());
             } catch (CouldNotGetConversationException | IOException e) {
                 e.printStackTrace();
@@ -242,9 +242,8 @@ public class ChatController implements Controller, ConversationObserver, Convers
 
     /**
      * Adds all the conversations to the conversation panel.
-     * @throws UsernameNotPartOfConversationException gets thrown if the username is not a part of this conversation.
      */
-    private void addAllConversations() throws UsernameNotPartOfConversationException {
+    private void addAllConversations() {
         contactsBox.getChildren().clear();
         ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
         List<ObservableConversation> conversationList = chatClient.getMessageLogs();
@@ -266,13 +265,12 @@ public class ChatController implements Controller, ConversationObserver, Convers
     /**
      * Makes a new conversation to select on the left side.
      * @param observableConversation the message log this conversation is about.
-     * @throws UsernameNotPartOfConversationException gets thrown if the username is not a part of this conversation.
      */
-    private void addNewConversation(ObservableConversation observableConversation) throws UsernameNotPartOfConversationException {
+    private void addNewConversation(ObservableConversation observableConversation) {
         VBox vBox = new VBox();
         vBox.setMinWidth(Long.MAX_VALUE);
         String nameOfConversation = observableConversation.getConversationName();
-        String membersOfConversation = observableConversation.getMembers().getAllMembersExceptUsernameAsString(ChatApplicationClient.getChatApplication().getChatClient().getUsername());
+        String membersOfConversation = getAllMembersExceptUsernameAsString(observableConversation.getMembers());
         Label membersLabel = new Label(membersOfConversation);
         membersLabel.setFont(Font.font(membersLabel.getFont().getName(), FontWeight.NORMAL, FontPosture.REGULAR, 14));
         long messageLogNumber = observableConversation.getConversationNumber();
@@ -291,21 +289,40 @@ public class ChatController implements Controller, ConversationObserver, Convers
     }
 
     /**
-     *
-     * @param observableConversation
+     * Makes a string of all the usernames in the register.
+     * @param observableMemberRegister the members register.
+     * @return a string with all the usernames of this group except the applications' user's username.
      */
-    public void addObservers(ObservableConversation observableConversation){
-        observableConversation.registerObserver(this);
-        observableConversation.getMembers().addObserver(this);
+    private String getAllMembersExceptUsernameAsString(ObservableMemberRegister observableMemberRegister){
+        ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
+        String username = chatClient.getUsername();
+        StringBuilder stringBuilder = new StringBuilder();
+        Iterator<Member> it = observableMemberRegister.getIterator();
+        it.forEachRemaining(member -> {
+            String memberUsername = member.getUsername();
+            if (!memberUsername.equals(username)){
+                stringBuilder.append(memberUsername);
+            }
+        });
+        return stringBuilder.toString();
     }
 
     /**
-     *
-     * @param observableConversation
+     * Adds this object as an observer.
+     * @param observableConversation the observable conversation.
+     */
+    public void addObserver(ObservableConversation observableConversation){
+        if(!observableConversation.checkIfObjectIsObserver(this)){
+            observableConversation.registerObserver(this);
+        }
+    }
+
+    /**
+     * Removes this object as an observer.
+     * @param observableConversation the conversation you want to stop listening to.
      */
     public void removeObservers(ObservableConversation observableConversation){
         observableConversation.removeObserver(this);
-        observableConversation.getMembers().removeObserver(this);
     }
 
     /**
@@ -314,13 +331,11 @@ public class ChatController implements Controller, ConversationObserver, Convers
      * @param messageLogNumber the message log number this pane is holding.
      */
     private void addInteractionToPane(Pane pane, long messageLogNumber){
-        pane.setOnMouseEntered(mouseEvent -> {
-            pane.setBackground(new Background(new BackgroundFill(Color.valueOf("#8B7E7E"), CornerRadii.EMPTY, Insets.EMPTY)));
-        });
+        pane.setOnMouseEntered(mouseEvent -> pane.setBackground(new Background(new BackgroundFill(Color.valueOf("#8B7E7E"), CornerRadii.EMPTY, Insets.EMPTY))));
 
-        pane.setOnMouseExited(event -> {
-            pane.setBackground(new Background(new BackgroundFill(Color.valueOf("#F4F4F4"), CornerRadii.EMPTY, Insets.EMPTY)));
-        });
+        pane.setOnMouseExited(event -> pane.setBackground(new Background(new BackgroundFill(Color.valueOf("#F4F4F4"), CornerRadii.EMPTY, Insets.EMPTY))));
+
+        pane.setId(Long.toString(messageLogNumber));
 
         pane.setOnMouseClicked(mouseEvent -> {
             try {
@@ -329,8 +344,6 @@ public class ChatController implements Controller, ConversationObserver, Convers
                 removeAllBordersOnPanes();
                 pane.setBorder(new Border(new BorderStroke(Color.BLACK,
                         BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(0,0,0,3))));
-            }catch (CouldNotGetMessageLogException exception){
-                AlertTemplates.makeAndShowCouldNotGetMessageLogExceptionAlert();
             }catch (CouldNotGetConversationException exception){
                 AlertTemplates.makeAndShowCouldNotGetConversationAlert();
             }
@@ -341,7 +354,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
      * Removes the border around all panes.
      */
     private void removeAllBordersOnPanes(){
-        contactsBox.getChildren().stream().filter(node -> node instanceof Pane).forEach(pane -> {
+        contactsBox.getChildren().stream().filter(Pane.class::isInstance).forEach(pane -> {
             Pane pane1 = (Pane) pane;
             pane1.setBorder(Border.EMPTY);
             pane1.setDisable(false);
@@ -353,14 +366,11 @@ public class ChatController implements Controller, ConversationObserver, Convers
      * @param conversationNumber the message log number this conversation has.
      * @throws CouldNotGetConversationException gets thrown if the conversation could not be found.
      */
-    private void handleConversationSwitch(long conversationNumber) throws CouldNotGetMessageLogException, CouldNotGetConversationException {
+    private void handleConversationSwitch(long conversationNumber) throws CouldNotGetConversationException {
         if ((conversationNumber != this.activeMessageLog)){
             ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
             ObservableConversation lastObservableConversation = chatClient.getConversationByNumber(this.activeMessageLog);
-            if (lastObservableConversation.checkIfObjectIsObserver(this)){
-                System.out.println("The chat controller is " + lastObservableConversation.checkIfObjectIsObserver(this));
-                addObservers(lastObservableConversation);
-            }
+            addObserver(lastObservableConversation);
             ObservableConversation observableConversation = chatClient.getConversationByNumber(conversationNumber);
             showMessagesFromConversation(observableConversation);
         }
@@ -372,12 +382,10 @@ public class ChatController implements Controller, ConversationObserver, Convers
      */
     public void showMessagesFromConversation(ObservableConversation observableConversation){
         messageBox.getChildren().clear();
-        addObservers(observableConversation);
+        addObserver(observableConversation);
         List<Message> messages = observableConversation.getAllMessagesOfConversationAsList();
         activeMessageLog = observableConversation.getConversationNumber();
-        ChatApplicationClient.getChatApplication().getExecutor().submit(()-> {
-            ChatApplicationClient.getChatApplication().getChatClient().setMessageLogFocus(activeMessageLog);
-        });
+        ChatApplicationClient.getChatApplication().getExecutor().submit(()-> ChatApplicationClient.getChatApplication().getChatClient().setMessageLogFocus(activeMessageLog));
         if (!messages.isEmpty()){
             messages.forEach(message -> {
                 if (message instanceof TextMessage textMessage){
@@ -411,9 +419,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
         vBox.getChildren().add(label);
         vBox.getChildren().add(text);
         messageBox.getChildren().add(vBox);
-        messageBox.heightProperty().addListener((obs, oldVal, newVal) -> {
-            scrollPane.setVvalue(1.0);
-        });
+        messageBox.heightProperty().addListener((obs, oldVal, newVal) -> scrollPane.setVvalue(1.0));
     }
 
     /**
@@ -436,11 +442,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
         emptyContent();
         setButtonFunctions();
         addListeners();
-        try {
-            addAllConversations();
-        }catch (Exception exception){
-            System.out.println(exception.getClass() + " " + exception.getMessage());
-        }
+        addAllConversations();
         PersonalConversationRegister personalConversationRegister = ChatApplicationClient.getChatApplication().getChatClient().getPersonalConversationRegister();
         if(!personalConversationRegister.checkIfObjectIsObserver(this)){
             personalConversationRegister.registerObserver(this);
@@ -467,21 +469,21 @@ public class ChatController implements Controller, ConversationObserver, Convers
      */
     private void checkIfAllFieldsAreValid(){
         long valid = validFields.values().stream().filter(aBoolean ->  aBoolean).count();
-        if (valid == validFields.size()){
-            sendButton.setDisable(false);
-        }else {
-            sendButton.setDisable(true);
-        }
+        sendButton.setDisable(valid != validFields.size());
     }
 
     @Override
-    public void updateConversationMessage(Message message, boolean removed) {
+    public void updateConversationMessage(Message message, boolean removed, long conversationNumber) {
         Platform.runLater(() ->{
-            System.out.println("New message");
             if (message instanceof TextMessage textMessage){
                 addMessage(textMessage);
             }
         });
+    }
+
+    @Override
+    public void updateMemberInConversation(long conversationNumber) {
+        Platform.runLater(() -> changeConversationMembers(conversationNumber));
     }
 
     @Override
@@ -490,20 +492,40 @@ public class ChatController implements Controller, ConversationObserver, Convers
             if (removed){
                 contactsBox.getChildren().clear();
             }else{
-                try {
-                    addNewConversation(observableConversation);
-                } catch (UsernameNotPartOfConversationException e) {
-                    //Todo: Fix this
-                    e.printStackTrace();
-                }
+                addNewConversation(observableConversation);
             }
         });
     }
 
-    @Override
-    public void updateMember(Member member, boolean removed) {
-        Platform.runLater(() -> {
-            System.out.println("Member " + removed);
-        });
+    /**
+     * Changes the conversation members based on the current input.
+     * @param conversationNumber the conversation number.
+     */
+    private void changeConversationMembers(long conversationNumber){
+        try {
+            VBox vBox = getConversationPane(conversationNumber);
+            ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
+            ObservableConversation observableConversation = chatClient.getConversationByNumber(conversationNumber);
+            long amountOfNodes = vBox.getChildren().stream().filter(Label.class::isInstance).count();
+            if (amountOfNodes == 1){
+                Label label = (Label) vBox.getChildren().get(0);
+                label.setText(getAllMembersExceptUsernameAsString(observableConversation.getMembers()));
+            }else if (amountOfNodes == 2){
+                Label label = (Label) vBox.getChildren().get(1);
+                label.setText(getAllMembersExceptUsernameAsString(observableConversation.getMembers()));
+            }
+        } catch (CouldNotGetConversationException | NoSuchElementException exception) {
+            addAllConversations();
+        }
+    }
+
+    /**
+     * Gets the conversation vbox that has the same id as the input conversation number.
+     * @param conversationNumber the conversation number to look for.
+     * @return the vbox that matches this number.
+     */
+    private VBox getConversationPane(long conversationNumber){
+        String conversationNumberAsString = Long.toString(conversationNumber);
+        return (VBox) contactsBox.getChildren().stream().filter(node -> node.getId().equals(conversationNumberAsString)).findFirst().get();
     }
 }
