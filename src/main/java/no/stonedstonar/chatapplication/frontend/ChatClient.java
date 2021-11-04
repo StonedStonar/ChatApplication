@@ -66,15 +66,17 @@ public class ChatClient {
 
     private ExecutorService executors;
 
+    //Todo: legg til funksjoner slik at den automatisk sjekker etter alt som kan oppdateres på threaden.
+    // husk også å fikse slik at samtalen kan endre navn.
+    // og det hadde vært kult med funksjon som ser om den får kontakt med serveren.
     /**
       * Makes an instance of the ChatClient class.
       */
     public ChatClient(){
-        executors = Executors.newFixedThreadPool(3);
+        executors = Executors.newFixedThreadPool(4);
         logger = Logger.getLogger(getClass().toString());
         host = "localhost";
         portNumber = 1380;
-        messageLogFocus = 0;
     }
 
     /**
@@ -109,16 +111,6 @@ public class ChatClient {
     public void setMessageLogFocus(long messageLogNumber) {
         stopCheckingForMessages();
         messageLogFocus = messageLogNumber;
-
-        runCheckForMessageThread = true;
-        try {
-            ObservableConversation personalMessageLog = getConversationByNumber(messageLogFocus);
-            executors.submit(() -> {
-                checkCurrentMessageLogForUpdates(personalMessageLog);
-            });
-        } catch (CouldNotGetConversationException e) {
-            logWaringError(e);
-        }
     }
 
     /**
@@ -129,11 +121,28 @@ public class ChatClient {
     }
 
     /**
+     * Starts the message listening thread.
+     */
+    public void startMessageListeningThread(){
+        runCheckForMessageThread = true;
+        executors.submit(this::checkCurrentMessageLogForUpdates);
+    }
+
+    /**
      * Stops all the threads.
      */
     public void stopAllThreads(){
         runCheckForMessageThread = false;
         executors.shutdown();
+    }
+
+    /**
+     * Checks if the listening thread is active.
+     * @return <code>true</code> if the thread is running.
+     *         <code>false</code> if the thread is not running.
+     */
+    public boolean checkIfListeningThreadIsActive(){
+        return runCheckForMessageThread;
     }
 
     /**
@@ -147,12 +156,17 @@ public class ChatClient {
 
     /**
      * Checks the current message log for new messages.
-     * @param observableConversation the active message log.
      */
-    public void checkCurrentMessageLogForUpdates(ObservableConversation observableConversation){
-        int count = 0;
-        do {
-            try {
+    public void checkCurrentMessageLogForUpdates(){
+        try {
+            int count = 0;
+            logger.log(Level.INFO, "Thread started.");
+            long currentMessageLogForThread = messageLogFocus;
+            ObservableConversation observableConversation = getConversationByNumber(currentMessageLogForThread);
+            do {
+                if (currentMessageLogForThread != messageLogFocus){
+                    observableConversation = getConversationByNumber(currentMessageLogForThread);
+                }
                 if (count > 8){
                     checkForNewMessages();
                     checkForNewConversations();
@@ -162,11 +176,11 @@ public class ChatClient {
                     count += 1;
                 }
                 Thread.sleep(2000);
-            }catch (CouldNotAddMessageException | IOException | InvalidResponseException | CouldNotGetMessageLogException | InterruptedException | UsernameNotPartOfConversationException | CouldNotAddConversationException exception){
-                logWaringError(exception);
-                stopCheckingForMessages();
-            }
-        } while(runCheckForMessageThread);
+            } while(runCheckForMessageThread);
+        }catch (CouldNotAddMessageException | IOException | InvalidResponseException | CouldNotGetMessageLogException | InterruptedException | UsernameNotPartOfConversationException | CouldNotAddConversationException | CouldNotGetConversationException exception){
+            logWaringError(exception);
+            stopCheckingForMessages();
+        }
     }
 
 

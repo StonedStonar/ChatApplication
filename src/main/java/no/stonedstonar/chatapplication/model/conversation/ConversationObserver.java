@@ -1,6 +1,5 @@
 package no.stonedstonar.chatapplication.model.conversation;
 
-import no.stonedstonar.chatapplication.model.member.Member;
 import no.stonedstonar.chatapplication.model.message.Message;
 
 /**
