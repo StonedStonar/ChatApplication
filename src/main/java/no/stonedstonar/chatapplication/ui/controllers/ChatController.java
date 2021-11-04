@@ -24,6 +24,8 @@ import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemb
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.conversationregister.personal.ConversationRegisterObserver;
+import no.stonedstonar.chatapplication.model.member.Member;
+import no.stonedstonar.chatapplication.model.membersregister.MembersRegisterObserver;
 import no.stonedstonar.chatapplication.model.message.Message;
 import no.stonedstonar.chatapplication.model.message.TextMessage;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
@@ -43,7 +45,7 @@ import java.util.concurrent.ExecutorService;
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class ChatController implements Controller, ConversationObserver, ConversationRegisterObserver {
+public class ChatController implements Controller, ConversationObserver, ConversationRegisterObserver, MembersRegisterObserver {
 
     @FXML
     private Label loggedInLabel;
@@ -102,7 +104,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
                 alert.setTitle("Could not send message");
                 alert.setHeaderText("Could not send empty message");
                 alert.setContentText("Could not send text message since the contents are empty. " +
-                        "Please try again.");
+                        "\nPlease try again.");
                 textMessageField.textProperty().set("");
                 alert.show();
             }
@@ -112,7 +114,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
             try {
                 ObservableConversation observableConversation = chatClient.getConversationByNumber(activeMessageLog);
                 if (observableConversation.checkIfObjectIsObserver(this)){
-                    observableConversation.removeObserver(this);
+                    removeObservers(observableConversation);
                 }
                 ChatApplicationClient.getChatApplication().setNewScene(NewConversationWindow.getNewConversationWindow());
             }catch (IOException exception){
@@ -135,7 +137,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
             try {
                 ObservableConversation observableConversation = chatClient.getConversationByNumber(activeMessageLog);
                 if (observableConversation.checkIfObjectIsObserver(this)){
-                    observableConversation.removeObserver(this);
+                    removeObservers(observableConversation);
                 }
                 executorService.submit(() -> {
                     chatClient.logOutOfUser();
@@ -150,6 +152,8 @@ public class ChatController implements Controller, ConversationObserver, Convers
             ConversationController controller = (ConversationController) NewConversationWindow.getNewConversationWindow().getController();
             try {
                 controller.setEditMode(activeMessageLog);
+                ObservableConversation observableConversation = chatClient.getConversationByNumber(activeMessageLog);
+                removeObservers(observableConversation);
                 ChatApplicationClient.getChatApplication().setNewScene(NewConversationWindow.getNewConversationWindow());
             } catch (CouldNotGetConversationException | IOException e) {
                 e.printStackTrace();
@@ -287,6 +291,24 @@ public class ChatController implements Controller, ConversationObserver, Convers
     }
 
     /**
+     *
+     * @param observableConversation
+     */
+    public void addObservers(ObservableConversation observableConversation){
+        observableConversation.registerObserver(this);
+        observableConversation.getMembers().addObserver(this);
+    }
+
+    /**
+     *
+     * @param observableConversation
+     */
+    public void removeObservers(ObservableConversation observableConversation){
+        observableConversation.removeObserver(this);
+        observableConversation.getMembers().removeObserver(this);
+    }
+
+    /**
      * Adds it so that the pane is interactive and can be used as a button.
      * @param pane the pane you want to make interactive.
      * @param messageLogNumber the message log number this pane is holding.
@@ -337,7 +359,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
             ObservableConversation lastObservableConversation = chatClient.getConversationByNumber(this.activeMessageLog);
             if (lastObservableConversation.checkIfObjectIsObserver(this)){
                 System.out.println("The chat controller is " + lastObservableConversation.checkIfObjectIsObserver(this));
-                lastObservableConversation.removeObserver(this);
+                addObservers(lastObservableConversation);
             }
             ObservableConversation observableConversation = chatClient.getConversationByNumber(conversationNumber);
             showMessagesFromConversation(observableConversation);
@@ -350,7 +372,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
      */
     public void showMessagesFromConversation(ObservableConversation observableConversation){
         messageBox.getChildren().clear();
-        observableConversation.registerObserver(this);
+        addObservers(observableConversation);
         List<Message> messages = observableConversation.getAllMessagesOfConversationAsList();
         activeMessageLog = observableConversation.getConversationNumber();
         ChatApplicationClient.getChatApplication().getExecutor().submit(()-> {
@@ -475,6 +497,13 @@ public class ChatController implements Controller, ConversationObserver, Convers
                     e.printStackTrace();
                 }
             }
+        });
+    }
+
+    @Override
+    public void updateMember(Member member, boolean removed) {
+        Platform.runLater(() -> {
+            System.out.println("Member " + removed);
         });
     }
 }

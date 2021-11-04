@@ -6,6 +6,7 @@ import no.stonedstonar.chatapplication.model.exception.member.CouldNotGetMemberE
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemberException;
 import no.stonedstonar.chatapplication.model.member.Member;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -13,7 +14,7 @@ import java.util.*;
  * @version 0.2
  * @author Steinar Hjelle Midthus
  */
-public class NormalObservableMemberRegister implements ObservableMemberRegister {
+public class NormalObservableMemberRegister implements ObservableMemberRegister, Serializable {
 
     private final Map<Long, Member> memberMap;
 

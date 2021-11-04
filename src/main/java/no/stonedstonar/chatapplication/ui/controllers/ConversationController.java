@@ -207,6 +207,7 @@ public class ConversationController implements Controller {
         validFields.put(conversationField, true);
         validFields.put(usernameText, false);
         addUsernameButton.setDisable(true);
+        removeUsernameButton.setDisable(true);
         makeConversationButton.setDisable(true);
     }
 
