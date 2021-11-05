@@ -43,14 +43,6 @@ public class NormalPersonalConversationRegister implements PersonalConversationR
         });
     }
 
-    /**
-     * Gets all the conversations.
-     * @return a list with all the conversations.
-     */
-    public List<ObservableConversation> getConversationList() {
-        return observableConversations;
-    }
-
     @Override
     public void addConversation(ObservableConversation observableConversation) throws CouldNotAddConversationException {
         checkIfObjectIsNull(observableConversation, "personal conversation");
@@ -132,7 +124,7 @@ public class NormalPersonalConversationRegister implements PersonalConversationR
      * @param prefix the prefix the error should have.
      */
     private void checkIfLongIsAboveZero(long number, String prefix){
-        if (number <= 0){
+        if (number < 0){
             throw new IllegalArgumentException("The " + prefix + " must be above 0.");
         }
     }

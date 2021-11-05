@@ -23,4 +23,10 @@ public interface ConversationObserver {
      * @param conversationNumber the conversation number of this conversation.
      */
     void updateMemberInConversation(long conversationNumber);
+
+    /**
+     * Tells if there is a new name of the conversation.
+     * @param conversationNumber the conversations number.
+     */
+    void updateConversationName(long conversationNumber);
 }

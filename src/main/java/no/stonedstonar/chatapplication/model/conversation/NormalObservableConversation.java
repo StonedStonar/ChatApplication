@@ -90,6 +90,11 @@ public class NormalObservableConversation implements ObservableConversation, Ser
     }
 
     @Override
+    public void notifyAboutNewName(String name) {
+        conversationObservers.forEach(obs -> obs.updateConversationName(conversationNumber));
+    }
+
+    @Override
     public void notifyObserversOfNewMember(Member member, boolean removed) {
         conversationObservers.forEach(listener -> listener.updateMemberInConversation(this.conversationNumber));
     }
@@ -154,6 +159,7 @@ public class NormalObservableConversation implements ObservableConversation, Ser
     public void setConversationName(String conversationName) {
         checkString(conversationName, "conversation name");
         this.conversationName = conversationName;
+        notifyAboutNewName(conversationName);
     }
 
     @Override

@@ -4,7 +4,9 @@ import no.stonedstonar.chatapplication.model.member.Member;
 import no.stonedstonar.chatapplication.network.requests.ConversationRequest;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents a builder class for a conversation request.
@@ -16,6 +18,10 @@ public class ConversationRequestBuilder {
     private boolean deleteConversation;
 
     private boolean newConversation;
+
+    private boolean checkForNewConversationNames;
+
+    private Map<Long, String> newConversationNamesMap;
 
     private String nameOfConversation;
 
@@ -34,10 +40,12 @@ public class ConversationRequestBuilder {
         deleteConversation = false;
         newConversation = false;
         checkForNewConversation = false;
+        checkForNewConversationNames = false;
         nameOfConversation = "";
         conversationNumberList = new ArrayList<>();
         username = "";
         memberList = new ArrayList<>();
+        newConversationNamesMap = new HashMap<>();
     }
 
     /**
@@ -52,6 +60,7 @@ public class ConversationRequestBuilder {
             deleteConversation = true;
             newConversation = false;
             checkForNewConversation = false;
+            checkForNewConversationNames = false;
         }else {
             deleteConversation = false;
         }
@@ -70,6 +79,7 @@ public class ConversationRequestBuilder {
             deleteConversation = false;
             newConversation = true;
             checkForNewConversation = false;
+            checkForNewConversationNames = false;
         }else {
             newConversation = false;
         }
@@ -87,9 +97,39 @@ public class ConversationRequestBuilder {
             deleteConversation = false;
             newConversation = false;
             checkForNewConversation = true;
+            checkForNewConversationNames = false;
         }else {
             checkForNewConversation = false;
         }
+        return this;
+    }
+
+    /**
+     * Says if the request is about checking for new conversation names.
+     * @param valid <code>true</code> if the request wants to check for new names on the conversations.
+     *              <code>false</code> if the does not want to check for new names on conversations.
+     * @return this builder object.
+     */
+    public ConversationRequestBuilder setCheckForConversationNames(boolean valid){
+        if (valid){
+            deleteConversation = false;
+            newConversation = false;
+            checkForNewConversation = false;
+            checkForNewConversationNames = true;
+        }else {
+            checkForNewConversationNames = true;
+        }
+        return this;
+    }
+
+    /**
+     * Adds conversation names map to the object.
+     * @param names the conversation map that holds the new names.
+     * @return this builder object.
+     */
+    public ConversationRequestBuilder addConversationNamesMap(Map<Long, String> names){
+        checkIfObjectIsNull(names, "conversation names");
+        this.newConversationNamesMap = names;
         return this;
     }
 
@@ -135,6 +175,23 @@ public class ConversationRequestBuilder {
         checkIfObjectIsNull(members, "members");
         this.memberList = members;
         return this;
+    }
+
+    /**
+     * Gets a map with all the new conversation names.
+     * @return a map with all the new names.
+     */
+    public Map<Long, String> getNewConversationNamesMap(){
+        return newConversationNamesMap;
+    }
+
+    /**
+     * Gets if the request is about checking for new conversation names.
+     * @return <code>true</code> if the request is about checking for conversation names.
+     *         <code>false</code> if the request is not about checking for new conversation names.
+     */
+    public boolean isCheckForNewConversationNames(){
+        return checkForNewConversationNames;
     }
 
     /**

@@ -1,6 +1,5 @@
 package no.stonedstonar.chatapplication.ui.controllers;
 
-import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -13,7 +12,6 @@ import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import no.stonedstonar.chatapplication.frontend.ChatClient;
-import no.stonedstonar.chatapplication.model.conversation.Conversation;
 import no.stonedstonar.chatapplication.model.conversation.ConversationObserver;
 import no.stonedstonar.chatapplication.model.conversation.ObservableConversation;
 import no.stonedstonar.chatapplication.model.conversationregister.personal.PersonalConversationRegister;
@@ -77,7 +75,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
     @FXML
     private Button testButton;
 
-    private long activeMessageLog;
+    private long activeConversation;
 
     private Map<Node, Boolean> validFields;
 
@@ -87,6 +85,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
       */
     public ChatController(){
         validFields = new HashMap<>();
+        activeConversation = 0;
     }
 
     /**
@@ -129,10 +128,9 @@ public class ChatController implements Controller, ConversationObserver, Convers
 
         logOutButton.setOnAction(actionEvent -> {
             try {
-                ObservableConversation observableConversation = chatClient.getConversationByNumber(activeMessageLog);
-                executorService.submit(() -> {
-                    chatClient.logOutOfUser();
-                });
+                ObservableConversation observableConversation = chatClient.getConversationByNumber(activeConversation);
+                unsubscribeToAllConversations();
+                executorService.submit(chatClient::logOutOfUser);
                 ChatApplicationClient.getChatApplication().setNewScene(LoginWindow.getLoginWindow());
             } catch (Exception e) {
                 AlertTemplates.makeAndShowCriticalErrorAlert(e);
@@ -142,7 +140,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
         editConversationButton.setOnAction(event ->{
             ConversationController controller = (ConversationController) NewConversationWindow.getNewConversationWindow().getController();
             try {
-                controller.setEditMode(activeMessageLog);
+                controller.setEditMode(activeConversation);
                 ChatApplicationClient.getChatApplication().setNewScene(NewConversationWindow.getNewConversationWindow());
             } catch (CouldNotGetConversationException | IOException e) {
                 e.printStackTrace();
@@ -154,17 +152,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
                 chatClient.checkForNewMembers();
             } catch (UsernameNotPartOfConversationException e) {
                 e.printStackTrace();
-            } catch (CouldNotGetConversationException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (InvalidResponseException e) {
-                e.printStackTrace();
-            } catch (CouldNotGetMemberException e) {
-                e.printStackTrace();
-            } catch (CouldNotRemoveMemberException e) {
-                e.printStackTrace();
-            } catch (CouldNotAddMemberException e) {
+            } catch (CouldNotGetConversationException | IOException | InvalidResponseException | CouldNotGetMemberException | CouldNotRemoveMemberException | CouldNotAddMemberException e) {
                 e.printStackTrace();
             }
         });
@@ -195,7 +183,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
      */
     private void sendNewMessage(String messageContents, ChatClient chatClient) {
         try {
-            ObservableConversation observableConversation = chatClient.getConversationByNumber(activeMessageLog);
+            ObservableConversation observableConversation = chatClient.getConversationByNumber(activeConversation);
             chatClient.sendMessage(messageContents, observableConversation);
             textMessageField.textProperty().set("");
         }catch (IllegalArgumentException  exception){
@@ -220,11 +208,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
         validFields.put(textMessageField, false);
 
         textMessageField.textProperty().addListener((obs, oldVal, newVal) -> {
-            if (!newVal.isEmpty()){
-                validFields.put(textMessageField, true);
-            }else {
-                validFields.put(textMessageField, false);
-            }
+            validFields.put(textMessageField, !newVal.isEmpty());
             checkIfAllFieldsAreValid();
         });
     }
@@ -256,13 +240,17 @@ public class ChatController implements Controller, ConversationObserver, Convers
         contactsBox.getChildren().clear();
         ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
         subscribeToAllConversations();
-        List<ObservableConversation> conversationList = chatClient.getMessageLogs();
-        if (!conversationList.isEmpty()){
-            for (ObservableConversation conversation : conversationList) {
-                addNewConversation(conversation);
+        Iterator<ObservableConversation> it = chatClient.getMessageLogs();
+        if (it.hasNext()){
+            int i = 0;
+            while (it.hasNext()){
+                ObservableConversation observableConversation = it.next();
+                addNewConversation(observableConversation);
+                if(i == 0){
+                    showMessagesFromConversation(observableConversation);
+                }
+                i += 1;
             }
-            ObservableConversation observableConversation = conversationList.get(0);
-            showMessagesFromConversation(observableConversation);
         } else {
             VBox vBox = new VBox();
             vBox.setMinWidth(Long.MAX_VALUE);
@@ -319,24 +307,6 @@ public class ChatController implements Controller, ConversationObserver, Convers
     }
 
     /**
-     * Adds this object as an observer.
-     * @param observableConversation the observable conversation.
-     */
-    public void addObserver(ObservableConversation observableConversation){
-        if(!observableConversation.checkIfObjectIsObserver(this)){
-            observableConversation.registerObserver(this);
-        }
-    }
-
-    /**
-     * Removes this object as an observer.
-     * @param observableConversation the conversation you want to stop listening to.
-     */
-    public void removeObservers(ObservableConversation observableConversation){
-        observableConversation.removeObserver(this);
-    }
-
-    /**
      * Adds it so that the pane is interactive and can be used as a button.
      * @param pane the pane you want to make interactive.
      * @param messageLogNumber the message log number this pane is holding.
@@ -378,7 +348,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
      * @throws CouldNotGetConversationException gets thrown if the conversation could not be found.
      */
     private void handleConversationSwitch(long conversationNumber) throws CouldNotGetConversationException {
-        if ((conversationNumber != this.activeMessageLog)){
+        if ((conversationNumber != this.activeConversation)){
             ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
             ObservableConversation observableConversation = chatClient.getConversationByNumber(conversationNumber);
             showMessagesFromConversation(observableConversation);
@@ -392,10 +362,10 @@ public class ChatController implements Controller, ConversationObserver, Convers
     public void showMessagesFromConversation(ObservableConversation observableConversation){
         messageBox.getChildren().clear();
         List<Message> messages = observableConversation.getAllMessagesOfConversationAsList();
-        activeMessageLog = observableConversation.getConversationNumber();
+        this.activeConversation = observableConversation.getConversationNumber();
         ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
         ChatApplicationClient.getChatApplication().getExecutor().submit(()-> {
-            chatClient.setMessageLogFocus(activeMessageLog);
+            chatClient.setConversationFocus(activeConversation);
             if (!chatClient.checkIfListeningThreadIsActive()){
                 chatClient.startMessageListeningThread();
             }
@@ -490,7 +460,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
     @Override
     public void updateConversationMessage(Message message, boolean removed, long conversationNumber) {
         Platform.runLater(() ->{
-            if ((message instanceof TextMessage textMessage) && (activeMessageLog == conversationNumber)){
+            if ((message instanceof TextMessage textMessage) && (activeConversation == conversationNumber)){
                 addMessage(textMessage);
             }
         });
@@ -499,6 +469,27 @@ public class ChatController implements Controller, ConversationObserver, Convers
     @Override
     public void updateMemberInConversation(long conversationNumber) {
         Platform.runLater(() -> changeConversationMembers(conversationNumber));
+    }
+
+    @Override
+    public void updateConversationName(long conversationNumber) {
+        Platform.runLater(() -> {
+            try {
+                ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
+                VBox vBox = getConversationVBox(conversationNumber);
+                long amount = vBox.getChildren().stream().filter(node -> node instanceof Label).count();
+                ObservableConversation observableConversation = chatClient.getConversationByNumber(conversationNumber);
+                if (amount == 1){
+                    contactsBox.getChildren().remove(vBox);
+                    addNewConversation(observableConversation);
+                }else if (amount == 2){
+                    Label label = (Label) vBox.getChildren().get(0);
+                    label.setText(observableConversation.getConversationName());
+                }
+            }catch (CouldNotGetConversationException exception){
+                addAllConversations();
+            }
+        });
     }
 
     @Override
@@ -519,7 +510,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
      */
     private void changeConversationMembers(long conversationNumber){
         try {
-            VBox vBox = getConversationPane(conversationNumber);
+            VBox vBox = getConversationVBox(conversationNumber);
             ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
             ObservableConversation observableConversation = chatClient.getConversationByNumber(conversationNumber);
             long amountOfNodes = vBox.getChildren().stream().filter(Label.class::isInstance).count();
@@ -540,7 +531,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
      * @param conversationNumber the conversation number to look for.
      * @return the vbox that matches this number.
      */
-    private VBox getConversationPane(long conversationNumber){
+    private VBox getConversationVBox(long conversationNumber){
         String conversationNumberAsString = Long.toString(conversationNumber);
         return (VBox) contactsBox.getChildren().stream().filter(node -> node.getId().equals(conversationNumberAsString)).findFirst().get();
     }

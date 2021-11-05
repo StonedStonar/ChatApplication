@@ -41,6 +41,12 @@ public interface ObservableConversation extends Conversation{
     void notifyObserversAboutNewMessage();
 
     /**
+     * Notifies the observers about a new name of the conversation.
+     * @param name the new name.
+     */
+    void notifyAboutNewName(String name);
+
+    /**
      * Notifies the observers about a change.
      * @param member the member that has been added or removed.
      * @param removed <code>true</code> if the member has been removed.

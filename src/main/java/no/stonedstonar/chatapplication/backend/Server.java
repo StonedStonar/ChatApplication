@@ -22,6 +22,7 @@ import no.stonedstonar.chatapplication.model.user.User;
 import no.stonedstonar.chatapplication.model.user.EndUser;
 import no.stonedstonar.chatapplication.model.userregister.NormalUserRegister;
 import no.stonedstonar.chatapplication.network.requests.*;
+import no.stonedstonar.chatapplication.network.requests.builder.ConversationRequestBuilder;
 import no.stonedstonar.chatapplication.network.requests.builder.MembersRequestBuilder;
 import no.stonedstonar.chatapplication.network.requests.builder.MessageRequestBuilder;
 import no.stonedstonar.chatapplication.network.transport.LoginTransport;
@@ -32,8 +33,7 @@ import no.stonedstonar.chatapplication.network.transport.PersonalConversationTra
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -144,7 +144,7 @@ public class Server{
      * @throws IOException gets thrown if the socket closes or cannot finish its task.
      * @throws InvalidResponseException gets thrown if the class cannot be found.
      */
-    private void handleConnection(Socket socket) throws IOException, InvalidResponseException {
+    private synchronized void handleConnection(Socket socket) throws IOException, InvalidResponseException {
         do{
             Object object = getObject(socket);
             if(object instanceof MessageRequest messageRequest){
@@ -169,7 +169,7 @@ public class Server{
      * @param socket the socket that gets the sends.
      * @throws IOException gets thrown if the socket closes or cannot finish its task.
      */
-    private void handleIncomingMessage(MessageRequest messageRequest, Socket socket) throws IOException {
+    private synchronized void handleIncomingMessage(MessageRequest messageRequest, Socket socket) throws IOException {
         try {
             if (messageRequest.isCheckForMessages()){
                 checkForNewMessages(messageRequest, socket);
@@ -201,7 +201,7 @@ public class Server{
      * @throws CouldNotAddMessageException gets thrown if the messages is already in the conversation.
      * @throws CouldNotGetMessageLogException gets thrown if the message log for that date could not be located.
      */
-    private void addNewMessages(List<Message> messages, ServerConversation conversation) throws IOException, CouldNotGetConversationException, UsernameNotPartOfConversationException, CouldNotAddMessageException, CouldNotGetMessageLogException {
+    private synchronized void addNewMessages(List<Message> messages, ServerConversation conversation) throws IOException, CouldNotGetConversationException, UsernameNotPartOfConversationException, CouldNotAddMessageException, CouldNotGetMessageLogException {
         conversation.addAllMessagesWithSameDate(messages);
     }
 
@@ -213,7 +213,7 @@ public class Server{
      * @throws CouldNotRemoveMessageException gets thrown if one or more of the messages are not in the conversation.
      * @throws CouldNotGetMessageLogException  gets thrown if the date of these messages don't have a message log.
      */
-    private void removeMessages(List<Message> messageList, ServerConversation conversation) throws UsernameNotPartOfConversationException, CouldNotRemoveMessageException, CouldNotGetMessageLogException {
+    private synchronized void removeMessages(List<Message> messageList, ServerConversation conversation) throws UsernameNotPartOfConversationException, CouldNotRemoveMessageException, CouldNotGetMessageLogException {
         conversation.removeAllMessagesWithSameDate(messageList);
     }
 
@@ -226,7 +226,7 @@ public class Server{
      * @throws CouldNotGetConversationException gets thrown if the conversation could not be found.
      * @throws UsernameNotPartOfConversationException gets thrown if the username is not a part of the conversation.
      */
-    private void checkForNewMessages(MessageRequest messageRequest, Socket socket) throws IOException, CouldNotGetConversationException, CouldNotGetMessageLogException, UsernameNotPartOfConversationException {
+    private synchronized void checkForNewMessages(MessageRequest messageRequest, Socket socket) throws IOException, CouldNotGetConversationException, CouldNotGetMessageLogException, UsernameNotPartOfConversationException {
         ServerConversation conversation = normalConversationRegister.getConversationByNumber(messageRequest.getConversationNumber());
         List<Message> newMessages = conversation.checkForNewMessagesOnDate(messageRequest.getCheckMessageDate(),messageRequest.getLastMessage(), messageRequest.getUsername());
         List<MessageTransport> messageTransportList = new ArrayList<>();
@@ -241,7 +241,7 @@ public class Server{
      * @param socket the socket this user request is from.
      * @throws IOException gets thrown if the socket closes or cannot finish its task.
      */
-    private void handleUserInteraction(UserRequest userRequest, Socket socket) throws IOException{
+    private synchronized void handleUserInteraction(UserRequest userRequest, Socket socket) throws IOException{
         try {
             if (userRequest.isLogin()){
                 User endUser = normalUserRegister.login(userRequest.getUsername(), userRequest.getPassword());
@@ -268,18 +268,60 @@ public class Server{
      * @param socket the socket the communication is happening over.
      * @throws IOException gets thrown if the socket closes or cannot finish its task.
      */
-    private void handleConversationInteraction(ConversationRequest conversationRequest, Socket socket) throws IOException {
+    private synchronized void handleConversationInteraction(ConversationRequest conversationRequest, Socket socket) throws IOException {
         try {
             if (conversationRequest.isNewConversation()){
                 makeNewConversation(conversationRequest, socket);
             }else if (conversationRequest.isCheckForNewConversation()){
                 handleCheckForNewConversations(conversationRequest, socket);
+            }else if (!conversationRequest.getNameOfConversation().isEmpty()){
+                changeNameOfConversation(conversationRequest, socket);
+            }else if (conversationRequest.isCheckForNewConversationNames()){
+                checkAllConversationsForNewNames(conversationRequest, socket);
             }
-        }catch (CouldNotAddMemberException | CouldNotAddConversationException exception) {
+        }catch (CouldNotAddMemberException | CouldNotAddConversationException | CouldNotGetConversationException exception) {
             String message = "Something went wrong in the " + conversationRequest + " with the exception " + exception.getMessage() + " and class " + exception.getClass();
             logEvent(Level.WARNING, message);
             sendObject(exception, socket);
         }
+    }
+
+    /**
+     * Checks if all the conversations has new names.
+     * @param conversationRequest the conversation request.
+     * @param socket the socket.
+     * @throws IOException gets thrown if the socket closes before the task is done.
+     * @throws CouldNotGetConversationException gets thrown if the conversation could not be located.
+     */
+    private void checkAllConversationsForNewNames(ConversationRequest conversationRequest, Socket socket) throws IOException, CouldNotGetConversationException {
+        Map<Long, String> conversationNamesToCheck = conversationRequest.getNewConversationNamesMap();
+        Map<Long, String> newConversationNames = new HashMap<>();
+        Iterator<Long> it = conversationNamesToCheck.keySet().iterator();
+        while (it.hasNext()){
+            long conversationNumber = it.next();
+            ServerConversation serverConversation = normalConversationRegister.getConversationByNumber(conversationNumber);
+            String nameOfConversation = serverConversation.getConversationName();
+            if(!nameOfConversation.equals(conversationNamesToCheck.get(conversationNumber))){
+                newConversationNames.put(conversationNumber, nameOfConversation);
+            }
+        }
+        ConversationRequest response = new ConversationRequestBuilder().addConversationNamesMap(newConversationNames).build();
+        sendObject(response, socket);
+    }
+
+
+    /**
+     * Changes the name of the conversation to a new value.
+     * @param conversationRequest the conversation request to handle.
+     * @param socket the socket.
+     * @throws CouldNotGetConversationException gets thrown if the conversation could not be found.
+     * @throws IOException gets thrown if the socket closes before the object could be sent.
+     */
+    private synchronized void changeNameOfConversation(ConversationRequest conversationRequest, Socket socket) throws CouldNotGetConversationException, IOException {
+        String newName = conversationRequest.getNameOfConversation();
+        ServerConversation serverConversation = normalConversationRegister.getConversationByNumber(conversationRequest.getConversationNumberList().get(0));
+        serverConversation.setConversationName(newName);
+        sendObject(conversationRequest, socket);
     }
 
     /**
@@ -288,7 +330,7 @@ public class Server{
      * @param socket the socket this communication is happening over.
      * @throws IOException gets thrown if the socket closes or cannot finish its task.
      */
-    private void handleCheckForNewConversations(ConversationRequest conversationRequest, Socket socket) throws IOException {
+    private synchronized void handleCheckForNewConversations(ConversationRequest conversationRequest, Socket socket) throws IOException {
         List<Long> conversationNumbers = conversationRequest.getConversationNumberList();
         String username = conversationRequest.getUsername();
         List<ServerConversation> list = normalConversationRegister.getAllConversationsOfUsername(username);
@@ -317,7 +359,7 @@ public class Server{
      * @throws CouldNotAddConversationException gets thrown if the conversation could not be added.
      * @throws CouldNotAddMemberException gets thrown if a member could not be added.
      */
-    private void makeNewConversation(ConversationRequest conversationRequest, Socket socket) throws IOException, CouldNotAddMemberException, CouldNotAddConversationException {
+    private synchronized void makeNewConversation(ConversationRequest conversationRequest, Socket socket) throws IOException, CouldNotAddMemberException, CouldNotAddConversationException {
         List<Member> usernames = conversationRequest.getMemberList();
         String nameOfMessageLog = conversationRequest.getNameOfConversation();
         ServerConversation conversation = normalConversationRegister.addNewConversationWithUsernames(usernames, nameOfMessageLog);
@@ -333,7 +375,7 @@ public class Server{
      * @param socket the socket that sent this request.
      * @throws IOException gets thrown if the socket closes or cannot finish its task.
      */
-    private void handleMembersRequest(MembersRequest membersRequest, Socket socket) throws IOException {
+    private synchronized void handleMembersRequest(MembersRequest membersRequest, Socket socket) throws IOException {
         try {
             if (membersRequest.isCheckForNewMembers()){
                 checkForNewAndRemovedMembers(membersRequest, socket);
@@ -365,7 +407,7 @@ public class Server{
      * @throws UsernameNotPartOfConversationException gets thrown if the username is not a part of this conversation.
      * @throws CouldNotGetConversationException gets thrown if the conversation could not be found.
      */
-    private void checkForNewAndRemovedMembers(MembersRequest membersRequest, Socket socket) throws IOException, UsernameNotPartOfConversationException, CouldNotGetConversationException {
+    private synchronized void checkForNewAndRemovedMembers(MembersRequest membersRequest, Socket socket) throws IOException, UsernameNotPartOfConversationException, CouldNotGetConversationException {
         long lastMember = membersRequest.getLastMember();
         long conversationNumber = membersRequest.getConversationNumber();
         long lastDeletedMember = membersRequest.getLastDeletedMember();
@@ -393,7 +435,7 @@ public class Server{
      * @throws CouldNotAddMemberException gets thrown if one person in the request is already in the conversation.
      * @throws UsernameNotPartOfConversationException gets thrown if the username is not a part of this conversation.
      */
-    private void addNewMembersToConversation(List<Member> members, ServerConversation conversation, String username) throws CouldNotGetConversationException, CouldNotAddMemberException, UsernameNotPartOfConversationException {
+    private synchronized void addNewMembersToConversation(List<Member> members, ServerConversation conversation, String username) throws CouldNotGetConversationException, CouldNotAddMemberException, UsernameNotPartOfConversationException {
         conversation.getMembers().addAllMembers(members, username);
     }
 
@@ -406,7 +448,7 @@ public class Server{
      * @throws CouldNotGetMemberException gets thrown if a member could not be located.
      * @throws CouldNotRemoveMemberException gets thrown if one or more members are missing form this object.
      */
-    private void removeMembers(List<Member> members, ServerConversation conversation, String username) throws UsernameNotPartOfConversationException, CouldNotGetMemberException, CouldNotRemoveMemberException {
+    private synchronized void removeMembers(List<Member> members, ServerConversation conversation, String username) throws UsernameNotPartOfConversationException, CouldNotGetMemberException, CouldNotRemoveMemberException {
         conversation.getMembers().removeAllMembers(members, username);
     }
 
@@ -415,7 +457,7 @@ public class Server{
      * @param object the object you want to send.
      * @param socket the socket the object should go through.
      */
-    private void sendObject(Object object, Socket socket) throws IOException {
+    private synchronized void sendObject(Object object, Socket socket) throws IOException {
         try {
             OutputStream outputStream = socket.getOutputStream();
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
@@ -434,7 +476,7 @@ public class Server{
      * @throws IOException gets thrown if the object could not be received.
      * @throws InvalidResponseException gets thrown if the class could not be found for that object.
      */
-    private Object getObject(Socket socket) throws IOException, InvalidResponseException {
+    private synchronized Object getObject(Socket socket) throws IOException, InvalidResponseException {
         try {
             ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
             Object object = objectInputStream.readObject();

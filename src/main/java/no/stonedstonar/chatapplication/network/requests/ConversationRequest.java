@@ -6,6 +6,7 @@ import no.stonedstonar.chatapplication.network.transport.MemberTransport;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents a conversation request that can do different operations based on the input values.
@@ -14,19 +15,23 @@ import java.util.List;
  */
 public class ConversationRequest implements Serializable {
 
-    private boolean deleteConversation;
+    private final boolean deleteConversation;
 
-    private boolean newConversation;
+    private final boolean checkForNewConversationNames;
 
-    private String nameOfConversation;
+    private final boolean newConversation;
 
-    private List<Long> conversationNumberList;
+    private final Map<Long, String> newConversationNamesMap;
 
-    private boolean checkForNewConversation;
+    private final String nameOfConversation;
 
-    private String username;
+    private final List<Long> conversationNumberList;
 
-    private List<Member> memberList;
+    private final boolean checkForNewConversation;
+
+    private final String username;
+
+    private final List<Member> memberList;
 
     /**
       * Makes an instance of the MessageLogRequest class.
@@ -39,6 +44,25 @@ public class ConversationRequest implements Serializable {
         conversationNumberList = conversationRequestBuilder.getConversationNumberList();
         username = conversationRequestBuilder.getUsername();
         memberList = conversationRequestBuilder.getMemberList();
+        checkForNewConversationNames = conversationRequestBuilder.isCheckForNewConversationNames();
+        newConversationNamesMap = conversationRequestBuilder.getNewConversationNamesMap();
+    }
+
+    /**
+     * Gets a map with all the new conversation names.
+     * @return a map with all the new names.
+     */
+    public Map<Long, String> getNewConversationNamesMap(){
+        return newConversationNamesMap;
+    }
+
+    /**
+     * Gets if the request is about checking for new conversation names.
+     * @return <code>true</code> if the request is about checking for conversation names.
+     *         <code>false</code> if the request is not about checking for new conversation names.
+     */
+    public boolean isCheckForNewConversationNames(){
+        return checkForNewConversationNames;
     }
 
     /**
