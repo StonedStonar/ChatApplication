@@ -69,12 +69,22 @@ public class TextMessage implements Serializable, Message{
     }
 
     @Override
-    public LocalDate getDate(){
+    public LocalDate getDate() {
         LocalDate localDate = receivedByServerDate;
-        if (receivedByServerDate == null){
+        if (receivedByServerDate == null) {
             localDate = sentDate;
         }
         return localDate;
+    }
+
+    @Override
+    public LocalTime getSentFromUserTime() {
+        return sentTime;
+    }
+
+    @Override
+    public LocalDate getSentFromUserDate() {
+        return sentDate;
     }
 
     @Override
@@ -150,7 +160,7 @@ public class TextMessage implements Serializable, Message{
     public boolean checkIfMessageContentsAreEqual(Message messageToCheck){
         boolean valid = false;
         if (messageToCheck instanceof TextMessage textMessage){
-            valid = (textMessage.getDate().isEqual(sentDate)) && (textMessage.getTime().equals(sentTime)) && (textMessage.getFromUsername().equals(fromUsername)) && textMessage.getMessage().equals(this.message);
+            valid = (textMessage.getSentFromUserDate().isEqual(sentDate)) && (textMessage.getSentFromUserTime().equals(sentTime)) && (textMessage.getFromUsername().equals(fromUsername)) && textMessage.getMessage().equals(this.message);
         }
         return valid;
     }

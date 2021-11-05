@@ -23,7 +23,6 @@ import no.stonedstonar.chatapplication.ui.windows.ChatWindow;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 
 /**
  * Represents the controller of the conversation window.
@@ -65,15 +64,17 @@ public class ConversationController implements Controller {
     @FXML
     private Button cancelButton;
 
-    private List<String> usernames;
+    private final List<String> usernames;
 
-    private List<String> removedUsernames;
+    private final List<String> removedUsernames;
 
-    private Map<Node, Boolean> validFields;
+    private final Map<Node, Boolean> validFields;
 
     private boolean editConversation;
 
     private ObservableConversation conversationToEdit;
+
+    private String standardConversationText;
 
     /**
       * Makes an instance of the ConversationController class.
@@ -82,6 +83,7 @@ public class ConversationController implements Controller {
         validFields = new HashMap<>();
         usernames = new ArrayList<>();
         removedUsernames = new ArrayList<>();
+        standardConversationText = "If the conversation is given a name it must be 3 characters or longer.";
     }
 
     /**
@@ -97,6 +99,7 @@ public class ConversationController implements Controller {
         removedUsernames.clear();
         if (!editConversation){
             usernames.clear();
+            removedUsernames.clear();
             if (membersBox != null){
                 membersBox.getChildren().clear();
             }
@@ -129,12 +132,7 @@ public class ConversationController implements Controller {
                     usernameField.textProperty().set("");
                     validFields.put(usernameField, false);
                 }else {
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                    alert.setTitle("Username error");
-                    alert.setHeaderText("Username is not a user on the server.");
-                    alert.setContentText("The username that you are trying to add is not a user on this app. " +
-                            "\nPlease try another username.");
-                    alert.show();
+                    AlertTemplates.makeAndShowCouldNotFindUsernameAlert();
                 }
             } catch (IOException e) {
                 AlertTemplates.makeAndShowCouldNotConnectToServerAlert();
@@ -166,16 +164,15 @@ public class ConversationController implements Controller {
             String nameOfConversation = conversationField.textProperty().get();
             try {
                 if (editConversation){
-                    //Todo: Fix it so that a conversation can change name.
                     List<String> originalMembers = conversationToEdit.getMembers().getNameOfAllMembers();
                     List<String> newMembers = usernames.stream().filter(name -> originalMembers.stream().noneMatch(user -> user.equals(name))).toList();
                     chatClient.editConversation(newMembers, removedUsernames, conversationField.getText(), conversationToEdit);
                 }else {
                     chatClient.makeNewConversation(usernames, nameOfConversation);
-                    editConversation = false;
-                    conversationToEdit = null;
                 }
-                emptyContent();
+                editConversation = false;
+                conversationToEdit = null;
+                setAllFieldsEmpty();
                 chatApplicationClient.setNewScene(ChatWindow.getChatWindow());
             } catch (CouldNotAddMessageLogException exception) {
                 AlertTemplates.makeAndShowCouldNotGetMessageLogExceptionAlert();
@@ -186,11 +183,11 @@ public class ConversationController implements Controller {
             } catch (InvalidResponseException e) {
                 AlertTemplates.makeAndShowInvalidResponseFromTheServer();
             } catch (CouldNotAddConversationException exception) {
-                AlertTemplates.makeAndShowCouldNotGetConversationAlert();
+                AlertTemplates.makeAndShowCouldNotAddConversation();
             } catch (CouldNotGetConversationException exception) {
-                exception.printStackTrace();
+                AlertTemplates.makeAndShowCouldNotGetConversationAlert();
             } catch (CouldNotRemoveMemberException e) {
-                e.printStackTrace();
+                AlertTemplates.makeCouldNotRemoveMemberExceptionAlert();
             }
         });
 
@@ -215,7 +212,7 @@ public class ConversationController implements Controller {
      */
     private void addListeners(){
         usernameText.setText("The username must be 3 letters long.");
-        conversationText.setText("If the conversation is given a name it must be 3 characters or longer.");
+        conversationText.setText(standardConversationText);
 
         usernameField.textProperty().addListener((obs, oldVal, newVal) -> {
             try {
@@ -252,11 +249,11 @@ public class ConversationController implements Controller {
                     convoText.set("The conversation name is valid.");
                 }else {
                     validFields.put(conversationField, false);
-                    convoText.set("If the conversation is given a name it must be 3 characters or longer.");
+                    convoText.set(standardConversationText);
                 }
             }else {
                 validFields.put(conversationField, true);
-                convoText.set("If the conversation is given a name it must be 3 characters or longer.");
+                convoText.set(standardConversationText);
             }
             checkIfRequiredFieldsAreOk();
         });
@@ -310,7 +307,7 @@ public class ConversationController implements Controller {
             usernames.add(username);
         }
         if(removedUsernames.stream().anyMatch(name -> name.equals(username))){
-            String usernameToRemove = removedUsernames.stream().filter(name -> name.equals(username)).findFirst().get();
+            String usernameToRemove = removedUsernames.stream().filter(name -> name.equals(username)).toList().get(0);
             removedUsernames.remove(usernameToRemove);
         }
     }
@@ -320,9 +317,9 @@ public class ConversationController implements Controller {
      * @param username the username you want to remove.
      */
     private void removeUsername(String username){
-        Text text = (Text) membersBox.getChildren().stream().filter(node -> node instanceof Text).filter(texts -> ((Text) texts).textProperty().get().equals(username)).findFirst().get();
+        Text text = (Text) membersBox.getChildren().stream().filter(Text.class::isInstance).filter(texts -> ((Text) texts).textProperty().get().equals(username)).toList().get(0);
         membersBox.getChildren().remove(text);
-        String nameToRemove = usernames.stream().filter(string -> string.equals(username)).findFirst().get();
+        String nameToRemove = usernames.stream().filter(string -> string.equals(username)).toList().get(0);
         usernames.remove(nameToRemove);
         removedUsernames.add(nameToRemove);
     }
@@ -331,7 +328,7 @@ public class ConversationController implements Controller {
      * Checks if the username can be added or removed. If so it
      */
     private void checkIfUsernameCanBeAdded(){
-        if (validFields.get(usernameField)){
+        if (Boolean.TRUE.equals(validFields.get(usernameField))){
             addUsernameButton.setDisable(false);
         }else {
             addUsernameButton.setDisable(true);
@@ -342,7 +339,7 @@ public class ConversationController implements Controller {
      * Checks if all the fields are filled in. Disables the login button if password and username is not filled in.
      */
     private void checkIfRequiredFieldsAreOk(){
-        if ((validFields.get(conversationField)) && (usernames.size() > 1)){
+        if (Boolean.TRUE.equals((validFields.get(conversationField))) && (usernames.size() > 1)){
             makeConversationButton.setDisable(false);
         }else {
             makeConversationButton.setDisable(true);
@@ -370,6 +367,7 @@ public class ConversationController implements Controller {
                 usernames.forEach(this::addUsername);
                 conversationField.setText(conversationToEdit.getConversationName());
             }else {
+                usernames.clear();
                 if (makeConversationButton != null){
                     makeConversationButton.setText("Make conversation");
                 }

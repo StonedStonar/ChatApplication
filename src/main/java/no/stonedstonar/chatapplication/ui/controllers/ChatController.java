@@ -14,16 +14,12 @@ import javafx.scene.text.Text;
 import no.stonedstonar.chatapplication.frontend.ChatClient;
 import no.stonedstonar.chatapplication.model.conversation.ConversationObserver;
 import no.stonedstonar.chatapplication.model.conversation.ObservableConversation;
+import no.stonedstonar.chatapplication.model.conversationregister.personal.ConversationRegisterObserver;
 import no.stonedstonar.chatapplication.model.conversationregister.personal.PersonalConversationRegister;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
-import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotPartOfConversationException;
-import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
-import no.stonedstonar.chatapplication.model.exception.member.CouldNotGetMemberException;
-import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemberException;
-import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
-import no.stonedstonar.chatapplication.model.conversationregister.personal.ConversationRegisterObserver;
+import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
 import no.stonedstonar.chatapplication.model.member.Member;
 import no.stonedstonar.chatapplication.model.membersregister.ObservableMemberRegister;
 import no.stonedstonar.chatapplication.model.message.Message;
@@ -72,9 +68,6 @@ public class ChatController implements Controller, ConversationObserver, Convers
     @FXML
     private Button editConversationButton;
 
-    @FXML
-    private Button testButton;
-
     private long activeConversation;
 
     private Map<Node, Boolean> validFields;
@@ -119,7 +112,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
                 alert.setContentText("Could not change window to \"New conversation\". The program will now restart.");
                 alert.showAndWait();
                 try {
-                    ChatApplicationClient.getChatApplication().stop();
+                    ChatApplicationClient.getChatApplication().stopApp();
                 } catch (Exception exception1) {
                     AlertTemplates.makeAndShowCriticalErrorAlert(exception1);
                 }
@@ -128,8 +121,8 @@ public class ChatController implements Controller, ConversationObserver, Convers
 
         logOutButton.setOnAction(actionEvent -> {
             try {
-                ObservableConversation observableConversation = chatClient.getConversationByNumber(activeConversation);
                 unsubscribeToAllConversations();
+                emptyContent();
                 executorService.submit(chatClient::logOutOfUser);
                 ChatApplicationClient.getChatApplication().setNewScene(LoginWindow.getLoginWindow());
             } catch (Exception e) {
@@ -142,18 +135,17 @@ public class ChatController implements Controller, ConversationObserver, Convers
             try {
                 controller.setEditMode(activeConversation);
                 ChatApplicationClient.getChatApplication().setNewScene(NewConversationWindow.getNewConversationWindow());
-            } catch (CouldNotGetConversationException | IOException e) {
-                e.printStackTrace();
+            } catch (CouldNotGetConversationException e) {
+                AlertTemplates.makeAndShowCouldNotGetConversationAlert();
+            }catch (IOException exception){
+                AlertTemplates.makeAndShowCouldNotConnectToServerAlert();
             }
         });
 
-        testButton.setOnAction(event -> {
-            try {
-                chatClient.checkForNewMembers();
-            } catch (UsernameNotPartOfConversationException e) {
-                e.printStackTrace();
-            } catch (CouldNotGetConversationException | IOException | InvalidResponseException | CouldNotGetMemberException | CouldNotRemoveMemberException | CouldNotAddMemberException e) {
-                e.printStackTrace();
+        ChatApplicationClient.getChatApplication().getExecutor().submit(()-> {
+            chatClient.setConversationFocus(activeConversation);
+            if (!chatClient.checkIfListeningThreadIsActive()){
+                chatClient.startBackgroundThread();
             }
         });
         sendButton.setDefaultButton(true);
@@ -166,6 +158,8 @@ public class ChatController implements Controller, ConversationObserver, Convers
      */
     public void setAllFieldsEmpty(){
         textMessageField.textProperty().set("");
+        messageBox.getChildren().clear();
+        contactsBox.getChildren().clear();
     }
 
     /**
@@ -240,7 +234,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
         contactsBox.getChildren().clear();
         ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
         subscribeToAllConversations();
-        Iterator<ObservableConversation> it = chatClient.getMessageLogs();
+        Iterator<ObservableConversation> it = chatClient.getConversationsIterator();
         if (it.hasNext()){
             int i = 0;
             while (it.hasNext()){
@@ -251,12 +245,13 @@ public class ChatController implements Controller, ConversationObserver, Convers
                 }
                 i += 1;
             }
+            textMessageField.setDisable(false);
+            editConversationButton.setDisable(false);
         } else {
-            VBox vBox = new VBox();
-            vBox.setMinWidth(Long.MAX_VALUE);
-            Text text = new Text("You have none conversations. \nPlease add one.");
-            vBox.getChildren().add(text);
-            contactsBox.getChildren().add(vBox);
+            Label label = new Label("You have none conversations. \nPlease add one.");
+            contactsBox.getChildren().add(label);
+            textMessageField.setDisable(true);
+            editConversationButton.setDisable(true);
         }
     }
 
@@ -364,13 +359,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
         List<Message> messages = observableConversation.getAllMessagesOfConversationAsList();
         this.activeConversation = observableConversation.getConversationNumber();
         ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
-        ChatApplicationClient.getChatApplication().getExecutor().submit(()-> {
-            chatClient.setConversationFocus(activeConversation);
-            if (!chatClient.checkIfListeningThreadIsActive()){
-                chatClient.startMessageListeningThread();
-            }
-
-        });
+        chatClient.setConversationFocus(activeConversation);
         if (!messages.isEmpty()){
             messages.forEach(message -> {
                 if (message instanceof TextMessage textMessage){
@@ -379,10 +368,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
             });
         }else {
             Label label = new Label("There is no messages in this conversation yet.");
-            VBox vBox = new VBox();
-            vBox.setMinWidth(Long.MAX_VALUE);
-            vBox.getChildren().add(label);
-            messageBox.getChildren().add(vBox);
+            messageBox.getChildren().add(label);
         }
     }
 
@@ -461,6 +447,9 @@ public class ChatController implements Controller, ConversationObserver, Convers
     public void updateConversationMessage(Message message, boolean removed, long conversationNumber) {
         Platform.runLater(() ->{
             if ((message instanceof TextMessage textMessage) && (activeConversation == conversationNumber)){
+                if (messageBox.getChildren().size() == 1 && messageBox.getChildren().get(0) instanceof Label){
+                    messageBox.getChildren().clear();
+                }
                 addMessage(textMessage);
             }
         });
@@ -477,7 +466,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
             try {
                 ChatClient chatClient = ChatApplicationClient.getChatApplication().getChatClient();
                 VBox vBox = getConversationVBox(conversationNumber);
-                long amount = vBox.getChildren().stream().filter(node -> node instanceof Label).count();
+                long amount = vBox.getChildren().stream().filter(Label.class::isInstance).count();
                 ObservableConversation observableConversation = chatClient.getConversationByNumber(conversationNumber);
                 if (amount == 1){
                     contactsBox.getChildren().remove(vBox);
@@ -487,6 +476,7 @@ public class ChatController implements Controller, ConversationObserver, Convers
                     label.setText(observableConversation.getConversationName());
                 }
             }catch (CouldNotGetConversationException exception){
+                contactsBox.getChildren().clear();
                 addAllConversations();
             }
         });
@@ -496,10 +486,18 @@ public class ChatController implements Controller, ConversationObserver, Convers
     public void updateConversation(ObservableConversation observableConversation, boolean removed) {
         Platform.runLater(() -> {
             if (removed){
-                contactsBox.getChildren().clear();
+                if (!contactsBox.getChildren().isEmpty()){
+                    contactsBox.getChildren().clear();
+                }
                 addAllConversations();
             }else{
-                addNewConversation(observableConversation);
+                if (contactsBox.getChildren().size() == 1 && contactsBox.getChildren().get(0) instanceof Label){
+                    contactsBox.getChildren().clear();
+                    addAllConversations();
+                }else{
+                    observableConversation.registerObserver(this);
+                    addNewConversation(observableConversation);
+                }
             }
         });
     }

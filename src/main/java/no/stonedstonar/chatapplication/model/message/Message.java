@@ -42,4 +42,16 @@ public interface Message {
      * @return the date this object was sent.
      */
     LocalDate getDate();
+
+    /**
+     * Gets the time the message was sent from the user.
+     * @return the time the message was sent from the user.
+     */
+    LocalTime getSentFromUserTime();
+
+    /**
+     * Gets the date the message was sent form user.
+     * @return the date this message was sent.
+     */
+    LocalDate getSentFromUserDate();
 }

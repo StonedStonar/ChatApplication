@@ -17,7 +17,6 @@ import java.util.*;
  */
 public class NormalMembersRegister implements Serializable, ServerMemberRegister {
 
-    //Todo: Endre denne til map slik at vi kan lagre hvem som var siste medlem.
     private final Map<Long, Member> memberMap;
 
     private final Map<Long, Member> deletedMap;

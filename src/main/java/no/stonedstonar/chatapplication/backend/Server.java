@@ -1,9 +1,12 @@
 package no.stonedstonar.chatapplication.backend;
 
 import javafx.application.Platform;
-import no.stonedstonar.chatapplication.model.conversation.*;
-import no.stonedstonar.chatapplication.model.conversationregister.server.NormalConversationRegister;
+import no.stonedstonar.chatapplication.model.conversation.Conversation;
+import no.stonedstonar.chatapplication.model.conversation.NormalObservableConversation;
+import no.stonedstonar.chatapplication.model.conversation.ObservableConversation;
+import no.stonedstonar.chatapplication.model.conversation.ServerConversation;
 import no.stonedstonar.chatapplication.model.conversationregister.personal.NormalPersonalConversationRegister;
+import no.stonedstonar.chatapplication.model.conversationregister.server.NormalConversationRegister;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotGetConversationException;
@@ -11,15 +14,15 @@ import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotP
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotGetMemberException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemberException;
+import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.exception.message.CouldNotRemoveMessageException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
-import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.model.member.Member;
 import no.stonedstonar.chatapplication.model.message.Message;
-import no.stonedstonar.chatapplication.model.user.User;
 import no.stonedstonar.chatapplication.model.user.EndUser;
+import no.stonedstonar.chatapplication.model.user.User;
 import no.stonedstonar.chatapplication.model.userregister.NormalUserRegister;
 import no.stonedstonar.chatapplication.network.requests.*;
 import no.stonedstonar.chatapplication.network.requests.builder.ConversationRequestBuilder;
@@ -30,7 +33,10 @@ import no.stonedstonar.chatapplication.network.transport.MemberTransport;
 import no.stonedstonar.chatapplication.network.transport.MessageTransport;
 import no.stonedstonar.chatapplication.network.transport.PersonalConversationTransport;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
@@ -416,11 +422,7 @@ public class Server{
         List<Member> newMembers = serverConversation.getMembers().checkForNewUsers(lastMember, username);
         List<Member> removedMembers = serverConversation.getMembers().checkForDeletedMembers(lastDeletedMember, username);
         List<MemberTransport> memberTransportList = new ArrayList<>();
-        try {
-            removedMembers.forEach(mem -> memberTransportList.add(new MemberTransport(mem, false)));
-        }catch (Exception exception){
-            System.out.println(exception.getMessage());
-        }
+        removedMembers.forEach(mem -> memberTransportList.add(new MemberTransport(mem, false)));
         newMembers.forEach(mem -> memberTransportList.add(new MemberTransport(mem, true)));
         MembersRequest response = new MembersRequestBuilder().addMemberTransports(memberTransportList).addConversationNumber(conversationNumber).build();
         sendObject(response, socket);

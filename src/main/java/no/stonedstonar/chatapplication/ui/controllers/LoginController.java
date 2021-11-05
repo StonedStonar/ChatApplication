@@ -2,17 +2,16 @@ package no.stonedstonar.chatapplication.ui.controllers;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyCodeCombination;
-import javafx.scene.input.Mnemonic;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
 import no.stonedstonar.chatapplication.frontend.ChatClient;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.ui.ChatApplicationClient;
 import no.stonedstonar.chatapplication.ui.windows.AlertTemplates;
 import no.stonedstonar.chatapplication.ui.windows.ChatWindow;
-import no.stonedstonar.chatapplication.ui.windows.LoginWindow;
 import no.stonedstonar.chatapplication.ui.windows.NewUserWindow;
 
 import java.io.IOException;
@@ -92,7 +91,7 @@ public class LoginController implements Controller {
                 chatClient.loginToUser(username, password);
                 chatApplicationClient.setNewScene(ChatWindow.getChatWindow());
             }catch (IOException exception){
-                //Todo: Sett inn error melding
+                AlertTemplates.makeAndShowCouldNotConnectToServerAlert();
             }catch (IllegalArgumentException exception){
                 AlertTemplates.makeAndShowInvalidInputAlert();
             } catch (CouldNotLoginToUserException exception) {
@@ -102,7 +101,6 @@ public class LoginController implements Controller {
             }
         });
         cancelButton.setOnAction(actionEvent -> {
-            chatClient.stopAllThreads();
             Platform.exit();
         });
 

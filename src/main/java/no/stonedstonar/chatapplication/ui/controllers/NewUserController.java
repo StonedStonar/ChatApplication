@@ -168,7 +168,6 @@ public class NewUserController implements Controller {
                         usernameText.setText("The username is taken.");
                         validFields.put(usernameField, false);
                     }else {
-                        System.out.println("USername is not true");
                         validFields.put(usernameField, true);
                         usernameText.setText("The username is not taken.");
                     }
@@ -208,7 +207,6 @@ public class NewUserController implements Controller {
      */
     private void checkIfAllFieldsAreValid(){
         long valid = validFields.values().stream().filter(aBoolean ->  aBoolean).count();
-        System.out.println(valid + " " + validFields.size());
         if (valid == validFields.size()){
             makeUserButton.setDisable(false);
         }else {

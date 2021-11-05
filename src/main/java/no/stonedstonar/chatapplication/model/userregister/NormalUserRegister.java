@@ -46,8 +46,6 @@ public class NormalUserRegister implements UserRegister {
         }
     }
 
-    //Todo: Kanskje denne skal fjernes og heller arves av en annen klasse så denne også kan holde på vanlige brukere.
-
     @Override
     public User login(String username, String password) throws CouldNotLoginToUserException {
         checkString(password, "password");

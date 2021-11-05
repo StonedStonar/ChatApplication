@@ -101,7 +101,6 @@ public class NormalObservableMemberRegister implements ObservableMemberRegister,
      */
     private void removeMember(Member member){
         memberMap.remove(member.getMemberNumber());
-        //Todo: Kan være lurt at denne settes og ikke plusses på.
         lastDeletedMember += 1;
         notifyObservers(member, true);
     }

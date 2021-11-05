@@ -1,9 +1,6 @@
 package no.stonedstonar.chatapplication.frontend;
 
-import javafx.beans.Observable;
-import no.stonedstonar.chatapplication.model.conversation.Conversation;
 import no.stonedstonar.chatapplication.model.conversation.ObservableConversation;
-import no.stonedstonar.chatapplication.model.conversationregister.personal.NormalPersonalConversationRegister;
 import no.stonedstonar.chatapplication.model.conversationregister.personal.PersonalConversationRegister;
 import no.stonedstonar.chatapplication.model.exception.InvalidResponseException;
 import no.stonedstonar.chatapplication.model.exception.conversation.CouldNotAddConversationException;
@@ -12,10 +9,9 @@ import no.stonedstonar.chatapplication.model.exception.conversation.UsernameNotP
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotAddMemberException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotGetMemberException;
 import no.stonedstonar.chatapplication.model.exception.member.CouldNotRemoveMemberException;
+import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotAddMessageLogException;
 import no.stonedstonar.chatapplication.model.exception.messagelog.CouldNotGetMessageLogException;
-import no.stonedstonar.chatapplication.model.exception.message.CouldNotAddMessageException;
-import no.stonedstonar.chatapplication.model.exception.message.CouldNotGetMessageException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotAddUserException;
 import no.stonedstonar.chatapplication.model.exception.user.CouldNotLoginToUserException;
 import no.stonedstonar.chatapplication.model.member.ConversationMember;
@@ -34,12 +30,13 @@ import no.stonedstonar.chatapplication.network.transport.MemberTransport;
 import no.stonedstonar.chatapplication.network.transport.MessageTransport;
 import no.stonedstonar.chatapplication.network.transport.PersonalConversationTransport;
 
-import java.io.*;
-import java.net.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.net.Socket;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -52,7 +49,7 @@ public class ChatClient {
 
     private User endUser;
 
-    private volatile NormalPersonalConversationRegister personalConversationRegister;
+    private volatile PersonalConversationRegister personalConversationRegister;
 
     private final Logger logger;
 
@@ -60,38 +57,40 @@ public class ChatClient {
 
     private final int portNumber;
 
-    private long messageLogFocus;
+    private long conversationFocus;
 
-    private boolean runCheckForMessageThread;
+    private boolean runBackgroundThread;
 
-    private final ExecutorService executors;
+    private boolean threadStopped;
 
-    //Todo: legg til funksjoner slik at den automatisk sjekker etter alt som kan oppdateres på threaden.
-    // husk også å fikse slik at samtalen kan endre navn.
-    // og det hadde vært kult med funksjon som ser om den får kontakt med serveren.
+    private final String invalidResponse;
+
+    private Thread checkingThread;
+
     /**
       * Makes an instance of the ChatClient class.
       */
     public ChatClient(){
-        executors = Executors.newFixedThreadPool(4);
         logger = Logger.getLogger(getClass().toString());
         host = "localhost";
         portNumber = 1380;
+        conversationFocus = 0;
+        invalidResponse = "The response from the server was invalid format.";
     }
 
     /**
      * Logs the user out and clears all the data.
      */
     public void logOutOfUser(){
-        stopCheckingForMessages();
-        messageLogFocus = 0;
-        while (!executors.isTerminated()){
+        stopBackgroundThread();
+        while (!checkIfThreadIsStopped()){
             try {
                 Thread.sleep(50);
             } catch (InterruptedException e) {
                 logWaringError(e);
             }
         }
+        conversationFocus = 0;
         endUser = null;
         personalConversationRegister = null;
     }
@@ -100,64 +99,73 @@ public class ChatClient {
      * Gets the personal conversation register.
      * @return the personal conversation regsiter.
      */
-    public PersonalConversationRegister getPersonalConversationRegister(){
+    public synchronized PersonalConversationRegister getPersonalConversationRegister(){
         return personalConversationRegister;
     }
 
     /**
-     * Sets the message log that is active in the gui. Starts a listening thread.
-     * @param messageLogNumber the message log you want to listen for new messages on.
+     * Sets the conversation that is active in the gui. Starts a listening thread.
+     * @param conversationFocus the conversation you want to listen for new messages on.
      */
-    public void setConversationFocus(long messageLogNumber) {
-        stopCheckingForMessages();
-        messageLogFocus = messageLogNumber;
+    public void setConversationFocus(long conversationFocus) {
+        checkIfLongIsNegative(conversationFocus, "conversation focus");
+        this.conversationFocus = conversationFocus;
     }
 
     /**
      * Sets the run boolean to false and interrupts the thread.
      */
-    public void stopCheckingForMessages(){
-        runCheckForMessageThread = false;
+    public void stopBackgroundThread(){
+        runBackgroundThread = false;
     }
 
     /**
      * Starts the message listening thread.
      */
-    public void startMessageListeningThread(){
-        runCheckForMessageThread = true;
-        executors.submit(() -> {
+    public void startBackgroundThread(){
+        runBackgroundThread = true;
+        threadStopped = false;
+        checkingThread = new Thread(() -> {
             try {
                 int count = 0;
-                logger.log(Level.INFO, "Thread started.");
-                long currentMessageLogForThread = messageLogFocus;
-                ObservableConversation observableConversation = getConversationByNumber(currentMessageLogForThread);
+                long currentMessageLogForThread = conversationFocus;
+                ObservableConversation observableConversation = null;
+                if (currentMessageLogForThread > 0){
+                     observableConversation = getConversationByNumber(currentMessageLogForThread);
+                }
                 do {
-                    if (currentMessageLogForThread != messageLogFocus){
+                    if (currentMessageLogForThread != this.conversationFocus){
+                        currentMessageLogForThread = this.conversationFocus;
                         observableConversation = getConversationByNumber(currentMessageLogForThread);
                     }
-                    if (count > 8){
+                    if (count == 4){
                         checkForNewMessages();
+                        checkForNewMembers();
                         checkForNewConversations();
+                        checkConversationsForNewNames();
                         count = 0;
                     }else {
-                        checkIFCurrentConversationHasNewMessages(observableConversation);
+                        if (currentMessageLogForThread != 0 && observableConversation != null){
+                            checkIFCurrentConversationHasNewMessages(observableConversation);
+                        }
                         count += 1;
                     }
-                    Thread.sleep(2000);
-                } while(runCheckForMessageThread);
-            }catch (CouldNotAddMessageException | IOException | InvalidResponseException | CouldNotGetMessageLogException | InterruptedException | UsernameNotPartOfConversationException | CouldNotAddConversationException | CouldNotGetConversationException exception){
+                    Thread.sleep(1500);
+                } while(runBackgroundThread);
+            }catch (CouldNotAddMessageException | IOException | InvalidResponseException | CouldNotGetMessageLogException | InterruptedException | UsernameNotPartOfConversationException | CouldNotGetConversationException | CouldNotGetMemberException | CouldNotRemoveMemberException | CouldNotAddMemberException | CouldNotAddConversationException exception) {
                 logWaringError(exception);
-                stopCheckingForMessages();
+                stopBackgroundThread();
             }
+            threadStopped = true;
         });
+        checkingThread.start();
     }
 
     /**
      * Stops all the threads.
      */
     public void stopAllThreads(){
-        runCheckForMessageThread = false;
-        executors.shutdown();
+        runBackgroundThread = false;
     }
 
     /**
@@ -166,7 +174,7 @@ public class ChatClient {
      *         <code>false</code> if the thread is not running.
      */
     public boolean checkIfListeningThreadIsActive(){
-        return runCheckForMessageThread;
+        return runBackgroundThread;
     }
 
     /**
@@ -175,18 +183,18 @@ public class ChatClient {
      *         <code>false</code> if the thread is still running.
      */
     public boolean checkIfThreadIsStopped(){
-        return executors.isShutdown();
+        return threadStopped;
     }
 
 
     /**
-     * Checks if the current message log has new messages.
+     * Checks if the current conversation has new messages.
      * @param observableConversation the observable conversation that this is about.
      * @throws UsernameNotPartOfConversationException gets thrown if the username is not a part of this conversation.
      * @throws IOException gets thrown if the socket closes and the communication cannot be continued.
      * @throws CouldNotAddMessageException gets thrown if the message could not be added.
      * @throws InvalidResponseException gets thrown if the response from the server is invalid.
-     * @throws CouldNotGetMessageLogException gets thrown if the message log for that date could not be found.
+     * @throws CouldNotGetMessageLogException gets thrown if the conversation for that date could not be found.
      */
     private void checkIFCurrentConversationHasNewMessages(ObservableConversation observableConversation) throws UsernameNotPartOfConversationException, IOException, CouldNotAddMessageException, InvalidResponseException, CouldNotGetMessageLogException {
         Socket socket = new Socket(host, portNumber);
@@ -194,11 +202,11 @@ public class ChatClient {
     }
 
     /**
-     * Returns the message log of the user.
-     * @return the personal message log of the user.
+     * Returns the iterator of all the conversation of the user.
+     * @return the iterator to get the personal conversations of the user.
      */
-    public Iterator<ObservableConversation> getMessageLogs(){
-        return personalConversationRegister.getIterator();
+    public Iterator<ObservableConversation> getConversationsIterator(){
+        return getPersonalConversationRegister().getIterator();
     }
 
     /**
@@ -234,7 +242,7 @@ public class ChatClient {
      * Makes a new conversation.
      * @param usernames the names of all the members of the new conversation.
      * @param nameOfConversation the name that the conversation should have.
-     * @throws CouldNotAddMessageLogException gets thrown if the message log could not be added.
+     * @throws CouldNotAddMessageLogException gets thrown if the conversation could not be added.
      * @throws CouldNotAddMemberException gets thrown if the members could not be added.
      * @throws IOException gets thrown if something goes wrong with the socket.
      * @throws InvalidResponseException gets thrown if the class could not be found for that object or the response is a different object than expected.
@@ -272,13 +280,13 @@ public class ChatClient {
      * Sends a message to a person if this client is logged in.
      * @param messageContents the contents of the message.
      * @param observableConversation the conversation that holds the conversation number.
-     * @throws CouldNotGetMessageLogException gets thrown if the server could not get the message log.
+     * @throws CouldNotGetMessageLogException gets thrown if the server could not get the conversation.
      * @throws IOException gets thrown if something fails in the socket.
      * @throws InvalidResponseException gets thrown if the class could not be found for that object or the response is a different object than expected.
      */
     public void sendMessage(String messageContents, ObservableConversation observableConversation) throws IOException, CouldNotAddMessageException, CouldNotGetMessageLogException, InvalidResponseException {
         checkString(messageContents, "message");
-        checkIfObjectIsNull(observableConversation, "message log");
+        checkIfObjectIsNull(observableConversation, "observable conversation");
         try (Socket socket = new Socket(host, portNumber)){
             TextMessage textMessage = new TextMessage(messageContents, endUser.getUsername());
             List<MessageTransport> messageTransportList = new ArrayList<>();
@@ -292,7 +300,7 @@ public class ChatClient {
                 }else if (object instanceof CouldNotGetMessageLogException exception){
                     throw exception;
                 }else {
-                    throw new InvalidResponseException("The object is of a invalid format.");
+                    throw new InvalidResponseException(invalidResponse);
                 }
             }
         } catch (IOException | CouldNotAddMessageException | InvalidResponseException | CouldNotGetMessageLogException exception){
@@ -302,13 +310,13 @@ public class ChatClient {
     }
 
     /**
-     * Gets the message log that matches that long number.
-     * @param messageLogNumber the number that message log has.
-     * @return the message log that matches that number.
+     * Gets the conversation that matches that long number.
+     * @param messageLogNumber the number that conversation has.
+     * @return the conversation that matches that number.
      * @throws CouldNotGetConversationException gets thrown if the conversation could not be found.
      */
     public ObservableConversation getConversationByNumber(long messageLogNumber) throws CouldNotGetConversationException {
-        return personalConversationRegister.getConversationByNumber(messageLogNumber);
+        return getPersonalConversationRegister().getConversationByNumber(messageLogNumber);
     }
 
     /**
@@ -319,7 +327,7 @@ public class ChatClient {
      * @throws CouldNotLoginToUserException gets thrown if the password or username is incorrect.
      * @throws InvalidResponseException gets thrown if the class could not be found for that object or the response is a different object than expected.
      */
-    public void loginToUser(String username, String password) throws IOException, CouldNotLoginToUserException, InvalidResponseException {;
+    public void loginToUser(String username, String password) throws IOException, CouldNotLoginToUserException, InvalidResponseException {
         checkString(username, "username ");
         checkString(password, "password");
         try (Socket socket = new Socket(host, portNumber)){
@@ -369,7 +377,6 @@ public class ChatClient {
             sendObject(setStopAlive, socket);
         }catch (Exception object){
             logWaringError(object);
-            System.out.println(object.getClass());
             if (object instanceof CouldNotAddMemberException exception){
                 throw exception;
             }else if (object instanceof CouldNotGetConversationException exception){
@@ -379,7 +386,7 @@ public class ChatClient {
             }else if (object instanceof IOException exception){
                 throw exception;
             }else {
-                throw new InvalidResponseException("The response from the server was invalid format.");
+                throw new InvalidResponseException(invalidResponse);
             }
         }
     }
@@ -402,8 +409,7 @@ public class ChatClient {
         }else if (object instanceof Exception exception){
             throw exception;
         }else {
-            System.out.println(object.getClass());
-            throw new InvalidResponseException("The response from the server was invalid format.");
+            throw new InvalidResponseException(invalidResponse);
         }
     }
 
@@ -416,62 +422,67 @@ public class ChatClient {
      * @throws Exception gets thrown if the response from the server is an exception or the socket closed unexpected.
      */
     private void addOrRemoveMembers(ObservableConversation observableConversation, List<String> addNames, List<String> removeNames, Socket socket) throws Exception {
-        List<MemberTransport> memberTransportList = new ArrayList<>();
-        if (!addNames.isEmpty()){
-            addNames.forEach(name -> memberTransportList.add(new MemberTransport(new ConversationMember(name), true)));
-        }
-        if(!removeNames.isEmpty()){
-            removeNames.forEach(name -> memberTransportList.add(new MemberTransport(new ConversationMember(name), false)));
-        }
-        MembersRequest membersRequest = new MembersRequestBuilder().addMemberTransports(memberTransportList).addConversationNumber(observableConversation.getConversationNumber()).addUsername(getUsername()).build();
-        sendObject(membersRequest, socket);
-        Object object = getObject(socket);
-        if (object instanceof Exception exception){
-            throw exception;
-        }else {
-            throw new InvalidResponseException("The response from the server was invalid format.");
+        if ((!addNames.isEmpty()) || (!removeNames.isEmpty())){
+            List<MemberTransport> memberTransportList = new ArrayList<>();
+            if (!addNames.isEmpty()){
+                addNames.forEach(name -> memberTransportList.add(new MemberTransport(new ConversationMember(name), true)));
+            }
+            if(!removeNames.isEmpty()){
+                removeNames.forEach(name -> memberTransportList.add(new MemberTransport(new ConversationMember(name), false)));
+            }
+            MembersRequest membersRequest = new MembersRequestBuilder().addMemberTransports(memberTransportList).addConversationNumber(observableConversation.getConversationNumber()).addUsername(getUsername()).build();
+            sendObject(membersRequest, socket);
+            Object object = getObject(socket);
+            if (!(object instanceof MembersRequest)){
+                if (object instanceof Exception exception){
+                    throw exception;
+                }else {
+                    throw new InvalidResponseException(invalidResponse);
+                }
+            }
         }
     }
 
     /**
-     * Checks all the message logs for new messages.
+     * Checks all the conversations for new messages.
      * @throws IOException gets thrown if the socket failed to be made.
      * @throws InvalidResponseException gets thrown if the class could not be found for that object or the response is a different object than expected.
      * @throws CouldNotAddMessageException gets thrown if the text message could not be added.
-     * @throws CouldNotGetMessageLogException gets thrown if the server can't find the message log.
+     * @throws CouldNotGetMessageLogException gets thrown if the server can't find the conversation.
      * @throws UsernameNotPartOfConversationException gets thrown if the user is not a part of the specified conversation.
      */
     private void checkForNewMessages() throws CouldNotAddMessageException, IOException, InvalidResponseException, CouldNotGetMessageLogException, UsernameNotPartOfConversationException {
-        try (Socket socket = new Socket(host, portNumber)){
-            socket.setKeepAlive(true);
-            SetKeepAliveRequest setKeepAliveRequest = new SetKeepAliveRequest(true);
-            sendObject(setKeepAliveRequest, socket);
-            Iterator<ObservableConversation> it = personalConversationRegister.getIterator();
-            while(it.hasNext()) {
-                ObservableConversation log = it.next();
-                checkConversationForNewMessages(log, socket);
+        Iterator<ObservableConversation> it = getPersonalConversationRegister().getIterator();
+        if (it.hasNext()){
+            try (Socket socket = new Socket(host, portNumber)){
+                socket.setKeepAlive(true);
+                SetKeepAliveRequest setKeepAliveRequest = new SetKeepAliveRequest(true);
+                sendObject(setKeepAliveRequest, socket);
+                while(it.hasNext()) {
+                    ObservableConversation log = it.next();
+                    checkConversationForNewMessages(log, socket);
+                }
+                SetKeepAliveRequest notKeepAlive = new SetKeepAliveRequest(false);
+                sendObject(notKeepAlive, socket);
+            } catch (IOException | InvalidResponseException | CouldNotAddMessageException | CouldNotGetMessageLogException | UsernameNotPartOfConversationException exception) {
+                logWaringError(exception);
+                throw exception;
             }
-            SetKeepAliveRequest notKeepAlive = new SetKeepAliveRequest(false);
-            sendObject(notKeepAlive, socket);
-        } catch (IOException | InvalidResponseException | CouldNotAddMessageException | CouldNotGetMessageLogException | UsernameNotPartOfConversationException exception) {
-            logWaringError(exception);
-            throw exception;
         }
     }
 
     /**
      * Checks for new messages and adds them if need be.
-     * @param observableConversation the message log you want to check.
+     * @param observableConversation the conversation you want to check.
      * @param socket the socket the communication happens over.
      * @throws IOException gets thrown if the socket failed to be made.
      * @throws InvalidResponseException gets thrown if the class could not be found for that object or the response is a different object than expected.
      * @throws CouldNotAddMessageException gets thrown if the text message could not be added to the local message log.
-     * @throws CouldNotGetMessageLogException gets thrown if the server can't find the message log.
+     * @throws CouldNotGetMessageLogException gets thrown if the server can't find the conversation.
      * @throws UsernameNotPartOfConversationException gets thrown if the user is not a part of the specified conversation.
      */
     public synchronized void checkConversationForNewMessages(ObservableConversation observableConversation, Socket socket) throws IOException, CouldNotAddMessageException, CouldNotGetMessageLogException, InvalidResponseException, UsernameNotPartOfConversationException {
         try {
-            logger.log(Level.INFO, "Syncing message log " + observableConversation.getConversationNumber());
             LocalDate localDate = LocalDate.now();
             long lastMessageNumber = observableConversation.getMessageLogForDate(localDate, endUser.getUsername()).getLastMessageNumber();
             long conversationNumber = observableConversation.getConversationNumber();
@@ -481,7 +492,7 @@ public class ChatClient {
             sendObject(messageRequest, socket);
             Object object = getObject(socket);
             if (object instanceof MessageRequest response) {
-                List<Message> textMessageList = response.getMessageTransportList().stream().map(trans -> trans.getMessage()).toList();
+                List<Message> textMessageList = response.getMessageTransportList().stream().map(MessageTransport::getMessage).toList();
                 if (!textMessageList.isEmpty()) {
                     observableConversation.addAllMessagesWithSameDate(textMessageList);
                 }
@@ -490,7 +501,7 @@ public class ChatClient {
             } else if (object instanceof IllegalArgumentException exception) {
                 throw exception;
             } else {
-                throw new InvalidResponseException("The response from the server was invalid format.");
+                throw new InvalidResponseException(invalidResponse);
             }
         } catch (CouldNotGetMessageLogException | IllegalArgumentException | CouldNotAddMessageException | IOException | InvalidResponseException | UsernameNotPartOfConversationException exception) {
             logWaringError(exception);
@@ -507,7 +518,7 @@ public class ChatClient {
     public void checkForNewConversations() throws IOException, InvalidResponseException, CouldNotAddConversationException {
         try (Socket socket = new Socket(host, portNumber)){
             List<String> usernames = new ArrayList<>();
-            List<Long> conversationNumbers = personalConversationRegister.getAllConversationNumbers();
+            List<Long> conversationNumbers = getPersonalConversationRegister().getAllConversationNumbers();
             usernames.add(endUser.getUsername());
             ConversationRequest conversationRequest = new ConversationRequestBuilder().setCheckForNewConversations(true).addUsername(getUsername()).addConversationNumberList(conversationNumbers).build();
             sendObject(conversationRequest, socket);
@@ -516,7 +527,7 @@ public class ChatClient {
                 Iterator<ObservableConversation> it = personalConversationTransport.getPersonalConversationList().iterator();
                 while (it.hasNext()){
                     ObservableConversation observableConversation = it.next();
-                    personalConversationRegister.addConversation(observableConversation);
+                    getPersonalConversationRegister().addConversation(observableConversation);
                 }
             }else if (object instanceof IllegalArgumentException exception){
                 throw exception;
@@ -546,7 +557,7 @@ public class ChatClient {
             }else if (object instanceof IllegalArgumentException exception){
                 throw exception;
             }else {
-                throw new InvalidResponseException("The response form the server is of a invalid format.");
+                throw new InvalidResponseException(invalidResponse);
             }
         }catch (IOException | IllegalArgumentException | InvalidResponseException exception){
             logWaringError(exception);
@@ -574,7 +585,7 @@ public class ChatClient {
                 }else if (object instanceof CouldNotAddUserException exception) {
                     throw exception;
                 }else {
-                    throw new InvalidResponseException("The response from the sever was of the wrong class.");
+                    throw new InvalidResponseException(invalidResponse);
                 }
             }
         }catch (IOException | IllegalArgumentException | CouldNotAddUserException | InvalidResponseException exception){
@@ -589,36 +600,39 @@ public class ChatClient {
      * @throws IOException gets thrown if the socket closes before the task is done.
      * @throws InvalidResponseException gets thrown if the response is invalid.
      */
-    private void checkConversationsForNewNames() throws CouldNotGetConversationException, IOException, InvalidResponseException {
-        try (Socket socket = new Socket(host, portNumber)){
-            Iterator<ObservableConversation> it = personalConversationRegister.getIterator();
-            Map<Long, String> namesOfConversations = new HashMap<>();
-            it.forEachRemaining(convo -> namesOfConversations.put(convo.getConversationNumber(), convo.getConversationName()));
-            ConversationRequest conversationRequest = new ConversationRequestBuilder().addConversationNamesMap(namesOfConversations).addUsername(getUsername()).setCheckForConversationNames(true).build();
-            sendObject(conversationRequest,socket);
-            Object object = getObject(socket);
-            if(object instanceof ConversationRequest response){
-                Map<Long, String> newNames = response.getNewConversationNamesMap();
-                if (!newNames.isEmpty()){
-                    Set<Long> keySet = newNames.keySet();
-                    Iterator<Long> keyIt = keySet.iterator();
-                    while(keyIt.hasNext()){
-                        long key = keyIt.next();
-                        ObservableConversation observableConversation = getConversationByNumber(key);
-                        String newName = newNames.get(key);
-                        if (!newName.equals(observableConversation.getConversationName())){
-                            observableConversation.setConversationName(newName);
+    public void checkConversationsForNewNames() throws CouldNotGetConversationException, IOException, InvalidResponseException {
+        Iterator<ObservableConversation> it = getPersonalConversationRegister().getIterator();
+        if (it.hasNext()){
+            try (Socket socket = new Socket(host, portNumber)){
+
+                Map<Long, String> namesOfConversations = new HashMap<>();
+                it.forEachRemaining(convo -> namesOfConversations.put(convo.getConversationNumber(), convo.getConversationName()));
+                ConversationRequest conversationRequest = new ConversationRequestBuilder().addConversationNamesMap(namesOfConversations).addUsername(getUsername()).setCheckForConversationNames(true).build();
+                sendObject(conversationRequest,socket);
+                Object object = getObject(socket);
+                if(object instanceof ConversationRequest response){
+                    Map<Long, String> newNames = response.getNewConversationNamesMap();
+                    if (!newNames.isEmpty()){
+                        Set<Long> keySet = newNames.keySet();
+                        Iterator<Long> keyIt = keySet.iterator();
+                        while(keyIt.hasNext()){
+                            long key = keyIt.next();
+                            ObservableConversation observableConversation = getConversationByNumber(key);
+                            String newName = newNames.get(key);
+                            if (!newName.equals(observableConversation.getConversationName())){
+                                observableConversation.setConversationName(newName);
+                            }
                         }
                     }
+                }else if(object instanceof CouldNotGetConversationException exception){
+                    throw exception;
+                }else {
+                    throw new InvalidResponseException(invalidResponse);
                 }
-            }else if(object instanceof CouldNotGetConversationException exception){
+            } catch (IOException | InvalidResponseException | CouldNotGetConversationException exception) {
+                logWaringError(exception);
                 throw exception;
-            }else {
-                throw new InvalidResponseException("The response from the server is invalid.");
             }
-        } catch (IOException | InvalidResponseException | CouldNotGetConversationException exception) {
-            logWaringError(exception);
-            throw exception;
         }
     }
 
@@ -651,6 +665,68 @@ public class ChatClient {
             return object;
         }catch (ClassNotFoundException exception){
             throw new InvalidResponseException("The class of the response was invalid.");
+        }
+    }
+
+    /**
+     * Checks all the conversations for new members.
+     * @throws UsernameNotPartOfConversationException gets thrown if this user is not a part of that conversation.
+     * @throws CouldNotGetConversationException gets thrown if the conversation could not be found.
+     * @throws IOException gets thrown if the socket closes before everything was done.
+     * @throws InvalidResponseException gets thrown if the server responds with wrong object.
+     * @throws CouldNotGetMemberException gets thrown if a member could not be found.
+     * @throws CouldNotRemoveMemberException gets thrown if a member could not be removed.
+     * @throws CouldNotAddMemberException gets thrown if a member could not be added.
+     */
+    public void checkForNewMembers() throws UsernameNotPartOfConversationException, CouldNotGetConversationException, IOException, InvalidResponseException, CouldNotGetMemberException, CouldNotRemoveMemberException, CouldNotAddMemberException {
+        Iterator<ObservableConversation> it = getPersonalConversationRegister().getIterator();
+        while (it.hasNext()){
+            ObservableConversation observableConversation = it.next();
+            checkConversationForNewOrDeletedMembers(observableConversation);
+        }
+    }
+
+    /**
+     * Checks if the input conversation has new members.
+     * @param observableConversation the conversation to check for new members.
+     * @throws UsernameNotPartOfConversationException gets thrown if this user is not a part of that conversation.
+     * @throws CouldNotGetConversationException gets thrown if the conversation could not be found.
+     * @throws IOException gets thrown if the socket closes before everything was done.
+     * @throws InvalidResponseException gets thrown if the server responds with wrong object.
+     * @throws CouldNotGetMemberException gets thrown if a member could not be found.
+     * @throws CouldNotRemoveMemberException gets thrown if a member could not be removed.
+     * @throws CouldNotAddMemberException gets thrown if a member could not be added.
+     */
+    private synchronized void checkConversationForNewOrDeletedMembers(ObservableConversation observableConversation) throws UsernameNotPartOfConversationException, CouldNotGetConversationException, IOException, InvalidResponseException, CouldNotGetMemberException, CouldNotRemoveMemberException, CouldNotAddMemberException {
+        try (Socket socket = new Socket(host, portNumber)){
+            MembersRequest membersRequest = new MembersRequestBuilder().setCheckForNewMembers(true).addConversationNumber(observableConversation.getConversationNumber()).addUsername(getUsername()).addLastMember(observableConversation.getMembers().getLastMemberNumber()).setLastDeletedMember(observableConversation.getMembers().getLastDeletedMember()).build();
+            sendObject(membersRequest, socket);
+            Object object = getObject(socket);
+            if (object instanceof MembersRequest response){
+                List<MemberTransport> membersTransport = response.getMembers();
+                if (!membersTransport.isEmpty()){
+                    List<Member> membersToRemove = membersTransport.stream().filter(member -> !member.isAddMember()).map(MemberTransport::getMember).toList();
+                    List<Member> membersToAdd = membersTransport.stream().filter(MemberTransport::isAddMember).map(MemberTransport::getMember).toList();
+                    MemberRegister memberRegister = observableConversation.getMembers();
+                    if (!membersToRemove.isEmpty()){
+                        memberRegister.removeAllMembers(membersToRemove, getUsername());
+                    }
+                    if (!membersToAdd.isEmpty()){
+                        memberRegister.addAllMembers(membersToAdd, getUsername());
+                    }
+                }
+            }else if (object instanceof UsernameNotPartOfConversationException exception){
+                throw exception;
+            }else if (object instanceof CouldNotGetConversationException exception){
+                throw exception;
+            }else if(object instanceof IllegalArgumentException exception){
+                throw exception;
+            }else {
+                throw new InvalidResponseException(invalidResponse);
+            }
+        }catch (IOException | CouldNotGetMemberException | CouldNotRemoveMemberException | InvalidResponseException | UsernameNotPartOfConversationException | CouldNotGetConversationException | CouldNotAddMemberException exception){
+            logWaringError(exception);
+            throw exception;
         }
     }
 
@@ -690,64 +766,13 @@ public class ChatClient {
     }
 
     /**
-     * Checks all the conversations for new members.
-     * @throws UsernameNotPartOfConversationException gets thrown if this user is not a part of that conversation.
-     * @throws CouldNotGetConversationException gets thrown if the conversation could not be found.
-     * @throws IOException gets thrown if the socket closes before everything was done.
-     * @throws InvalidResponseException gets thrown if the server responds with wrong object.
-     * @throws CouldNotGetMemberException gets thrown if a member could not be found.
-     * @throws CouldNotRemoveMemberException gets thrown if a member could not be removed.
-     * @throws CouldNotAddMemberException gets thrown if a member could not be added.
+     * Checks if a long is negative or equal to zero.
+     * @param number the number to check.
+     * @param prefix the prefix the error should have.
      */
-    public void checkForNewMembers() throws UsernameNotPartOfConversationException, CouldNotGetConversationException, IOException, InvalidResponseException, CouldNotGetMemberException, CouldNotRemoveMemberException, CouldNotAddMemberException {
-        Iterator<ObservableConversation> it = personalConversationRegister.getIterator();
-        while (it.hasNext()){
-            ObservableConversation observableConversation = it.next();
-            checkConversationForNewOrDeletedMembers(observableConversation);
-        }
-    }
-
-    /**
-     * Checks if the input conversation has new members.
-     * @param observableConversation the conversation to check for new members.
-     * @throws UsernameNotPartOfConversationException gets thrown if this user is not a part of that conversation.
-     * @throws CouldNotGetConversationException gets thrown if the conversation could not be found.
-     * @throws IOException gets thrown if the socket closes before everything was done.
-     * @throws InvalidResponseException gets thrown if the server responds with wrong object.
-     * @throws CouldNotGetMemberException gets thrown if a member could not be found.
-     * @throws CouldNotRemoveMemberException gets thrown if a member could not be removed.
-     * @throws CouldNotAddMemberException gets thrown if a member could not be added.
-     */
-    private void checkConversationForNewOrDeletedMembers(ObservableConversation observableConversation) throws UsernameNotPartOfConversationException, CouldNotGetConversationException, IOException, InvalidResponseException, CouldNotGetMemberException, CouldNotRemoveMemberException, CouldNotAddMemberException {
-        try (Socket socket = new Socket(host, portNumber)){
-            MembersRequest membersRequest = new MembersRequestBuilder().setCheckForNewMembers(true).addConversationNumber(observableConversation.getConversationNumber()).addUsername(getUsername()).addLastMember(observableConversation.getMembers().getLastMemberNumber()).setLastDeletedMember(observableConversation.getMembers().getLastDeletedMember()).build();
-            sendObject(membersRequest, socket);
-            Object object = getObject(socket);
-            if (object instanceof MembersRequest response){
-                List<MemberTransport> membersTransport = response.getMembers();
-                if (!membersTransport.isEmpty()){
-                    List<Member> membersToRemove = membersTransport.stream().filter(member -> !member.isAddMember()).map(MemberTransport::getMember).toList();
-                    List<Member> membersToAdd = membersTransport.stream().filter(MemberTransport::isAddMember).map(MemberTransport::getMember).toList();
-                    MemberRegister memberRegister = observableConversation.getMembers();
-                    if (!membersToRemove.isEmpty()){
-                        memberRegister.removeAllMembers(membersToRemove, getUsername());
-                    }
-                    if (!membersToAdd.isEmpty()){
-                        memberRegister.addAllMembers(membersToAdd, getUsername());
-                    }
-                }
-            }else if (object instanceof UsernameNotPartOfConversationException exception){
-                throw exception;
-            }else if (object instanceof CouldNotGetConversationException exception){
-                throw exception;
-            }else if(object instanceof IllegalArgumentException exception){
-                throw exception;
-            }else {
-                throw new InvalidResponseException("The response from the server is invalid.");
-            }
-        }catch (IOException | CouldNotGetMemberException | CouldNotRemoveMemberException | InvalidResponseException | UsernameNotPartOfConversationException | CouldNotGetConversationException | CouldNotAddMemberException exception){
-            logWaringError(exception);
-            throw exception;
+    private synchronized void checkIfLongIsNegative(long number, String prefix) {
+        if (number < 0) {
+            throw new IllegalArgumentException("Expected the " + prefix + " to be larger than zero.");
         }
     }
 }

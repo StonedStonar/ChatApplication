@@ -33,9 +33,6 @@ public class NormalServerConversation implements ServerConversation {
 
     private NormalMembersRegister conversationMembers;
 
-    //Todo: Lag metoder så vi kan spørre etter de siste 100 meldingene eller lignende.
-    // Kanskje heller lage metoder som ser på en dato.
-
     /**
       * Makes an instance of the conversation class.
       * @param conversationNumber the number this conversation is.
@@ -178,12 +175,12 @@ public class NormalServerConversation implements ServerConversation {
     }
 
     @Override
-    public void addAllMessagesWithSameDate(List<Message> newMessageList) throws CouldNotAddMessageException, CouldNotGetMessageLogException {
+    public void addAllMessagesWithSameDate(List<Message> newMessageList) throws CouldNotAddMessageException, CouldNotGetMessageLogException, UsernameNotPartOfConversationException {
         checkIfListIsValid(newMessageList, "new message list");
         LocalDate testDateFromOneMessage = newMessageList.get(0).getDate();
         boolean validDate = newMessageList.stream().allMatch(message -> message.getDate().isEqual(testDateFromOneMessage));
         if (validDate){
-            ServerMessageLog messageLog = getMessageLogByTheDate(testDateFromOneMessage);
+            ServerMessageLog messageLog = getMessageLogForDate(testDateFromOneMessage, newMessageList.get(0).getFromUsername());
             if (!messageLog.checkIfAllMessagesAreNewMessages(newMessageList)){
                 Iterator<Message> it = newMessageList.iterator();
                 while (it.hasNext()){

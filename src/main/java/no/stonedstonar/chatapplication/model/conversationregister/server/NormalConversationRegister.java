@@ -91,7 +91,6 @@ public class NormalConversationRegister implements ServerConversationRegister {
         }
     }
 
-    //Todo: Endre denne slik at samtalen blir slettet om den er tom forlenge.
     /**
      * Removes a conversation from the list.
      * @param conversation the conversation you want to remove.

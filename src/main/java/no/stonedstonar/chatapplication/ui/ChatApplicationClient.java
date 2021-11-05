@@ -1,6 +1,7 @@
 package no.stonedstonar.chatapplication.ui;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -48,13 +49,16 @@ public class ChatApplicationClient extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         stage = primaryStage;
-        try {
-            setNewScene(LoginWindow.getLoginWindow());
-            primaryStage.show();
-        }catch (Exception exception){
-            //Todo: Something
-            System.out.print("Exception hell. " +  exception.getClass() + " " + exception.getMessage());
-        }
+        setNewScene(LoginWindow.getLoginWindow());
+        primaryStage.setOnCloseRequest(event -> {
+            chatClient.stopAllThreads();
+            do {
+                System.out.println(chatClient.checkIfThreadIsStopped());
+            }while (chatClient.checkIfThreadIsStopped());
+            Platform.exit();
+            System.exit(0);
+        });
+        primaryStage.show();
     }
 
     /**
@@ -129,13 +133,11 @@ public class ChatApplicationClient extends Application {
         }
     }
 
-    @Override
-    public void stop() throws Exception {
-        chatClient.stopAllThreads();
-        while (!chatClient.checkIfThreadIsStopped()){
-            Thread.sleep(50);
-        }
-        super.stop();
+    /**
+     * Stops the program and the threads.
+     */
+    public void stopApp() {
+        Platform.exit();
     }
 
     /**
