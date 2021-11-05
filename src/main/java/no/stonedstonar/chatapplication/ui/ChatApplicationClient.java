@@ -52,9 +52,6 @@ public class ChatApplicationClient extends Application {
         setNewScene(LoginWindow.getLoginWindow());
         primaryStage.setOnCloseRequest(event -> {
             chatClient.stopAllThreads();
-            do {
-                System.out.println(chatClient.checkIfThreadIsStopped());
-            }while (chatClient.checkIfThreadIsStopped());
             Platform.exit();
             System.exit(0);
         });
